@@ -1,5 +1,7 @@
 # 711
 IFN711
+global installation
+npm install -g firebase-tools
 
 Backend
 #1. npm init -y
