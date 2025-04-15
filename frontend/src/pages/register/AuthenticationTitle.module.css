@@ -1,0 +1,12 @@
+body {
+  transform: scale(1.06);
+  transform-origin: top left;
+  width: 90.91%; 
+}
+
+.title {
+  font-family:
+    Greycliff CF,
+    var(--mantine-font-family);
+  font-weight: 900;
+}
