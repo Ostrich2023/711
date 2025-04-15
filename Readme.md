@@ -1,4 +1,5 @@
 # 711
+
 IFN711
 global installation
 npm install -g firebase-tools
@@ -11,7 +12,7 @@ Functions
 Frontend
 #1. npm init -y
 #2. npm install firebase axios ethers react-router-dom firebase-tools
-
+#3. npm install @mantine/core @mantine/hooks
 
 how to run：
 #1. back to ddigital-skill-wallet run code:firebase emulators:start --only functions
