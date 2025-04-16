@@ -29,7 +29,7 @@ async function verifyToken(req, res, next) {
   }
 }
 
-// GET /school/students
+// GET /school/students (authenticated teacher only)
 router.get("/students", verifyToken, async (req, res) => {
   const { schoolId } = req.user;
 
@@ -48,7 +48,7 @@ router.get("/students", verifyToken, async (req, res) => {
   }
 });
 
-// GET /school/student/:id/skills
+//  GET /school/student/:id/skills (authenticated teacher only)
 router.get("/student/:id/skills", verifyToken, async (req, res) => {
   const { schoolId } = req.user;
   const studentId = req.params.id;
@@ -73,6 +73,25 @@ router.get("/student/:id/skills", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("Error fetching student skills:", err);
     res.status(500).send("Failed to retrieve skills.");
+  }
+});
+
+//  NEW: GET /school/:schoolId/students (public access)
+router.get("/:schoolId/students", async (req, res) => {
+  const { schoolId } = req.params;
+
+  try {
+    const snapshot = await admin.firestore()
+      .collection("users")
+      .where("role", "==", "student")
+      .where("schoolId", "==", schoolId)
+      .get();
+
+    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(students);
+  } catch (err) {
+    console.error("Public school-student fetch failed:", err);
+    res.status(500).send("Failed to retrieve students.");
   }
 });
 

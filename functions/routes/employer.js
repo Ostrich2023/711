@@ -82,4 +82,23 @@ router.get("/schools", async (req, res) => {
   }
 });
 
+// GET /employer/school/:schoolId/students
+router.get("/school/:schoolId/students", verifyEmployer, async (req, res) => {
+  const { schoolId } = req.params;
+
+  try {
+    const snapshot = await admin.firestore()
+      .collection("users")
+      .where("role", "==", "student")
+      .where("schoolId", "==", schoolId)
+      .get();
+
+    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(students);
+  } catch (err) {
+    console.error("Error fetching students for employer:", err.message);
+    res.status(500).send("Failed to retrieve students");
+  }
+});
+
 module.exports = router;

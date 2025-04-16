@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from "./context/AuthContext";
 
@@ -5,8 +6,9 @@ import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
 
 // Pages
-import { AuthenticationImage } from './pages/login/AuthenticationImage';
-import { AuthenticationTitle } from './pages/register/AuthenticationTitle';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import UnauthorizedPage from './pages/Unauthorized';
 
 import StudentPage from "./pages/StudentPage";
 import StudentProfile from "./pages/StudentProfile";
@@ -17,7 +19,7 @@ import SyncUserDocPage from "./pages/SyncUserDocPage";
 import RedirectByRole from "./components/RedirectByRole";
 
 function App() {
-  const { user, role, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) return <p>Loading...</p>;
 
@@ -25,30 +27,23 @@ function App() {
     <MantineProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<AuthenticationTitle />} />
-          <Route path="/register" element={<AuthenticationTitle />} />
-          <Route path="/login" element={<AuthenticationImage />} />
-          <Route
-            path="/student"
-            element={role === "student" ? <StudentPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/student/profile"
-            element={role === "student" ? <StudentProfile /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/school"
-            element={role === "school" ? <SchoolPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/employer"
-            element={role === "employer" ? <EmployerPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/admin"
-            element={role === "admin" ? <AdminPage /> : <Navigate to="/" />}
-          />
+          <Route path="/" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+          {/* Role Routes */}
+          <Route path="/student" element={<StudentPage />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
+          <Route path="/school" element={<SchoolPage />} />
+          <Route path="/employer" element={<EmployerPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="/sync" element={<SyncUserDocPage />} />
+
+          {/* Dynamic redirect */}
+          <Route path="/redirect" element={<RedirectByRole />} />
+
+          {/* Fallback route */}
+          <Route path="*" element={<p>404 Not Found</p>} />
         </Routes>
       </Router>
     </MantineProvider>
