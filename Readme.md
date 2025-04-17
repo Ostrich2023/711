@@ -17,3 +17,12 @@ Frontend
 how to run：
 #1. back to ddigital-skill-wallet run code:firebase emulators:start --only functions
 #2. cd to frontend run: npm run dev
+
+
+Biqing Changes:(pending)
+smart-contract:
+#1 npm install --save-dev hardhat
+#2 npx hardhat(pending)
+#3 npx hardhat compile
+#4 npx hardhat node        (#4 and #5 should be run at the same time)
+#5 npx hardhat run scripts/deploy.js --network localhost (open a new terminal to run this code)
