@@ -20,9 +20,9 @@ how to run：
 
 
 Biqing Changes:(pending)
-smart-contract:
+smart-contracts:
+cd smart-contracts
 #1 npm install --save-dev hardhat
-#2 npx hardhat(pending)
-#3 npx hardhat compile
-#4 npx hardhat node        (#4 and #5 should be run at the same time)
-#5 npx hardhat run scripts/deploy.js --network localhost (open a new terminal to run this code)
+#2 npx hardhat compile
+#3 npx hardhat node        (#4 and #5 should be run at the same time, keep this running)
+#4 npx hardhat run scripts/deploy.js --network localhost (and open a new terminal to run this line)
