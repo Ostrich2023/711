@@ -11,3 +11,10 @@ REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat ignition deploy ./ignition/modules/Lock.js
 ```
+
+
+npx hardhat node
+Private Key of each block
+
+npx hardhat run scripts/deploy.js
+Deploying with account is contract key
