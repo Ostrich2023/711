@@ -19,7 +19,7 @@ how to run：
 #2. cd to frontend run: npm run dev
 
 
-Biqing Changes:(pending)
+pending
 smart-contracts:
 cd smart-contracts
 #1 npm install --save-dev hardhat
