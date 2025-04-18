@@ -12,15 +12,15 @@ contract HashStorage is AccessControl {
     ///@dev 触发新的哈西值
     event HashStored(address indexed user, bytes32 hashValue);
 
-    /// @dev 存储所有用户所有哈希
+    ///@dev 存储所有用户所有哈希
     mapping(address => bytes32[]) private userHashes;
 
-    /// @dev DEFAULT_ADMIN_ROLE 分配
+    ///@dev DEFAULT_ADMIN_ROLE 分配
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    /// @notice 只有STUDENT_ROLE的账户才能存储哈希
+    ///@notice 只有STUDENT_ROLE的账户才能存储哈希
     function storeHash(bytes32 hashValue)
         external
         onlyRole(STUDENT_ROLE)
@@ -29,7 +29,7 @@ contract HashStorage is AccessControl {
         emit HashStored(msg.sender, hashValue);
     }
 
-    /// @notice 都可以查询
+    ///@notice 都可以查询
     function getHashes(address user)
         external
         view
