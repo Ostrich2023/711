@@ -9,8 +9,6 @@ import { auth, db } from "../firebase";
 
 // Custom Modules
 import LoginForm from "../components/LoginForm";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 
 
@@ -38,11 +36,6 @@ export default function Login() {
   };
 
   return (
-  <>
-    <Header />
-    <LoginForm onLogin={handleLogin} />
-    <Footer />
-  </>
-  
+    <LoginForm onLogin={handleLogin} /> 
   );
 }
