@@ -1,10 +1,19 @@
+// Core React and Routing
 import React from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+
+// Firebase
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
+
+// Custom Modules
 import LoginForm from "../components/LoginForm";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
+
+
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,5 +37,12 @@ export default function Login() {
     else throw new Error("Invalid role");
   };
 
-  return <LoginForm onLogin={handleLogin} />;
+  return (
+  <>
+    <Header />
+    <LoginForm onLogin={handleLogin} />
+    <Footer />
+  </>
+  
+  );
 }

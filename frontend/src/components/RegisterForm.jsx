@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import {
   Anchor,
   Button,
@@ -10,9 +11,10 @@ import {
   Text,
   TextInput,
   Title,
-  Select
+  Select,
+  Center
 } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
+
 
 export default function RegisterForm({ onRegister, schoolOptions = [] }) {
   const [email, setEmail] = useState("");
@@ -21,6 +23,7 @@ export default function RegisterForm({ onRegister, schoolOptions = [] }) {
   const [role, setRole] = useState("student");
   const [schoolId, setSchoolId] = useState("");
   const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
   const handleRegister = async () => {
@@ -86,7 +89,7 @@ export default function RegisterForm({ onRegister, schoolOptions = [] }) {
 
         <Group mt="md" justify="center">
           <Text size="sm">Already have an account?</Text>
-          <Anchor fw={700} component="button" size="sm" onClick={() => navigate("/login")}>Login</Anchor>
+          <Anchor fw={700} component="button" size="sm" onClick={() => navigate('/login')}>Login</Anchor>
         </Group>
       </Paper>
     </Container>

@@ -1,12 +1,24 @@
+// Core React and Routing
 import React, { useEffect, useState } from "react";
-import RegisterForm from "../components/RegisterForm";
+import { useNavigate } from "react-router-dom";
+
+// Firebase
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { ethers } from "ethers";
-import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
-import { useAuth } from "../context/AuthContext";
+
+// Third-party Libraries
+import { ethers } from "ethers";
 import axios from "axios";
+
+// Custom Modules
+import RegisterForm from "../components/RegisterForm";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
+
+
+
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -17,23 +29,26 @@ export default function Register() {
   const navigate = useNavigate();
   const { setUser, setRole: setGlobalRole } = useAuth();
 
+  // Fetch school list from the API
+  const fetchSchoolList = async () => {
+  try {
+    const res = await axios.get(`${BASE_URL}/employer/schools`);
+    setSchoolOptions(res.data);
+  } catch (error) {
+    console.error(" Failed to fetch school list:", error);
+    alert("Failed to load school list.");
+  } finally {
+    setLoading(false);
+  }
+  };
+  // Fetch school list when the component mounts
   useEffect(() => {
-    const fetchSchoolList = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/employer/schools`);
-        setSchoolOptions(res.data);
-      } catch (error) {
-        console.error("❌ Failed to fetch school list:", error);
-        alert("Failed to load school list.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSchoolList();
   }, []);
 
+  // Handle user registration
   const handleRegister = async (email, password, role, schoolId) => {
+    // 1. Create a new user with Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
@@ -53,6 +68,7 @@ export default function Register() {
       userData.schoolId = schoolId;
     }
 
+    // 2. Store user data in Firestore
     await setDoc(doc(db, "users", user.uid), userData);
 
     setUser(user);
@@ -70,6 +86,11 @@ export default function Register() {
   if (loading) return <p>Loading school list...</p>;
 
   return (
-    <RegisterForm onRegister={handleRegister} schoolOptions={schoolOptions} />
+    <>
+      <Header />
+      <RegisterForm onRegister={handleRegister} schoolOptions={schoolOptions} />
+      <Footer />
+    </>
+
   );
 }

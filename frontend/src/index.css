@@ -1,9 +1,8 @@
 /* === Auth UI Styles (merged from Login/Register modules) === */
 
 body {
-    transform: scale(1.06);
-    transform-origin: top left;
-    width: 90.91%;
+    transform: scale(1.00);
+    width: 100%;
   }
   
   .wrapper {

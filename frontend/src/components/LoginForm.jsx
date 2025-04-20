@@ -1,7 +1,7 @@
 // components/LoginForm.jsx
 import React, { useState } from "react";
-import { Anchor, Button, Checkbox, Paper, PasswordInput, Text, TextInput, Title } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import { Anchor, Button, Checkbox, Paper, PasswordInput, Text, TextInput, Title } from '@mantine/core';
 
 export default function LoginForm({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -32,7 +32,7 @@ export default function LoginForm({ onLogin }) {
 
         <Text ta="center" mt="md">
           Don&apos;t have an account?{' '}
-          <Anchor href="#" fw={700} onClick={(e) => { e.preventDefault(); navigate("/register"); }}>
+          <Anchor href="#" fw={700} onClick={(e) => { e.preventDefault(); navigate('/register'); }}>
             Register
           </Anchor>
         </Text>
