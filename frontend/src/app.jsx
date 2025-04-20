@@ -18,6 +18,7 @@ import EmployerPage from "./pages/EmployerPage";
 import AdminPage from "./pages/AdminPage";
 import SyncUserDocPage from "./pages/SyncUserDocPage";
 import RedirectByRole from "./components/RedirectByRole";
+import Layout from './components/Layout';
 
 function App() {
   const { loading } = useAuth();
@@ -29,6 +30,7 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
+          <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
@@ -47,6 +49,7 @@ function App() {
 
             {/* Fallback route */}
             <Route path="*" element={<p>404 Not Found</p>} />
+          </Route>
           </Routes>
         </Router>
       </AuthProvider>
