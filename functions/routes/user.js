@@ -5,6 +5,9 @@ const router = express.Router();
 const admin = require("firebase-admin");
 const jwt = require("jsonwebtoken");
 
+const { create } = require("ipfs-http-client");
+const upload = require("../middlewares/upload");
+
 // POST /user/login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -34,6 +37,28 @@ router.post("/login", async (req, res) => {
     console.error("Login failed:", err.message);
     res.status(401).json({ error: "Invalid credentials or user not found." });
   }
+});
+
+// init IPFS (Infura)
+const client = create({ url: "https://ipfs.infura.io:5001/api/v0" });
+
+// upload api
+router.post("/upload-skill", verifyToken, upload.single("file"), async (req, res) => {
+    const file = req.file;
+
+    if (!file) {
+        return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    try {
+        const added = await client.add(file.buffer);
+        const ipfsHash = added.path;
+
+        res.status(200).json({ success: true, hash: ipfsHash });
+    } catch (err) {
+        console.error("IPFS upload error:", err);
+        res.status(500).json({ success: false, message: "Failed to upload to IPFS" });
+    }
 });
 
 module.exports = router;
