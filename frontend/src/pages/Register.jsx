@@ -13,8 +13,6 @@ import axios from "axios";
 
 // Custom Modules
 import RegisterForm from "../components/RegisterForm";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 
 
@@ -47,7 +45,7 @@ export default function Register() {
   }, []);
 
   // Handle user registration
-  const handleRegister = async (email, password, role, schoolId) => {
+  const handleRegister = async (username, email, password, role, schoolId) => {
     // 1. Create a new user with Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -57,6 +55,7 @@ export default function Register() {
     const customUid = `${prefix}-${user.uid}`;
 
     const userData = {
+      name:username,
       email: user.email,
       role,
       walletAddress: wallet.address,
@@ -86,11 +85,7 @@ export default function Register() {
   if (loading) return <p>Loading school list...</p>;
 
   return (
-    <>
-      <Header />
-      <RegisterForm onRegister={handleRegister} schoolOptions={schoolOptions} />
-      <Footer />
-    </>
+    <RegisterForm onRegister={handleRegister} schoolOptions={schoolOptions} />
 
   );
 }

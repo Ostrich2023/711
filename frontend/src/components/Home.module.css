@@ -1,9 +1,10 @@
 .inner {
   display: flex;
   justify-content: space-between;
-  padding-top: calc(var(--mantine-spacing-xl) * 4);
-  padding-bottom: calc(var(--mantine-spacing-xl) * 4);
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 40px;
+  padding: 100px 0;
+  flex-direction: row;
 }
 
 .content {
