@@ -8,6 +8,9 @@ Functions
 #1. npm init -y
 #2. npm install express mysql2 dotenv firebase-admin cors ipfs-http-client
 #3. firebase emulators:start
+pending
+#4. npm install multer ipfs-http-client
+
 
 Frontend
 #1. npm init -y
