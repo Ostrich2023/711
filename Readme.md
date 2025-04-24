@@ -7,9 +7,8 @@ npm install -g firebase-tools
 Functions
 #1. npm init -y
 #2. npm install express mysql2 dotenv firebase-admin cors ipfs-http-client
-#3. firebase emulators:start
-pending
-#4. npm install multer ipfs-http-client
+#3. npm install multer
+#4. firebase emulators:start
 
 
 Frontend

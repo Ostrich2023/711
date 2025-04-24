@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 
 const { create } = require("ipfs-http-client");
 const upload = require("../middlewares/upload");
+const verifyToken = require("../middlewares/verifyToken");
 
 // POST /user/login
 router.post("/login", async (req, res) => {
@@ -64,7 +65,6 @@ router.post("/upload-skill", verifyToken, upload.single("file"), async (req, res
 module.exports = router;
 
 
-const verifyToken = require("../middlewares/verifyToken");
 
 router.get("/protected", verifyToken, (req, res) => {
   res.json({ message: "You are authorized", user: req.user });
