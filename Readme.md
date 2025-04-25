@@ -2,13 +2,15 @@
 
 IFN711
 global installation
+plz use node.js v20, which is the only version can export ipfs.
 npm install -g firebase-tools
 
 Functions
 #1. npm init -y
 #2. npm install express mysql2 dotenv firebase-admin cors ipfs-http-client
 #3. npm install multer
-#4. firebase emulators:start
+#4. npm install ipfs-http-client@56.0.3
+#5. firebase emulators:start
 
 
 Frontend
