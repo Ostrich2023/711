@@ -1,6 +1,6 @@
 import { Anchor, Container, Group, Image } from '@mantine/core';
 import classes from './Footer.module.css';
-import logo from '../../public/favicon.ico';
+import logo from '../../../public/favicon.ico';
 
 const links = [
     { link: '#', label: 'Contact' },
