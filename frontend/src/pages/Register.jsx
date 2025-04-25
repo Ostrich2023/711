@@ -12,7 +12,7 @@ import { ethers } from "ethers";
 import axios from "axios";
 
 // Custom Modules
-import RegisterForm from "../components/RegisterForm";
+import RegisterForm from "../components/auth/RegisterForm";
 import { useAuth } from "../context/AuthContext";
 
 

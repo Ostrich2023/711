@@ -1,0 +1,87 @@
+import { IconChevronRight, IconHeart, IconLogout, IconMessage, IconPlayerPause, IconSettings, IconStar, IconSwitchHorizontal, IconTrash, } from '@tabler/icons-react';
+import { Avatar, Group, Menu, Text, useMantineTheme } from '@mantine/core';
+
+import { useNavigate } from "react-router-dom";
+
+import { signOut } from 'firebase/auth';
+import { auth } from '../../firebase'; 
+import { useAuth } from '../../context/AuthContext';
+
+export default function UserMenu(props) {
+  const navigate = useNavigate();
+  const theme = useMantineTheme();
+  const { setUser, setRole } = useAuth();
+
+  // Handle logout function
+  const handleLogout = async () => {
+    try {
+      await signOut(auth); // Firebase sign out
+      setUser(null);       // Clear user state  
+      setRole(null);       // Clear role state
+      navigate('/login');   // Redirect to login page
+      localStorage.removeItem('token');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      alert('Failed to logout');
+    }
+  };
+
+  return (
+  <Group justify="center">
+    <Menu withArrow width={300} position="bottom" transitionProps={{ transition: 'pop' }} withinPortal>
+      <Menu.Target>
+        <Group>
+          <Text fw={500} color="#575757">Hi, {props.userData?.name}</Text>
+          <Avatar name={props.userData?.name} color="initials" radius="xl">
+            {props.userData?.name?.slice(0, 2).toUpperCase()}
+          </Avatar>
+        </Group>
+        </Menu.Target>
+
+      <Menu.Dropdown>
+        <Menu.Item rightSection={<IconChevronRight size={16} stroke={1.5}/>}>
+          <Group onClick={() => navigate('/school')}>
+          <Avatar name={props.userData?.name} color="initials" radius="xl">
+            {props.userData?.name?.slice(0, 2).toUpperCase()}
+          </Avatar>
+          <div>
+            <Text fw={500}>{props.userData?.name}</Text>
+            <Text size="xs" c="dimmed">
+            {props.userData?.email}
+            </Text>
+          </div>
+          </Group>
+        </Menu.Item>
+
+        <Menu.Divider />
+
+        <Menu.Item leftSection={<IconHeart size={16} stroke={1.5} color={theme.colors.red[6]}/>}>
+          Liked posts
+        </Menu.Item>
+        <Menu.Item leftSection={<IconStar size={16} stroke={1.5} color={theme.colors.yellow[6]}/>}>
+          Saved posts
+        </Menu.Item>
+        <Menu.Item leftSection={<IconMessage size={16} stroke={1.5} color={theme.colors.blue[6]}/>}>
+          Your comments
+        </Menu.Item>
+
+        <Menu.Label>Settings</Menu.Label>
+        <Menu.Item leftSection={<IconSettings size={16} stroke={1.5}/>}>
+          Account settings
+        </Menu.Item>
+        <Menu.Item leftSection={<IconSwitchHorizontal size={16} stroke={1.5}/>}>
+          Change account
+        </Menu.Item>
+        <Menu.Item leftSection={<IconLogout size={16} stroke={1.5}/>} onClick={handleLogout}>Logout</Menu.Item>
+
+        <Menu.Divider />
+
+        <Menu.Label>Danger zone</Menu.Label>
+        <Menu.Item leftSection={<IconPlayerPause size={16} stroke={1.5}/>}>
+          Pause subscription
+        </Menu.Item>
+      </Menu.Dropdown>
+
+    </Menu>
+  </Group>);
+}

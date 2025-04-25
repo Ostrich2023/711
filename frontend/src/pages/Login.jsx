@@ -8,7 +8,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
 // Custom Modules
-import LoginForm from "../components/LoginForm";
+import LoginForm from "../components/auth/LoginForm";
 import { useAuth } from "../context/AuthContext";
 
 

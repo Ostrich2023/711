@@ -1,7 +1,7 @@
 import {createBrowserRouter} from 'react-router-dom';
 
 // Pages
-import Layout from '../components/Layout';
+import Layout from '../components/layout/Layout';
 
 import HomePage from '../pages/HomePage';
 import Login from '../pages/Login';
@@ -14,7 +14,9 @@ import SchoolPage from "../pages/SchoolPage";
 import EmployerPage from "../pages/EmployerPage";
 import AdminPage from "../pages/AdminPage";
 import SyncUserDocPage from "../pages/SyncUserDocPage";
-import RedirectByRole from "../components/RedirectByRole";
+import RedirectByRole from "../components/auth/RedirectByRole";
+
+import ErrorPage from '../pages/ErrorPage';
 
 const AppRouter = createBrowserRouter([
   {
@@ -36,7 +38,7 @@ const AppRouter = createBrowserRouter([
       {path: "redirect", element: <RedirectByRole />},
 
       // 404 fallback
-      {path: "*", element: <p>404 Not Found</p>}
+      {path: "*", element: <ErrorPage />}
     ]
   }
 ]);

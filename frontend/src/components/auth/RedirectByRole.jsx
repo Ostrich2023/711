@@ -1,6 +1,6 @@
 // src/components/RedirectByRole.jsx
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 const RedirectByRole = () => {
   const { user, role, loading } = useAuth();

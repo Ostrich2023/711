@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { IconCalendarStats, IconDeviceDesktopAnalytics, IconFingerprint, IconGauge, IconHome2, IconLogout, IconSettings, IconSwitchHorizontal, IconUser} from '@tabler/icons-react';
 import { Center, Stack, Tooltip, UnstyledButton, Image } from '@mantine/core';
 import classes from './Navbar.module.css';
-import logo from '../../public/favicon.ico';
+import logo from '../../../public/favicon.ico';
 
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { auth } from '../firebase'; 
-import { useAuth } from '../context/AuthContext';
+import { auth } from '../../firebase'; 
+import { useAuth } from '../../context/AuthContext';
 
 function NavbarLink({ icon: Icon, label, active, onClick }) {
     return (<Tooltip label={label} position="right" transitionProps={{ duration: 0 }}>
