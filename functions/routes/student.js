@@ -72,4 +72,67 @@ router.put("/update-school", verifyStudent, async (req, res) => {
     }
   });
 
+// PUT /student/job/:jobId/accept
+router.put("/job/:jobId/accept", verifyStudent, async (req, res) => {
+  const { jobId } = req.params;
+  const { uid } = req.user;
+
+  try {
+    const jobDoc = await admin.firestore().doc(`jobs/${jobId}`).get();
+    if (!jobDoc.exists) return res.status(404).send("Job not found");
+
+    const jobData = jobDoc.data();
+    if (jobData.studentId !== uid) {
+      return res.status(403).send("You are not assigned to this job.");
+    }
+
+    await jobDoc.ref.update({ status: "accepted" });
+    res.status(200).send("Job accepted successfully");
+  } catch (error) {
+    console.error("Error accepting job:", error.message);
+    res.status(500).send("Failed to accept job");
+  }
+});
+
+// PUT /student/job/:jobId/reject
+router.put("/job/:jobId/reject", verifyStudent, async (req, res) => {
+  const { jobId } = req.params;
+  const { uid } = req.user;
+
+  try {
+    const jobDoc = await admin.firestore().doc(`jobs/${jobId}`).get();
+    if (!jobDoc.exists) return res.status(404).send("Job not found");
+
+    const jobData = jobDoc.data();
+    if (jobData.studentId !== uid) {
+      return res.status(403).send("You are not assigned to this job.");
+    }
+
+    await jobDoc.ref.update({ status: "rejected" });
+    res.status(200).send("Job rejected successfully");
+  } catch (error) {
+    console.error("Error rejecting job:", error.message);
+    res.status(500).send("Failed to reject job");
+  }
+});
+
+// GET /student/jobs
+router.get("/jobs", verifyStudent, async (req, res) => {
+  const { uid } = req.user;
+
+  try {
+    const snapshot = await admin.firestore()
+      .collection("jobs")
+      .where("studentId", "==", uid)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(jobs);
+  } catch (error) {
+    console.error("Failed to fetch student jobs:", error.message);
+    res.status(500).send("Error retrieving jobs");
+  }
+});
+
 module.exports = router;
