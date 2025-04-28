@@ -28,7 +28,7 @@ async function verifyToken(req, res, next) {
 // POST /skill/add
 router.post("/add", verifyToken, async (req, res) => {
   const { role, uid } = req.user;
-  const { title, description, level } = req.body;
+  const { title, description, level, attachmentCid } = req.body; //  get attachmentCid
 
   if (role !== "student") return res.status(403).send("Only students can add skills");
 
@@ -38,6 +38,7 @@ router.post("/add", verifyToken, async (req, res) => {
       title,
       description,
       level,
+      attachmentCid: attachmentCid || "", //  Save the CID if provided
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     res.status(201).send({ id: docRef.id });
@@ -52,7 +53,7 @@ router.get("/list", verifyToken, async (req, res) => {
   const { uid, role } = req.user;
   const targetUid = req.query.uid || uid;
 
-  // student can only get their own data
+  // Student can only view their own data
   if (role === "student" && targetUid !== uid)
     return res.status(403).send("You can only view your own skills");
 
@@ -63,8 +64,12 @@ router.get("/list", verifyToken, async (req, res) => {
       .orderBy("createdAt", "desc")
       .get();
 
-    const skills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.json(skills);
+    const skills = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.send(skills);
   } catch (error) {
     console.error("Error fetching skills:", error);
     res.status(500).send("Failed to fetch skills");
@@ -77,20 +82,18 @@ router.delete("/delete/:id", verifyToken, async (req, res) => {
   const skillId = req.params.id;
 
   try {
-    const docRef = admin.firestore().collection("skills").doc(skillId);
-    const docSnap = await docRef.get();
+    const skillDoc = await admin.firestore().collection("skills").doc(skillId).get();
+    if (!skillDoc.exists) return res.status(404).send("Skill not found");
 
-    if (!docSnap.exists) return res.status(404).send("Skill not found");
+    const skillData = skillDoc.data();
 
-    const skillData = docSnap.data();
-
-    // Allow deletion if student owns it, or if requester is school
-    if (skillData.ownerId !== uid && role !== "school") {
-      return res.status(403).send("Permission denied");
+    // Only owner can delete
+    if (skillData.ownerId !== uid && role !== "admin") {
+      return res.status(403).send("Unauthorized to delete this skill");
     }
 
-    await docRef.delete();
-    res.sendStatus(204);
+    await admin.firestore().collection("skills").doc(skillId).delete();
+    res.send("Skill deleted successfully");
   } catch (error) {
     console.error("Error deleting skill:", error);
     res.status(500).send("Failed to delete skill");

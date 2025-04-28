@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { addSkill, listSkills, deleteSkill } from "../services/skillService";
+import { uploadToIPFS } from "../ipfs/uploadToIPFS";
 import { useNavigate, Navigate } from "react-router-dom";
 
 const StudentPage = () => {
@@ -11,9 +12,10 @@ const StudentPage = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [level, setLevel] = useState("Beginner");
+  const [file, setFile] = useState(null); 
+  const [uploading, setUploading] = useState(false); 
   const navigate = useNavigate();
 
-  //  Block unauthorized access
   if (!user || role !== "student") return <Navigate to="/" />;
 
   useEffect(() => {
@@ -32,17 +34,34 @@ const StudentPage = () => {
       return;
     }
 
+    let fileCid = "";
+
+    if (file) {
+      try {
+        setUploading(true);
+        fileCid = await uploadToIPFS(file);
+      } catch (error) {
+        console.error("File upload failed:", error);
+        alert("Failed to upload file to IPFS.");
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+
     const token = await user.getIdToken();
     await addSkill(token, {
       title,
       description,
       level,
       createdAt: new Date().toISOString(),
+      attachmentCid: fileCid || "", // save the CID if file is uploaded
     });
 
     setTitle("");
     setDescription("");
     setLevel("Beginner");
+    setFile(null); 
     loadSkills();
   };
 
@@ -80,7 +99,16 @@ const StudentPage = () => {
         <option value="Intermediate">Intermediate</option>
         <option value="Advanced">Advanced</option>
       </select>
-      <button onClick={handleAdd}>Submit Skill</button>
+
+      <input
+        type="file"
+        onChange={(e) => setFile(e.target.files[0])}
+        style={{ display: "block", marginBottom: "10px" }}
+      />
+
+      <button onClick={handleAdd} disabled={uploading}>
+        {uploading ? "Uploading..." : "Submit Skill"}
+      </button>
 
       <h3 style={{ marginTop: "30px" }}>Your Skills</h3>
       {skills.length === 0 ? (
@@ -91,10 +119,15 @@ const StudentPage = () => {
             <li key={skill.id} style={{ marginBottom: "10px" }}>
               <strong>{skill.title}</strong> ({skill.level})<br />
               <em>{skill.description}</em><br />
+              {skill.attachmentCid && (
+                <div>
+                  📎 <a href={`https://ipfs.io/ipfs/${skill.attachmentCid}`} target="_blank" rel="noopener noreferrer">
+                    View Uploaded Document
+                  </a>
+                </div>
+              )}
               {skill.verified !== undefined && (
-                <span>
-                  Verified: {skill.verified ? " Yes" : " No"}<br />
-                </span>
+                <span>Verified: {skill.verified ? " Yes" : " No"}<br /></span>
               )}
               {skill.score !== undefined && (
                 <span>Score: {skill.score}</span>
