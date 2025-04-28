@@ -146,8 +146,8 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
   }
 });
 
-// POST /employer/job/:jobId/assign/:studentId
-router.post("/job/:jobId/assign/:studentId", verifyEmployer, async (req, res) => {
+// PUT /employer/job/:jobId/assign/:studentId
+router.put("/job/:jobId/assign/:studentId", verifyEmployer, async (req, res) => {
   const { jobId, studentId } = req.params;
 
   try {
@@ -209,6 +209,26 @@ router.put("/job/:jobId/verify", verifyEmployer, async (req, res) => {
   } catch (error) {
     console.error("Error verifying job:", error.message);
     res.status(500).send("Failed to verify job");
+  }
+});
+
+
+// GET /employer/jobs
+router.get("/jobs", verifyEmployer, async (req, res) => {
+  const { uid } = req.user;
+
+  try {
+    const snapshot = await admin.firestore()
+      .collection("jobs")
+      .where("employerId", "==", uid)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(jobs);
+  } catch (error) {
+    console.error("Error fetching jobs for employer:", error.message);
+    res.status(500).send("Failed to retrieve jobs");
   }
 });
 
