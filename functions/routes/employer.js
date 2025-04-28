@@ -190,6 +190,7 @@ router.put("/job/:jobId/status", verifyEmployer, async (req, res) => {
   }
 });
 
+
 // PUT /employer/job/:jobId/verify
 router.put("/job/:jobId/verify", verifyEmployer, async (req, res) => {
   const { jobId } = req.params;
