@@ -7,6 +7,7 @@ const skillRoutes = require("./routes/skill");
 const studentRoutes = require("./routes/student");
 const schoolRoutes = require("./routes/school");
 const employerRoutes = require("./routes/employer");
+const jobRoutes = require("./routes/job");
 const adminRoutes = require("./routes/admin"); 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/skill", skillRoutes);
 app.use("/student", studentRoutes);
 app.use("/school", schoolRoutes);
 app.use("/employer", employerRoutes);
+app.use("/job", jobRoutes);
 app.use("/admin", adminRoutes); 
 
 // Global error handler
