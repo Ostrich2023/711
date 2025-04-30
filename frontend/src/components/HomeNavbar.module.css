@@ -6,18 +6,20 @@
   flex-direction: column;
 }
 
-.actionNavbar{
+.actionNavbar {
   margin-top: 30px;
   margin-left: 10px;
 }
 
 .navbarMain {
   flex: 1;
+  display: flex;         /* 补充 */
+  flex-direction: column; /* 补充，确保是上下排列 */
   align-items: center;
-  gap: 10px; 
+  gap: 10px;
 }
 
-.user{
+.user {
   margin-top: 20px;
   margin-bottom: 30px;
 }
@@ -60,4 +62,27 @@
   margin-right: var(--mantine-spacing-sm);
   width: 25px;
   height: 25px;
+}
+
+/* ⬇️ 小屏幕（移动端）特殊处理 */
+@media (max-width: 768px) {
+  .navbar {
+    width: 100%;
+    height: 100%;
+    padding: var(--mantine-spacing-md);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .navbarMain {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .link {
+    width: 100%;
+  }
 }

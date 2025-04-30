@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Group, Drawer, Avatar, Text, UnstyledButton } from '@mantine/core';
 import { IconBaselineDensityMedium } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks'; 
+import { useNavigate } from "react-router-dom";
 
 import classes from './HomeNavbar.module.css';
 
-import ActionButton from '../common/ActionButton';
+import ActionButton from './common/ActionButton';
 
 export default function HomeNavbar(props) {
+  const navigate = useNavigate();
   
   // navbar的列表渲染
   const [active, setActive] = useState(props.navbarData[0].label);
@@ -19,6 +21,7 @@ export default function HomeNavbar(props) {
     key={item.label} 
     onClick={(event) => {
       event.preventDefault();
+      navigate(item.link);
       setActive(item.label);
     }}>
     <item.icon className={classes.linkIcon} stroke={1.5}/>
@@ -45,7 +48,7 @@ export default function HomeNavbar(props) {
           onActionButton={handleActionButton}/>
         </div>
         
-        <Drawer opened={opened} size="300px" onClose={() => setOpened(false)} withCloseButton={false}>
+        <Drawer withOverlay position="left" opened={opened} size="300px" onClose={() => setOpened(false)} withCloseButton={false}>
             <nav className={classes.navbar}>
 
               <UnstyledButton className={classes.user}>
