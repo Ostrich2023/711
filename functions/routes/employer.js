@@ -101,4 +101,25 @@ router.get("/school/:schoolId/students", verifyEmployer, async (req, res) => {
   }
 });
 
+
+// GET /employer/students/skills/:skill
+router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
+  const { skill } = req.params;
+
+  try {
+    const snapshot = await admin.firestore()
+      .collection("users")
+      .where("role", "==", "student")
+      .where("skills", "array-contains", skill)
+      .get();
+
+    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(students);
+  } catch (error) {
+    console.error("Error searching students by skill:", error.message);
+    res.status(500).send("Failed to search students");
+  }
+});
+
+
 module.exports = router;
