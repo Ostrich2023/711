@@ -1,30 +1,30 @@
 import React from "react";
-import { Container, Group } from "@mantine/core";
+import { Container, Group, Box} from "@mantine/core";
 import { 
   IconUser,
   IconFileCheck,
-  IconBell,
+  IconHome2,
   IconFileCertificate, 
   IconCalendarEvent,  
   IconSettings,
   } from '@tabler/icons-react';
-import { Navigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import { useFireStoreUser } from "../hooks/useFirestoreUser";
 
-import HomeNavbar from "../components/layout/HomeNavbar";
-import Notification from "../components/Notification"
+import HomeNavbar from "../components/HomeNavbar";
 
 const SchoolPage = () => {
   const { user, role } = useAuth();
   const { userData, isLoading } = useFireStoreUser(user);
   
   const navbarData = [
-    { link: '', label: 'Home', icon: IconUser },
-    { link: '', label: 'Verify Skills', icon: IconFileCheck },
-    { link: '', label: 'Issue Certificates', icon: IconFileCertificate },
-    { link: '', label: 'Courses', icon: IconCalendarEvent },
+    { link: '.', label: 'Home', icon: IconHome2 },
+    { link: 'verify-skill', label: 'Verify Skills', icon: IconFileCheck },
+    { link: 'publish-certification', label: 'Pulish Certificates', icon: IconFileCertificate },
+    { link: 'students', label: 'Students', icon: IconUser },
+    { link: 'courses', label: 'Courses', icon: IconCalendarEvent },
     { link: '', label: 'Settings', icon: IconSettings },
 ];
 
@@ -33,12 +33,17 @@ const SchoolPage = () => {
   if (role !== "school") return <Navigate to="/" />;
 
   return (
-    <Container size="1600px">
+    <Container Container size="xl" maw="1400px">
       <Group align="flex-start">
-        <HomeNavbar 
-        userData={userData}
-        navbarData={navbarData}/>
-        <Notification />
+        {/* left */}
+        <Box>
+          <HomeNavbar 
+          userData={userData}
+          navbarData={navbarData}/>
+        </Box>
+        {/* right */}
+        <Outlet />
+
       </Group>
     </Container>
   );

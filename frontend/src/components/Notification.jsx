@@ -1,65 +1,42 @@
-import { Title, Box, Group, Stack, Text, Paper, Divider } from "@mantine/core";
-export default function Notification(){
-  
-  const notifications = [
+import { Title, Box, SimpleGrid, Card, Text, Button, Group } from "@mantine/core";
+
+export default function PendingActions() {
+  const actions = [
     {
-      title: 'Week 9: Ass2 Industry Forum Friday Wk9, 2 May, 11am - 12pm on Zoom',
-      content: 'Dear Students, Please place the details of the event below in...',
-      date: '25 Apr 2025, 12:36',
-      unread: true,
+      title: 'Skill Approval Requests',
+      description: 'You currently have 5 skill requests pending verify.',
+      actionText: 'Verify Skills',
+      actionLink: '/teacher/verify-skills', // 以后加路由跳转
     },
     {
-      title: 'Week 7 Update (Ass1 survey, Ass2 brief, Guest lecture and more)',
-      content: 'Dear Students, I hope that your projects are progressing well...',
-      date: '10 Apr 2025, 11:25',
-      unread: false,
-    },
-    {
-      title: 'Week 7 Update (Ass1 survey, Ass2 brief, Guest lecture and more)',
-      content: 'Dear Students, I hope that your projects are progressing well...',
-      date: '10 Apr 2025, 11:25',
-      unread: false,
+      title: 'Certificate Publishing',
+      description: 'You currently have 2 certificates ready for publishing.',
+      actionText: 'Publish Certificates',
+      actionLink: '/teacher/issue_certificates', // 以后加路由跳转
     },
   ];
-  
-  return(
-    <Box style={{ maxWidth: 1000, flex: 1 }} >
-      <Stack spacing="xs">
-        <Title mt="38px" order={2}>Notification</Title> 
-        {notifications.map((item, index) => (
-          <Paper key={index} withBorder p="md" radius="md">
-            <Group align="flex-start" spacing="md">
-              {/* 左边小圆点 */}
-              <Box
-                w={8}
-                h={8}
-                mt={16}
-                bg={item.unread ? 'blue.7' : 'gray.3'}
-                style={{ borderRadius: '50%' }}
-              />
 
+  return (
+    <Box w="100%">
+      <Group justify="space-between" align="center" mb="md">
+        <Title order={2} mt="38px">Pending Actions</Title>
+      </Group>
 
-              {/* 正文内容 */}
-              <Box style={{ flex: 1 }}>
-                <Text fw={500} size="sm">
-                  {item.title}
-                </Text>
-                <Text size="xs" c="dimmed" mt={4}>
-                  {item.content}
-                </Text>
-              </Box>
-
-              {/* 时间 */}
-              <Box>
-                <Text size="xs" c="dimmed">
-                  Posted on:
-                </Text>
-                <Text size="xs">{item.date}</Text>
-              </Box>
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        {actions.map((item, index) => (
+          <Card key={index} shadow="sm" padding="lg" radius="md" withBorder>
+            <Group justify="space-between" mb="xs">
+              <Text fw={600}>{item.title}</Text>
             </Group>
-          </Paper>
+            <Text size="sm" c="dimmed" mb="md">
+              {item.description}
+            </Text>
+            <Button fullWidth variant="light" radius="md">
+              {item.actionText}
+            </Button>
+          </Card>
         ))}
-      </Stack>
+      </SimpleGrid>
     </Box>
   )
 }

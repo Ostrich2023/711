@@ -17,6 +17,11 @@ import SyncUserDocPage from "../pages/SyncUserDocPage";
 import RedirectByRole from "../components/auth/RedirectByRole";
 
 import ErrorPage from '../pages/ErrorPage';
+import SchoolHome from '../pages/SchoolHome';
+import SchoolVerifySkill from '../pages/SchoolVerifySkill';
+import SchoolPublishCertification from '../pages/SchoolPublishCertification';
+import SchoolStudents from '../pages/SchoolStudents';
+import SchoolCourses from '../pages/SchoolCourses';
 
 const AppRouter = createBrowserRouter([
   {
@@ -29,9 +34,19 @@ const AppRouter = createBrowserRouter([
       {path: "unauthorized", element: <UnauthorizedPage />},
 
       // Role pages
+      {path: "school",
+       element: <SchoolPage />,
+       children: [
+        {index: true, element: <SchoolHome />},
+        {path: "verify-skill", element: <SchoolVerifySkill />},
+        {path: "publish-certification", element: <SchoolPublishCertification />},
+        {path: "students", element: <SchoolStudents />},
+        {path: "courses", element: <SchoolCourses />},
+       ]},
+
       {path: "student", element: <StudentPage />},
       {path: "student/profile", element: <StudentProfile />},
-      {path: "school", element: <SchoolPage />},
+      
       {path: "employer", element: <EmployerPage />},
       {path: "admin", element: <AdminPage />},
       {path: "sync", element: <SyncUserDocPage />},
