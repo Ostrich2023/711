@@ -1,52 +1,14 @@
 import { Avatar, Group, Box, Title, Button, Flex, Text, Stack, Paper } from '@mantine/core';
 
-const data = [
-  {
-    avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-9.png',
-    name: 'Alice Johnson',
-    email: 'alice@student.edu',
-    course: 'Computer Science',
-    lastActive: '2 days ago',
-  },
-  {
-    avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-6.png',
-    name: 'Bob Smith',
-    email: 'bobsmith@student.edu',
-    course: 'Software Engineering',
-    lastActive: '10 days ago',
-  },
-  {
-    avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-10.png',
-    name: 'Catherine Green',
-    email: 'catherine@student.edu',
-    course: 'Data Science',
-    lastActive: 'Today',
-  },
-  {
-    avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png',
-    name: 'David Brown',
-    email: 'david@student.edu',
-    course: 'Information Technology',
-    lastActive: '5 days ago',
-  },
-  {
-    avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-3.png',
-    name: 'Emma White',
-    email: 'emmawhite@student.edu',
-    course: 'Cybersecurity',
-    lastActive: '20 days ago',
-  },
-];
-
-export default function UserTable() {
+export default function UserTable(props) {
   return (
-    <Box w="100%" mt="25px">
+    <Box w="100%" mb="50px">
       <Stack spacing="xs">
         <Group>
-          <Title order={2}>My Student</Title>
+          <Title order={3}>{props.title}</Title>
           <Button variant="light" ml="auto" mt="15px">More</Button>
         </Group>
-        {data.map((item) => (
+        {props.data.map((item) => (
         <Paper withBorder p="sm" radius="md">
           <Flex justify="space-between" align="center" direction={{ base: 'column', sm: 'row' }} gap="sm">
             <Group gap="sm">

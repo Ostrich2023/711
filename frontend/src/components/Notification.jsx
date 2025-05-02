@@ -1,42 +1,32 @@
-import { Title, Box, SimpleGrid, Card, Text, Button, Group } from "@mantine/core";
+import {
+  Box,
+  Card,
+  Text,
+  Group,
+  ThemeIcon,
+} from "@mantine/core";
+import { IconBell } from "@tabler/icons-react";
 
-export default function PendingActions() {
-  const actions = [
-    {
-      title: 'Skill Approval Requests',
-      description: 'You currently have 5 skill requests pending verify.',
-      actionText: 'Verify Skills',
-      actionLink: '/teacher/verify-skills', // 以后加路由跳转
-    },
-    {
-      title: 'Certificate Publishing',
-      description: 'You currently have 2 certificates ready for publishing.',
-      actionText: 'Publish Certificates',
-      actionLink: '/teacher/issue_certificates', // 以后加路由跳转
-    },
-  ];
-
+export default function Notification(props) {
   return (
     <Box w="100%">
-      <Group justify="space-between" align="center" mb="md">
-        <Title order={2} mt="38px">Pending Actions</Title>
-      </Group>
 
-      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-        {actions.map((item, index) => (
-          <Card key={index} shadow="sm" padding="lg" radius="md" withBorder>
-            <Group justify="space-between" mb="xs">
-              <Text fw={600}>{item.title}</Text>
-            </Group>
-            <Text size="sm" c="dimmed" mb="md">
-              {item.description}
+      {/* 顶部提醒栏 */}
+      <Card shadow="xs" padding="md" radius="md" withBorder bg="blue.0" mb="md" mt="10px">
+        <Group align="center">
+          <ThemeIcon variant="subtle" color="blue" radius="xl" size="lg">
+            <IconBell size={20} />
+          </ThemeIcon>
+          <Text fw="600px">
+            {props.messagePrefix}
+            <Text span fw={700} c="blue">
+            &nbsp;{props.count}&nbsp;{props.label}&nbsp;
             </Text>
-            <Button fullWidth variant="light" radius="md">
-              {item.actionText}
-            </Button>
-          </Card>
-        ))}
-      </SimpleGrid>
+            {props.messageSuffix}
+          </Text>
+        </Group>
+      </Card>
+
     </Box>
-  )
+  );
 }
