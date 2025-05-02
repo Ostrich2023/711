@@ -1,144 +1,45 @@
 import React, { useEffect, useState } from "react";
+import { Container, Group, Box } from "@mantine/core";
+import { 
+  IconHome2,
+  IconCertificate,
+  IconClipboardList,
+  IconSettings,
+  } from '@tabler/icons-react';
+import { Navigate, Outlet } from "react-router-dom";  
+
 import { useAuth } from "../context/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
-import { addSkill, listSkills, deleteSkill } from "../services/skillService";
-import { uploadToIPFS } from "../ipfs/uploadToIPFS";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useFireStoreUser } from "../hooks/useFirestoreUser";
+
+import HomeNavbar from "../components/HomeNavbar";
 
 const StudentPage = () => {
+  
   const { user, role } = useAuth();
-  const [skills, setSkills] = useState([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [level, setLevel] = useState("Beginner");
-  const [file, setFile] = useState(null); 
-  const [uploading, setUploading] = useState(false); 
-  const navigate = useNavigate();
+  const { userData, isLoading } = useFireStoreUser(user);
 
   if (!user || role !== "student") return <Navigate to="/" />;
 
-  useEffect(() => {
-    loadSkills();
-  }, []);
-
-  const loadSkills = async () => {
-    const token = await user.getIdToken();
-    const data = await listSkills(token);
-    setSkills(data);
-  };
-
-  const handleAdd = async () => {
-    if (!title.trim() || !description.trim()) {
-      alert("Title and Description are required.");
-      return;
-    }
-
-    let fileCid = "";
-
-    if (file) {
-      try {
-        setUploading(true);
-        fileCid = await uploadToIPFS(file);
-      } catch (error) {
-        console.error("File upload failed:", error);
-        alert("Failed to upload file to IPFS.");
-        setUploading(false);
-        return;
-      }
-      setUploading(false);
-    }
-
-    const token = await user.getIdToken();
-    await addSkill(token, {
-      title,
-      description,
-      level,
-      createdAt: new Date().toISOString(),
-      attachmentCid: fileCid || "", // save the CID if file is uploaded
-    });
-
-    setTitle("");
-    setDescription("");
-    setLevel("Beginner");
-    setFile(null); 
-    loadSkills();
-  };
-
-  const handleDelete = async (skillId) => {
-    const token = await user.getIdToken();
-    await deleteSkill(token, skillId);
-    loadSkills();
-  };
+  const navbarData = [
+    { link: '.', label: 'Home', icon: IconHome2 },
+    { link: 'request-skill', label: 'Request Skill', icon: IconClipboardList },
+    { link: '', label: 'Settings', icon: IconSettings },
+  ];
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Student Dashboard</h2>
-      <p>Email: {user?.email}</p>
-      <p>Role: {role}</p>
-      <button onClick={() => signOut(auth)}>Logout</button>
-      <button onClick={() => navigate("/student/profile")} style={{ marginLeft: "10px" }}>
-        Edit Profile
-      </button>
+    <Container size="xl" maw="1400px">
+      <Group align="flex-start">
+        {/* left */}
+        <Box>
+          <HomeNavbar 
+          userData={userData}
+          navbarData={navbarData}/>
+        </Box>
+        {/* right */}
+        <Outlet/>
+      </Group>
+    </Container>
 
-      <h3 style={{ marginTop: "30px" }}>Add Skill</h3>
-      <input
-        placeholder="Skill title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        style={{ display: "block", marginBottom: "10px" }}
-      />
-      <input
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        style={{ display: "block", marginBottom: "10px" }}
-      />
-      <select value={level} onChange={(e) => setLevel(e.target.value)} style={{ marginBottom: "10px" }}>
-        <option value="Beginner">Beginner</option>
-        <option value="Intermediate">Intermediate</option>
-        <option value="Advanced">Advanced</option>
-      </select>
-
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files[0])}
-        style={{ display: "block", marginBottom: "10px" }}
-      />
-
-      <button onClick={handleAdd} disabled={uploading}>
-        {uploading ? "Uploading..." : "Submit Skill"}
-      </button>
-
-      <h3 style={{ marginTop: "30px" }}>Your Skills</h3>
-      {skills.length === 0 ? (
-        <p>No skills added yet.</p>
-      ) : (
-        <ul>
-          {skills.map((skill) => (
-            <li key={skill.id} style={{ marginBottom: "10px" }}>
-              <strong>{skill.title}</strong> ({skill.level})<br />
-              <em>{skill.description}</em><br />
-              {skill.attachmentCid && (
-                <div>
-                  📎 <a href={`https://ipfs.io/ipfs/${skill.attachmentCid}`} target="_blank" rel="noopener noreferrer">
-                    View Uploaded Document
-                  </a>
-                </div>
-              )}
-              {skill.verified !== undefined && (
-                <span>Verified: {skill.verified ? " Yes" : " No"}<br /></span>
-              )}
-              {skill.score !== undefined && (
-                <span>Score: {skill.score}</span>
-              )}
-              <br />
-              <button onClick={() => handleDelete(skill.id)}>Delete</button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   );
 };
 

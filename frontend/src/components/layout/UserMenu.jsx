@@ -1,4 +1,4 @@
-import { IconChevronRight, IconHeart, IconLogout, IconMessage, IconPlayerPause, IconSettings, IconStar, IconSwitchHorizontal, IconTrash, } from '@tabler/icons-react';
+import { IconChevronRight, IconHeart, IconLogout, IconMessage, IconHome2, IconSettings, IconStar, IconSwitchHorizontal, IconTrash, } from '@tabler/icons-react';
 import { Avatar, Group, Menu, Text, useMantineTheme } from '@mantine/core';
 
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function UserMenu(props) {
   const navigate = useNavigate();
   const theme = useMantineTheme();
-  const { setUser, setRole } = useAuth();
+  const { setUser, setRole, role} = useAuth();
 
   // Handle logout function
   const handleLogout = async () => {
@@ -26,9 +26,20 @@ export default function UserMenu(props) {
     }
   };
 
+  const handleGoHome =()=>{
+    if(role==='student'){
+      navigate('/student');
+    }
+    else if(role==='school'){
+      navigate('/school')
+    }
+    else if(role==='employer'){
+      navigate('/employer')
+    }
+  }
   return (
   <Group justify="center">
-    <Menu withArrow width={300} position="bottom" transitionProps={{ transition: 'pop' }} withinPortal>
+    <Menu withArrow width={200} position="bottom" transitionProps={{ transition: 'pop' }} withinPortal>
       <Menu.Target>
         <Group>
           <Text fw={500} color="#575757">Hi, {props.userData?.name}</Text>
@@ -40,10 +51,7 @@ export default function UserMenu(props) {
 
       <Menu.Dropdown>
         <Menu.Item rightSection={<IconChevronRight size={16} stroke={1.5}/>}>
-          <Group onClick={() => navigate('/school')}>
-          <Avatar name={props.userData?.name} color="initials" radius="xl">
-            {props.userData?.name?.slice(0, 2).toUpperCase()}
-          </Avatar>
+          <Group onClick={handleGoHome}>
           <div>
             <Text fw={500}>{props.userData?.name}</Text>
             <Text size="xs" c="dimmed">
@@ -55,31 +63,11 @@ export default function UserMenu(props) {
 
         <Menu.Divider />
 
-        <Menu.Item leftSection={<IconHeart size={16} stroke={1.5} color={theme.colors.red[6]}/>}>
-          Liked posts
-        </Menu.Item>
-        <Menu.Item leftSection={<IconStar size={16} stroke={1.5} color={theme.colors.yellow[6]}/>}>
-          Saved posts
-        </Menu.Item>
-        <Menu.Item leftSection={<IconMessage size={16} stroke={1.5} color={theme.colors.blue[6]}/>}>
-          Your comments
-        </Menu.Item>
-
-        <Menu.Label>Settings</Menu.Label>
         <Menu.Item leftSection={<IconSettings size={16} stroke={1.5}/>}>
-          Account settings
-        </Menu.Item>
-        <Menu.Item leftSection={<IconSwitchHorizontal size={16} stroke={1.5}/>}>
-          Change account
+          Settings
         </Menu.Item>
         <Menu.Item leftSection={<IconLogout size={16} stroke={1.5}/>} onClick={handleLogout}>Logout</Menu.Item>
 
-        <Menu.Divider />
-
-        <Menu.Label>Danger zone</Menu.Label>
-        <Menu.Item leftSection={<IconPlayerPause size={16} stroke={1.5}/>}>
-          Pause subscription
-        </Menu.Item>
       </Menu.Dropdown>
 
     </Menu>

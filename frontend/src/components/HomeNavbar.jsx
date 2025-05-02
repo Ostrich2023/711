@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Group, Drawer, Avatar, Text, UnstyledButton } from '@mantine/core';
-import { IconBaselineDensityMedium } from '@tabler/icons-react';
+import { IconBaselineDensityMedium, IconCertificate, IconArrowRight } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks'; 
 import { useNavigate } from "react-router-dom";
 
@@ -95,8 +95,24 @@ export default function HomeNavbar(props) {
               </div>
               </Group>
           </UnstyledButton>
-
+          
         <div className={classes.navbarMain}>
+          {props.userData?.role==="student" &&
+          (<a 
+            className={classes.link} 
+            href={'profile'} 
+            onClick={(event) => {
+              event.preventDefault();
+              navigate('profile');
+            }}>
+            <Group justify="space-between" align="center" w="100%">
+              <Group gap="xs" align="center">
+                <IconCertificate stroke={1.5} />
+                <span>Digital Skill Wallet</span>
+              </Group>
+              <IconArrowRight stroke={1.5} />
+            </Group>
+          </a>)}
           {links}
         </div>
 
