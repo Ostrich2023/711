@@ -4,7 +4,7 @@ import * as w3up from '@web3-storage/w3up-client'
 const TAG = '[Web3.Storage]'
 
 // 环境变量配置
-const EMAIL = import.meta.env.VITE_W3UP_EMAIL // 修改变量名
+const SIGNIN_KEY = import.meta.env.VITE_W3UP_SIGNIN_KEY  // 修改变量名
 const SPACE_DID = import.meta.env.VITE_W3UP_SPACE_DID
 
 // 客户端实例
