@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
-import axios from "axios";
-import { Navigate } from "react-router-dom";
+import { Container, Group, Box,Flex, SimpleGrid ,Title, Button, Text } from "@mantine/core";
+import { IconHome2, IconSettings } from '@tabler/icons-react';
+import { Navigate, useNavigate, Outlet, useLocation  } from "react-router-dom";
 
+<<<<<<< HEAD
 // Frontend-Amir
 import { MantineProvider, Container, Group, Text, Grid, createTheme, Paper, Flex, Button} from "@mantine/core";
 import { useMantineTheme } from "@mantine/core";
@@ -32,67 +31,94 @@ const theme = createTheme({
 // Frontend-Amir
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+=======
+import { useAuth } from "../context/AuthContext";
+import { useFireStoreUser } from "../hooks/useFirestoreUser";
+import { fetchJobs, assignJob, verifyJobCompletion } from "../services/jobService";
+
+import HomeNavbar from "../components/HomeNavbar";
+import JobTable from '../components/JobTable';
+>>>>>>> upstream/main
 
 const EmployerPage = () => {
-  const { user, role } = useAuth();
-  const [schools, setSchools] = useState([]);
-  const [selectedSchool, setSelectedSchool] = useState("");
-  const [students, setStudents] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [skills, setSkills] = useState([]);
+  const navigate = useNavigate();
+  const location = useLocation(); //
+  const { user, role, token } = useAuth();
+  const { userData, isLoading } = useFireStoreUser(user);
+  const [jobs, setJobs] = useState([]);
+  const [error, setError] = useState(null);
+
+  const loadJobs = async () => {
+    try {
+      const fetchedJobs = await fetchJobs(token);
+      setJobs(fetchedJobs);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load jobs. Please try again later.');
+      console.error("Error loading jobs:", err);
+      setJobs([]);
+    }
+  };
+  
+  useEffect(() => {
+    loadJobs();
+  
+    if (location.state?.reload) {
+      window.history.replaceState({}, document.title); // Clear state
+    }
+  }, [token, location.state?.reload]);
+  
+  
+  const handleVerifyCompletion = async (jobId) => {
+    try {
+      await verifyJobCompletion(jobId);
+      // Refresh jobs list to reflect the change
+      const fetchedJobs = await fetchJobs();
+      setJobs(fetchedJobs);
+      alert('Job verified successfully!');
+    } catch (err) {
+      console.error('Failed to verify job:', err);
+      alert('Failed to verify job. Please try again.');
+    }
+  };
+
+  const navbarData = [
+    { link: '.', label: 'Home', icon: IconHome2 },
+    { link: 'add-job', label: 'Add Job', icon: IconSettings },
+    { link: '', label: 'Settings', icon: IconSettings },
+  ];
 
   // ❗ Block unauthorized access
   if (!user || role !== "employer") {
     return <Navigate to="/" />;
   }
 
-  useEffect(() => {
-    fetchSchoolList();
-  }, []);
-
-  const fetchSchoolList = async () => {
-    try {
-      const token = await user.getIdToken();
-      const res = await axios.get(`${BASE_URL}/employer/schools`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSchools(res.data);
-    } catch (error) {
-      console.error("Failed to fetch schools:", error);
-      alert("Could not load school list");
-    }
-  };
-
-  const fetchStudents = async (schoolId) => {
-    try {
-      const token = await user.getIdToken();
-      const res = await axios.get(`${BASE_URL}/employer/school/${schoolId}/students`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSelectedSchool(schoolId);
-      setStudents(res.data);
-      setSelectedStudent(null);
-      setSkills([]);
-    } catch (error) {
-      console.error("Failed to fetch students:", error);
-      alert("Could not load students from this school");
-    }
-  };
-
-  const fetchSkills = async (studentId) => {
-    try {
-      const token = await user.getIdToken();
-      const res = await axios.get(`${BASE_URL}/employer/student/${studentId}/skills`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const studentInfo = students.find((s) => s.id === studentId);
-      setSelectedStudent(studentInfo);
-      setSkills(res.data);
-    } catch (error) {
-      console.error("Failed to fetch student skills:", error);
-      alert("Could not load skills");
-    }
-  };
+  if (!Array.isArray(jobs) || jobs.length === 0) {
+    return (
+      <Container size="xl" maw="1400px">
+        <Group align="flex-start">
+          {/* left */}
+          <Box>
+            <HomeNavbar 
+            userData={userData}
+            navbarData={navbarData}/>
+          </Box>
+          {/* right */}
+          <Box>
+            {/* Only show job listings on the main employer page, not in child routes */}
+            {window.location.pathname === '/employer' && (
+              <div>
+                <h2>Job Listings</h2>
+                <p>No jobs available.</p>
+                {error && <p style={{ color: 'red' }}>{error}</p>}
+              </div>
+            )}
+            <Outlet />
+          </Box>
+        </Group>
+      </Container>
+    );
+  }
 
   // Frontend-Amir
   const theme = useMantineTheme()
@@ -170,6 +196,7 @@ const EmployerPage = () => {
   // Frontend-Amir
 
   return (
+<<<<<<< HEAD
     // Frontend-Amir
     <MantineProvider theme={theme}>
       <Container size="responsive" bg="var(--mantine-color-white)">
@@ -298,6 +325,34 @@ const EmployerPage = () => {
     </MantineProvider>
     // Frontend-Amir
 
+=======
+    <Container size="xl" maw="1400px" pt="md">
+      <Flex align="flex-start" gap="md">
+        {/* Left: Sidebar - 30% */}
+        <Box style={{ width: '30%' }}>
+          <HomeNavbar
+            userData={userData}
+            navbarData={navbarData}
+          />
+        </Box>
+
+        {/* Right: Content - 70% */}
+        <Box style={{ width: '70%' }}>
+          {location.pathname === '/employer' ? (
+            <JobTable
+              title="My Job Listings"
+              data={jobs}
+              onVerify={handleVerifyCompletion}
+              onEdit={(jobId) => navigate(`/employer/edit-job/${jobId}`)}
+              onRefresh={loadJobs}
+            />
+          ) : (
+            <Outlet />
+          )}
+        </Box>
+      </Flex>
+    </Container>
+>>>>>>> upstream/main
   );
 };
 

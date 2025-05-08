@@ -23,6 +23,33 @@ how to run：
 #2. cd to frontend run: npm run dev
 
 
+How to use Firestore and Firebase Auth in local development :
+    in /frontend/src/firebase.js 
+        Add these lines on the top:
+            import { getAuth, connectAuthEmulator } from "firebase/auth";
+            import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+
+        Add these lines before export :
+
+            if (location.hostname === "localhost") {
+                connectAuthEmulator(auth, "http://localhost:9099");
+                connectFirestoreEmulator(db, "localhost", 8080);
+            }
+
+    Still we can use non local Firebase (Auth, Firestore) by commenting these lines :
+
+            if (location.hostname === "localhost") {
+                connectAuthEmulator(auth, "http://localhost:9099");
+                connectFirestoreEmulator(db, "localhost", 8080);
+            }
+
+Firebase emulator:
+    Start the emulator from the root :   firebase emulators:start --only auth,firestore,functions
+    For save firebase seeds : firebase emulators:export ./firebase-seed
+    Add "exportOnExit": true to firebase.json file
+    Next time start data with firebase emulators:start --import=./firebase-seed --only auth,firestore,functions
+    Before exit run firebase seeds : firebase emulators:export ./firebase-seed to save latest data for later use
+
 pending
 smart-contracts:
 cd smart-contracts
