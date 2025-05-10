@@ -1,11 +1,10 @@
-const express = require("express");
-const router = express.Router();
-const admin = require("firebase-admin");
+import express from "express";
+import admin from "firebase-admin";
 
-//  安全引用 Firestore FieldValue（注意：如果你本地模拟器无法解析 serverTimestamp，可以改为 new Date().toISOString()）
+const router = express.Router();
 const FieldValue = admin.firestore?.FieldValue ?? null;
 
-//  Middleware: Verify token and attach user info
+// Middleware: Verify token and attach user info
 async function verifyToken(req, res, next) {
   const idToken = req.headers.authorization?.split("Bearer ")[1];
   if (!idToken) return res.status(401).send("Unauthorized");
@@ -26,12 +25,10 @@ async function verifyToken(req, res, next) {
   }
 }
 
-//  POST /skill/add — Add a new skill (student only)
+// POST /skill/add — Add a new skill (student only)
 router.post("/add", verifyToken, async (req, res) => {
   const { role, uid } = req.user;
   const { title, description, level, attachmentCid } = req.body;
-
-  console.log("📩 Received skill data:", req.body);
 
   if (role !== "student") return res.status(403).send("Only students can add skills");
 
@@ -42,23 +39,24 @@ router.post("/add", verifyToken, async (req, res) => {
       description: description || "",
       level: level || "Beginner",
       attachmentCid: attachmentCid || "",
-      createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(), // ✅ 根据环境选择方式
+      createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(),
     });
 
     res.status(201).send({ id: docRef.id });
   } catch (error) {
-    console.error("❌ Error adding skill:", error);
+    console.error("Error adding skill:", error);
     res.status(500).send("Failed to add skill");
   }
 });
 
-//  GET /skill/list — List skills (self for student, any for teacher/admin)
+// GET /skill/list — List skills (self for student, any for teacher/admin)
 router.get("/list", verifyToken, async (req, res) => {
   const { uid, role } = req.user;
   const targetUid = req.query.uid || uid;
 
-  if (role === "student" && targetUid !== uid)
+  if (role === "student" && targetUid !== uid) {
     return res.status(403).send("Students can only view their own skills");
+  }
 
   try {
     const snapshot = await admin.firestore()
@@ -67,19 +65,15 @@ router.get("/list", verifyToken, async (req, res) => {
       .orderBy("createdAt", "desc")
       .get();
 
-    const skills = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
+    const skills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.send(skills);
   } catch (error) {
-    console.error("❌ Error fetching skills:", error);
+    console.error("Error fetching skills:", error);
     res.status(500).send("Failed to fetch skills");
   }
 });
 
-//  DELETE /skill/delete/:id — Delete skill (owner or admin)
+// DELETE /skill/delete/:id — Delete skill (owner or admin)
 router.delete("/delete/:id", verifyToken, async (req, res) => {
   const { role, uid } = req.user;
   const skillId = req.params.id;
@@ -96,9 +90,9 @@ router.delete("/delete/:id", verifyToken, async (req, res) => {
     await admin.firestore().collection("skills").doc(skillId).delete();
     res.send("Skill deleted successfully");
   } catch (error) {
-    console.error("❌ Error deleting skill:", error);
+    console.error("Error deleting skill:", error);
     res.status(500).send("Failed to delete skill");
   }
 });
 
-module.exports = router;
+export default router;

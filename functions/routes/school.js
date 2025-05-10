@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import admin from "firebase-admin";
+
 const router = express.Router();
-const admin = require("firebase-admin");
 
 // Middleware: verify token and extract user info
 async function verifyToken(req, res, next) {
@@ -31,13 +32,11 @@ async function verifyToken(req, res, next) {
 
 // GET /school/students (authenticated teacher only)
 router.get("/students", verifyToken, async (req, res) => {
-  const { schoolId } = req.user;
-
   try {
     const snapshot = await admin.firestore()
       .collection("users")
       .where("role", "==", "student")
-      .where("schoolId", "==", schoolId)
+      .where("schoolId", "==", req.user.schoolId)
       .get();
 
     const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -48,9 +47,8 @@ router.get("/students", verifyToken, async (req, res) => {
   }
 });
 
-//  GET /school/student/:id/skills (authenticated teacher only)
+// GET /school/student/:id/skills (authenticated teacher only)
 router.get("/student/:id/skills", verifyToken, async (req, res) => {
-  const { schoolId } = req.user;
   const studentId = req.params.id;
 
   try {
@@ -58,7 +56,7 @@ router.get("/student/:id/skills", verifyToken, async (req, res) => {
     if (!studentDoc.exists) return res.status(404).send("Student not found");
 
     const student = studentDoc.data();
-    if (student.role !== "student" || student.schoolId !== schoolId) {
+    if (student.role !== "student" || student.schoolId !== req.user.schoolId) {
       return res.status(403).send("Cannot access students from another school.");
     }
 
@@ -76,7 +74,7 @@ router.get("/student/:id/skills", verifyToken, async (req, res) => {
   }
 });
 
-//  NEW: GET /school/:schoolId/students (public access)
+// GET /school/:schoolId/students (public access)
 router.get("/:schoolId/students", async (req, res) => {
   const { schoolId } = req.params;
 
@@ -95,4 +93,4 @@ router.get("/:schoolId/students", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

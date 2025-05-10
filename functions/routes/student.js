@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import admin from "firebase-admin";
+
 const router = express.Router();
-const admin = require("firebase-admin");
 
 // Middleware: Verify token and attach student info
 async function verifyStudent(req, res, next) {
@@ -54,22 +55,22 @@ router.get("/skills", verifyStudent, async (req, res) => {
 
 // PUT /student/update-school
 router.put("/update-school", verifyStudent, async (req, res) => {
-    const { uid } = req.user;
-    const { schoolId } = req.body;
-  
-    if (!schoolId || typeof schoolId !== "string") {
-      return res.status(400).send("Invalid school ID.");
-    }
-  
-    try {
-      await admin.firestore().doc(`users/${uid}`).update({
-        schoolId: schoolId.trim(),
-      });
-      res.status(200).send("School updated successfully.");
-    } catch (error) {
-      console.error("Error updating school:", error);
-      res.status(500).send("Failed to update school.");
-    }
-  });
+  const { uid } = req.user;
+  const { schoolId } = req.body;
 
-module.exports = router;
+  if (!schoolId || typeof schoolId !== "string") {
+    return res.status(400).send("Invalid school ID.");
+  }
+
+  try {
+    await admin.firestore().doc(`users/${uid}`).update({
+      schoolId: schoolId.trim(),
+    });
+    res.status(200).send("School updated successfully.");
+  } catch (error) {
+    console.error("Error updating school:", error);
+    res.status(500).send("Failed to update school.");
+  }
+});
+
+export default router;

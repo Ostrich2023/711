@@ -1,9 +1,9 @@
-const express = require("express");
-const router = express.Router();
-const admin = require("firebase-admin");
-const jwt = require("jsonwebtoken");
+import express from "express";
+import admin from "firebase-admin";
+import jwt from "jsonwebtoken";
+import verifyToken from "../middlewares/verifyToken.js";
 
-const verifyToken = require("../middlewares/verifyToken");
+const router = express.Router();
 
 // POST /user/login
 router.post("/login", async (req, res) => {
@@ -33,9 +33,9 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// 示例受保护接口
+// GET /user/protected — Example of protected route
 router.get("/protected", verifyToken, (req, res) => {
   res.json({ message: "You are authorized", user: req.user });
 });
 
-module.exports = router;
+export default router;

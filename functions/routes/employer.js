@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import admin from "firebase-admin";
+
 const router = express.Router();
-const admin = require("firebase-admin");
 
 // Middleware: verify employer identity
 async function verifyEmployer(req, res, next) {
@@ -27,7 +28,7 @@ async function verifyEmployer(req, res, next) {
   }
 }
 
-//  GET /employer/student/:id
+// GET /employer/student/:id
 router.get("/student/:id", verifyEmployer, async (req, res) => {
   const studentId = req.params.id;
 
@@ -48,7 +49,7 @@ router.get("/student/:id", verifyEmployer, async (req, res) => {
   }
 });
 
-//  GET /employer/student/:id/skills
+// GET /employer/student/:id/skills
 router.get("/student/:id/skills", verifyEmployer, async (req, res) => {
   const studentId = req.params.id;
 
@@ -67,7 +68,7 @@ router.get("/student/:id/skills", verifyEmployer, async (req, res) => {
   }
 });
 
-//  GET /employer/schools
+// GET /employer/schools
 router.get("/schools", async (req, res) => {
   try {
     const snapshot = await admin.firestore().collection("schools").get();
@@ -101,7 +102,6 @@ router.get("/school/:schoolId/students", verifyEmployer, async (req, res) => {
   }
 });
 
-
 // GET /employer/students/skills/:skill
 router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
   const { skill } = req.params;
@@ -121,5 +121,4 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
   }
 });
 
-
-module.exports = router;
+export default router;

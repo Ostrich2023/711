@@ -1,38 +1,56 @@
-const express = require("express");
-const cors = require("cors");
+import dotenv from "dotenv";
+dotenv.config();
 
-// Route modules
-const userRoutes = require("./routes/user");
-const skillRoutes = require("./routes/skill");
-const studentRoutes = require("./routes/student");
-const schoolRoutes = require("./routes/school");
-const employerRoutes = require("./routes/employer");
-const jobRoutes = require("./routes/job");
-const adminRoutes = require("./routes/admin"); 
+import express from "express";
+import cors from "cors";
+import fileUpload from "express-fileupload";
+import * as w3up from "@web3-storage/w3up-client";
+
+import userRoutes from "./routes/user.js";
+import skillRoutes from "./routes/skill.js";
+import studentRoutes from "./routes/student.js";
+import schoolRoutes from "./routes/school.js";
+import employerRoutes from "./routes/employer.js";
+import jobRoutes from "./routes/job.js";
+import adminRoutes from "./routes/admin.js";
+
 const app = express();
 
-// Middleware
+// ✅ 注册中间件
 app.use(cors({ origin: true }));
 app.use(express.json());
+app.use(fileUpload());
 
-// Health check
-app.get("/", (req, res) => {
-  res.status(200).send("Digital Skill Wallet API is running.");
-});
-
-// Route mounting
+// ✅ 注册 REST 路由
 app.use("/user", userRoutes);
 app.use("/skill", skillRoutes);
 app.use("/student", studentRoutes);
 app.use("/school", schoolRoutes);
 app.use("/employer", employerRoutes);
 app.use("/job", jobRoutes);
-app.use("/admin", adminRoutes); 
+app.use("/admin", adminRoutes);
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err.stack);
-  res.status(500).send("Internal Server Error");
+// ✅ 文件上传路由
+app.post("/upload", async (req, res) => {
+  try {
+    const client = await w3up.create();
+    await client.login(process.env.VITE_W3UP_SIGNIN_KEY);
+    await client.setCurrentSpace(process.env.VITE_W3UP_SPACE_DID);
+
+    const uploaded = req.files.file;
+
+    const blob = new Blob([uploaded.data], { type: uploaded.mimetype });
+    const file = new File([blob], uploaded.name, { type: uploaded.mimetype });
+
+    const cid = await client.uploadFile(file);
+    res.json({ cid });
+  } catch (error) {
+    console.error("Upload failed:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-module.exports = app;
+// ✅ 健康检查
+app.get("/", (_, res) => res.send("Functions API running."));
+
+export default app;

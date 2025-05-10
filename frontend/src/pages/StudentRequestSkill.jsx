@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 import { addSkill, listSkills, deleteSkill } from "../services/skillService";
-import { uploadToIPFS } from "../ipfs/uploadToIPFS";
+import { uploadToIPFS } from "../ipfs/uploadToIPFS"; // 中转服务
 
 export default function StudentRequestSkill() {
   const { user } = useAuth();
@@ -40,25 +40,29 @@ export default function StudentRequestSkill() {
     let fileCid = "";
 
     if (file) {
-      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']; // PDF & DOCX
+      const allowedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ]; // PDF & DOCX
       const maxSizeMB = 5;
-    
+
       if (!allowedTypes.includes(file.type)) {
         alert("Only PDF or DOCX files are allowed.");
         return;
       }
-    
+
       if (file.size > maxSizeMB * 1024 * 1024) {
         alert("File size exceeds 5MB.");
         return;
       }
-    
+
       try {
-        console.log(" Uploading file...");
+        setUploading(true);
         fileCid = await uploadToIPFS(file);
       } catch (error) {
-        console.error(" File upload failed:", error);
+        console.error("File upload failed:", error);
         alert("Failed to upload file to IPFS.");
+        setUploading(false);
         return;
       }
     }
@@ -81,6 +85,8 @@ export default function StudentRequestSkill() {
     } catch (error) {
       console.error("Failed to add skill:", error);
       alert("Failed to save skill to Firestore");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -137,7 +143,7 @@ export default function StudentRequestSkill() {
           {skills.map((skill) => (
             <li key={skill.id} style={{ marginBottom: "10px" }}>
               <strong>{skill.title}</strong> ({skill.level})<br />
-              <em>{skill.description}</em><br />
+              <em>{skill.description}</em>
               {skill.attachmentCid && (
                 <div>
                   📎{" "}

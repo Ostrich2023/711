@@ -1,42 +1,7 @@
-const express = require("express");
-const admin = require("firebase-admin");
+import express from "express";
+import admin from "firebase-admin";
+
 const router = express.Router();
-
-
-/**
- * JOBS api
- *
- * Scenario:
- * - Employers can create jobs specifying title, description, price, location, and required skills.
- * - Employers can view the list of jobs they have created.
- * - Employers can assign a job to a student based on skills. (Searching student by skill is in employer.js /employer/students/skills/:skill)
- * - Students can view the list of jobs assigned to them.
- * - Students can accept or reject assigned jobs.
- * - After working on a job, students can mark the job as completed.
- * - Once the student marks a job as completed, the employer can verify the completion.
- * 
- * - Students and Employers can get a job detail by // GET /jobs/:jobId when they want to edit a job. 
- *
- * Job Document Structure:
- * - title: string
- * - description: string
- * - price: number
- * - location: string
- * - skills: array of strings
- * - employerId: string (UID of the employer)
- * - studentId: string (UID of the assigned student, nullable)
- * - status: string ("pending", "accepted", "rejected", "completed")
- * - verified: boolean (true if employer verifies completion)
- * - createdAt: timestamp
- *
- * Status Workflow:
- * 1. Created → (status: "pending")
- * 2. Assigned → (studentId set, status remains "pending")
- * 3. Student Accepts → (status: "accepted")
- * 4. Student Rejects → (status: "rejected")
- * 5. Student Completes → (status: "completed")
- * 6. Employer Verifies → (verified: true)
- */
 
 // Middleware: verify token and attach user info
 async function verifyToken(req, res, next) {
@@ -69,13 +34,11 @@ router.get("/:jobId", verifyToken, async (req, res) => {
     if (!jobDoc.exists) return res.status(404).send("Job not found");
 
     const job = jobDoc.data();
-
-    if (role === "employer" && job.employerId !== uid) {
-      return res.status(403).send("You do not own this job");
-    }
-
-    if (role === "student" && job.studentId !== uid) {
-      return res.status(403).send("You are not assigned to this job");
+    if (
+      (role === "employer" && job.employerId !== uid) ||
+      (role === "student" && job.studentId !== uid)
+    ) {
+      return res.status(403).send("Access denied");
     }
 
     res.status(200).json({ id: jobDoc.id, ...job });
@@ -91,7 +54,6 @@ router.post("/", verifyToken, async (req, res) => {
   const { uid, role } = req.user;
 
   if (role !== "employer") return res.status(403).send("Only employers can create jobs");
-
   if (!title || !description || !price || !location || !skills) {
     return res.status(400).send("All fields are required");
   }
@@ -136,7 +98,7 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /employer/job/:jobId
+// PUT /job/:jobId
 router.put("/:jobId", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { title, description, price, location, skills } = req.body;
@@ -159,7 +121,7 @@ router.put("/:jobId", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /employer/job/:jobId/assign/:studentId
+// PUT /job/:jobId/assign/:studentId
 router.put("/:jobId/assign/:studentId", verifyToken, async (req, res) => {
   const { jobId, studentId } = req.params;
   const { uid, role } = req.user;
@@ -183,7 +145,7 @@ router.put("/:jobId/assign/:studentId", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /employer/job/:jobId/verify
+// PUT /job/:jobId/verify
 router.put("/:jobId/verify", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
@@ -206,7 +168,7 @@ router.put("/:jobId/verify", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /student/job/:jobId/accept
+// PUT /job/:jobId/accept
 router.put("/:jobId/accept", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
@@ -216,7 +178,6 @@ router.put("/:jobId/accept", verifyToken, async (req, res) => {
   try {
     const jobDoc = await admin.firestore().doc(`jobs/${jobId}`).get();
     if (!jobDoc.exists) return res.status(404).send("Job not found");
-
     if (jobDoc.data().studentId !== uid) {
       return res.status(403).send("Not your assigned job");
     }
@@ -229,7 +190,7 @@ router.put("/:jobId/accept", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /student/job/:jobId/reject
+// PUT /job/:jobId/reject
 router.put("/:jobId/reject", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
@@ -239,7 +200,6 @@ router.put("/:jobId/reject", verifyToken, async (req, res) => {
   try {
     const jobDoc = await admin.firestore().doc(`jobs/${jobId}`).get();
     if (!jobDoc.exists) return res.status(404).send("Job not found");
-
     if (jobDoc.data().studentId !== uid) {
       return res.status(403).send("Not your assigned job");
     }
@@ -252,7 +212,7 @@ router.put("/:jobId/reject", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /student/job/:jobId/complete
+// PUT /job/:jobId/complete
 router.put("/:jobId/complete", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
@@ -262,7 +222,6 @@ router.put("/:jobId/complete", verifyToken, async (req, res) => {
   try {
     const jobDoc = await admin.firestore().doc(`jobs/${jobId}`).get();
     if (!jobDoc.exists) return res.status(404).send("Job not found");
-
     if (jobDoc.data().studentId !== uid) {
       return res.status(403).send("Not your assigned job");
     }
@@ -275,4 +234,4 @@ router.put("/:jobId/complete", verifyToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

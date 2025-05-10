@@ -1,11 +1,10 @@
-// functions/scripts/syncUserOnLogin.js
-const admin = require("firebase-admin");
+import admin from "firebase-admin";
 
 /**
  * Create Firestore user doc if not exists
  * @param {object} user Firebase Auth user
  */
-async function syncUserDocument(user) {
+export async function syncUserDocument(user) {
   const uid = user.uid;
   const email = user.email;
 
@@ -18,7 +17,11 @@ async function syncUserDocument(user) {
     else if (email.includes("@school")) role = "school";
     else if (email.includes("@employer")) role = "employer";
 
-    const prefix = role === "student" ? "S" : role === "school" ? "T" : role === "employer" ? "E" : "A";
+    const prefix =
+      role === "student" ? "S" :
+      role === "school" ? "T" :
+      role === "employer" ? "E" : "A";
+
     const customUid = `${prefix}-${uid.slice(0, 6)}`;
 
     await userRef.set({
@@ -33,5 +36,3 @@ async function syncUserDocument(user) {
     console.log(`ℹ️ User doc already exists for ${email}`);
   }
 }
-
-module.exports = { syncUserDocument };
