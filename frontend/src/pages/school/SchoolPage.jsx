@@ -7,10 +7,10 @@ import {
   } from '@tabler/icons-react';
 import { useNavigate, Outlet } from "react-router-dom";
 
-import { useAuth } from "../context/AuthContext";
-import { useFireStoreUser } from "../hooks/useFirestoreUser";
+import { useAuth } from "../../context/AuthContext";
+import { useFireStoreUser } from "../../hooks/useFirestoreUser";
 
-import HomeNavbar from "../components/HomeNavbar";
+import HomeNavbar from "../../components/HomeNavbar";
 
 const SchoolPage = () => {
   const navigate = useNavigate();
