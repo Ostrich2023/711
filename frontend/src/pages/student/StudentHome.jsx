@@ -94,7 +94,7 @@ export default function StudentHome(){
         messageSuffix="pending review."
       />
 
-      <StatusOverview />
+      {/* <StatusOverview /> */}
 
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
         <ActivityList 
