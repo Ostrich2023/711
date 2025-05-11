@@ -44,7 +44,6 @@ router.post("/create", verifyTeacher, async (req, res) => {
             skillTemplate: {
                 skillTitle: skillTemplate.skillTitle || "",
                 skillDescription: skillTemplate.skillDescription || "",
-                level: skillTemplate.level || "Beginner",
             },
         };
         const ref = await admin.firestore().collection("courses").add(courseData);
