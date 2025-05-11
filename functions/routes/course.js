@@ -1,10 +1,10 @@
-// routes/course.js
 import express from "express";
 import admin from "firebase-admin";
 
 const router = express.Router();
 const FieldValue = admin.firestore?.FieldValue ?? null;
 
+// verifyTeacher
 async function verifyTeacher(req, res, next) {
     const idToken = req.headers.authorization?.split("Bearer ")[1];
     if (!idToken) return res.status(401).send("Unauthorized");
@@ -16,76 +16,67 @@ async function verifyTeacher(req, res, next) {
 
         const user = userDoc.data();
         if (user.role !== "teacher") {
-            return res.status(403).send("Only teachers allowed.");
+            return res.status(403).send("Access denied. Only teachers allowed.");
         }
 
         req.user = { uid: decoded.uid, ...user };
         next();
-    } catch (error) {
-        console.error("Token verification failed:", error);
+    } catch (err) {
+        console.error("Teacher token error:", err);
         return res.status(403).send("Invalid token");
     }
 }
 
-// POST /course/create 
+// POST /course/create
 router.post("/create", verifyTeacher, async (req, res) => {
-    const { title, description, skillTemplate } = req.body;
-    const teacherRef = admin.firestore().doc(`users/${req.user.uid}`);
+    const { title, code, skillTemplate } = req.body;
 
-    if (!title || !skillTemplate?.title) {
-        return res.status(400).send("Missing required course or skill template info");
+    if (!title || !code || !skillTemplate?.skillTitle) {
+        return res.status(400).send("Missing required fields");
     }
 
     try {
-        const docRef = await admin.firestore().collection("courses").add({
+        const courseData = {
             title,
-            description: description || "",
+            code,
+            createdBy: admin.firestore().doc(`users/${req.user.uid}`),
+            createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(),
             skillTemplate: {
-                title: skillTemplate.title || "",
-                description: skillTemplate.description || "",
+                skillTitle: skillTemplate.skillTitle || "",
+                skillDescription: skillTemplate.skillDescription || "",
                 level: skillTemplate.level || "Beginner",
             },
-            createdBy: teacherRef,
-            createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(),
-        });
-
-        res.status(201).send({ id: docRef.id });
-    } catch (error) {
-        console.error("Failed to create course:", error);
-        res.status(500).send("Error creating course");
+        };
+        const ref = await admin.firestore().collection("courses").add(courseData);
+        res.status(201).send({ id: ref.id });
+    } catch (err) {
+        console.error("Failed to create course:", err.message);
+        res.status(500).send("Course creation failed");
     }
 });
 
-// GET /course/list (for all)
-router.get("/list", async (req, res) => {
+// DELETE /course/delete/:id
+router.delete("/delete/:id", verifyTeacher, async (req, res) => {
+    const courseId = req.params.id;
+
     try {
-        const snapshot = await admin.firestore()
-            .collection("courses")
-            .orderBy("createdAt", "desc")
-            .get();
+        const courseRef = admin.firestore().doc(`courses/${courseId}`);
+        const doc = await courseRef.get();
 
-        const courses = await Promise.all(snapshot.docs.map(async doc => {
-            const data = doc.data();
-            let createdByName = null;
+        if (!doc.exists) return res.status(404).send("Course not found");
 
-            try {
-                const teacherDoc = await data.createdBy.get();
-                createdByName = teacherDoc.exists ? teacherDoc.data().name : null;
-            } catch (e) {
-                console.warn("Error resolving teacher reference:", e.message);
-            }
+        const course = doc.data();
+        const createdByPath = course.createdBy?.path;
 
-            return {
-                id: doc.id,
-                ...data,
-                createdByName,
-            };
-        }));
+        if (!createdByPath || !createdByPath.endsWith(req.user.uid)) {
+            return res.status(403).send("You are not the creator of this course");
+        }
 
-        res.send(courses);
-    } catch (error) {
-        console.error("Error fetching course list:", error);
-        res.status(500).send("Failed to fetch courses");
+        await courseRef.delete();
+        res.send("Course deleted successfully");
+    } catch (err) {
+        console.error("Course deletion failed:", err.message);
+        res.status(500).send("Course deletion failed");
     }
 });
 
