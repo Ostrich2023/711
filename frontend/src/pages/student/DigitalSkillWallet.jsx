@@ -3,16 +3,29 @@ import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-// Frontend-Amir
-import { Container, Flex, Grid, Box, MantineProvider, createTheme } from "@mantine/core";
-import { IconActivity, IconBrandMessenger, IconBrandTeams, IconClipboardList, IconFilePlus } from "@tabler/icons-react";
+import {
+  Container,
+  Flex,
+  Grid,
+  Box,
+  MantineProvider,
+  createTheme,
+  Rating,
+  Text,
+} from "@mantine/core";
+
+import {
+  IconActivity,
+  IconClipboardList,
+  IconFilePlus,
+} from "@tabler/icons-react";
+
 import cx from "clsx";
 import AlertBox from "../../components/digitalskillwallet/AlertBox";
 import BarChart from "../../components/digitalskillwallet/BarChart";
 import HeaderCard from "../../components/digitalskillwallet/HeaderCard";
 import PieChart from "../../components/digitalskillwallet/PieChart";
 import SkillCard from "../../components/digitalskillwallet/SkillCard";
-import VerifiedSkillCard from "../../components/digitalskillwallet/VerifiedSkillCard";
 import NormButton from "../../components/digitalskillwallet/NormButton";
 import classes from "./DigitalSkillWallet.module.css";
 
@@ -20,13 +33,11 @@ const theme = createTheme({
   components: {
     Container: Container.extend({
       classNames: (_, { size }) => ({
-        root: cx({ [classes.responsiveContainer]: size === "responsive" })
-      })
-    })
-  }
-})
-
-// Frontend-Amir
+        root: cx({ [classes.responsiveContainer]: size === "responsive" }),
+      }),
+    }),
+  },
+});
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -39,12 +50,17 @@ const DigitalSkillWallet = () => {
   const [schoolList, setSchoolList] = useState([]);
   const [newSchool, setNewSchool] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [verifiedSkills, setVerifiedSkills] = useState([]);
+  const [courseStats, setCourseStats] = useState([]);
+  const [showAlert, setShowAlert] = useState(true);
 
   if (!user || role !== "student") return <Navigate to="/" />;
 
   useEffect(() => {
     loadProfile();
     loadSchoolOptions();
+    fetchVerifiedSkills();
+    fetchCoursePerformance();
   }, []);
 
   const loadProfile = async () => {
@@ -67,21 +83,15 @@ const DigitalSkillWallet = () => {
   const loadSchoolOptions = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/employer/schools`);
-      setSchoolList(res.data); // [{ code, name }]
+      setSchoolList(res.data);
     } catch (error) {
       console.error("Failed to load school list:", error);
     }
   };
 
   const updateSchool = async () => {
-    if (!newSchool) {
-      alert("Please select a school.");
-      return;
-    }
-    if (newSchool === currentSchool) {
-      alert("School unchanged.");
-      return;
-    }
+    if (!newSchool) return alert("Please select a school.");
+    if (newSchool === currentSchool) return alert("School unchanged.");
 
     setUpdating(true);
     try {
@@ -100,162 +110,110 @@ const DigitalSkillWallet = () => {
       setUpdating(false);
     }
   };
-  
-  // Frontend-Amir
-  const [showAlert, setShowAlert] = useState(true)
-  const [checkedSkills, setCheckedSkills] = useState({})
-  
-  // Data for pie chart
-  const softSkillsData = [
-      { soft_skill: "Creativity", percentage: 90, color: "#9CD3E8" },
-      { soft_skill: "Communication", percentage: 80, color: "#F39393" },
-      { soft_skill: "Critical Analysis", percentage: 85, color: "#FBD889" },
-      { soft_skill: "Collaboration", percentage: 75, color: "#B1DB9E" },
-      { soft_skill: "Problem-Solving", percentage: 95, color: "#879AD7" }
-  ]
-  
-  // Data for bar chart
-  const techSkillsData = [
-      { tech_skill: "Java Script", hours: 150, color: "#9CD3E8" },
-      { tech_skill: "HTML", hours: 120, color: "#F39393" },
-      { tech_skill: "CSS", hours: 100, color: "#FBD889" },
-      { tech_skill: "PHP", hours: 80, color: "#B1DB9E" }
-  ]
-  
-  // Student data for Header
+
+  const fetchVerifiedSkills = async () => {
+    try {
+      const token = await user.getIdToken();
+      const res = await axios.get(`${BASE_URL}/skill/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const verified = res.data.filter(skill => skill.verified === "approved");
+      setVerifiedSkills(verified);
+    } catch (error) {
+      console.error("Failed to load verified skills:", error);
+    }
+  };
+
+  const fetchCoursePerformance = async () => {
+    try {
+      const token = await user.getIdToken();
+
+      const [skillsRes, avgRes] = await Promise.all([
+        axios.get(`${BASE_URL}/skill/list`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${BASE_URL}/student/course-avg-scores`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+
+      const skills = skillsRes.data.filter(s => s.verified === "approved");
+      const avgMap = {};
+      avgRes.data.forEach(item => {
+        avgMap[item.courseTitle] = parseFloat(item.avgScore);
+      });
+
+      const combined = skills.map(skill => ({
+        courseTitle: skill.courseTitle,
+        courseCode: skill.courseCode,
+        score: skill.score,
+        avgScore: avgMap[skill.courseTitle] || 0,
+        level: skill.level || "N/A"
+      }));
+
+      setCourseStats(combined);
+    } catch (error) {
+      console.error("Failed to fetch course performance:", error);
+    }
+  };
+
   const studentData = {
-      id: user?.email || "SW123456",
-      name: user?.username || "John Doe",
-      company: "ABC University",
-      role: role,
-      image: user?.ImageUrl || "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png"
-  }
-  
-  // Verified skills data
-  const verifiedSkills = [
-      {
-        id: 1,
-        title: "Communication",
-        icon: <IconBrandMessenger size={32} color="#228be6" />,
-        course: "ABC101",
-        verifiedBy: "Prof. Smith",
-        score: 4.5
-      },
-      {
-        id: 2,
-        title: "Teamwork",
-        icon: <IconBrandTeams size={32} color="#228be6" />,
-        course: "ABC101",
-        verifiedBy: "Prof. Lee",
-        score: 4.0
-      }
-  ]
-  // Frontend-Amir
+    id: user?.email || "SW123456",
+    name: user?.username || "John Doe",
+    company: "ABC University",
+    role: role,
+    image:
+      user?.ImageUrl ||
+      "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png",
+  };
 
   return (
-    // Frontend-Amir
     <MantineProvider theme={theme}>
       <Box flex={1} mt="30px">
-        {/* <Container size="responsive" bg="var(--mantine-color-white)"> */}
-          <Grid justify="center" gutter="xs">
-            {/* Heading component (Profile)*/}
-            <Grid.Col span={10}>
-              <HeaderCard userType="student" userData={studentData}/>
-            </Grid.Col>
+        <Grid justify="center" gutter="xs">
+          <Grid.Col span={10}>
+            <HeaderCard userType="student" userData={studentData} />
+          </Grid.Col>
 
-            {/* Soft Skills-Pie Chart */}
-            <Grid.Col span={10}>
-              <SkillCard title="Soft Skills">
-                <Flex gap="md" justify="center" wrap="wrap">
-                  {/* Pie Chart */}
-                  {softSkillsData.map((skill, index) => (
-                    <PieChart key={index} skill={skill} />
-                  ))}
-                </Flex>
-              </SkillCard>
-            </Grid.Col>
-
-            {/* Technical Skills-Bar chart */}
-            <Grid.Col span={10}>
-              <SkillCard title="Technical Skills">
-                <BarChart data={techSkillsData} />
-              </SkillCard>
-            </Grid.Col>
-
-            {/* Verified Skills */}
-            <Grid.Col span={10} className={classes.heading}>
-              Verified Skills
-            </Grid.Col>
-
-            {/* Skills cards */}
-            <Grid.Col span={10}>
-              <Flex wrap="wrap" gap="lg" justify="flex-start">
-                {verifiedSkills.map(skill => (
-                  <VerifiedSkillCard
-                    key={skill.id}
-                    skill={skill}
-                    checked={checkedSkills[skill.id] || false}
-                    onChange={event =>
-                      setCheckedSkills(prev => ({
-                        ...prev,
-                        [skill.id]: event.target.checked
-                      }))
-                    }
+          <Grid.Col span={10}>
+            <SkillCard title="My Skill Overview">
+              <Flex wrap="wrap" gap="md" justify="center">
+                {courseStats.map((skill, index) => (
+                  <PieChart
+                    key={index}
+                    skill={{
+                      title: skill.courseTitle,
+                      score: skill.score,
+                      courseCode: skill.courseCode,
+                      level: skill.level,
+                      color: "#4dabf7"
+                    }}
                   />
                 ))}
               </Flex>
-            </Grid.Col>
+            </SkillCard>
+          </Grid.Col>
 
-            {/* Three Buttons */}
-            <Grid.Col span={10}>
-              <Flex
-                gap={{ base: "sm", sm: "lg" }}
-                justify="stretch"
-                align="stretch"
-                direction="row"
-                wrap="wrap"
-              >
-                <NormButton
-                  icon={<IconFilePlus size={18} />}
-                  label="Request Skill"
-                  to="/"
-                  // className={classes.actionButton}
-                  style={{ flex: 1 }}
-                />
-                <NormButton
-                  icon={<IconClipboardList size={18} />}
-                  label="My Applications"
-                  to="/"
-                  // className={classes.actionButton}
-                  style={{ flex: 1 }}
-                />
-                <NormButton
-                  icon={<IconActivity size={18} />}
-                  label="Activities"
-                  to="/"
-                  // className={classes.actionButton}
-                  style={{ flex: 1 }}
-                />
-              </Flex>
-            </Grid.Col>
+          <Grid.Col span={10}>
+            <SkillCard title="My Score vs Course Average">
+              <BarChart data={courseStats} />
+            </SkillCard>
+          </Grid.Col>
 
-            {/* Sticky Alert */}
-            <Grid.Col span={10}>
-              {showAlert && (
+          <Grid.Col span={10}>
+            {showAlert && (
               <AlertBox
                 onClose={() => setShowAlert(false)}
                 title="Graduation Reminder"
               >
-                After graduation, your school email will be deactivated.
-                Please use your personal email to log in!
+                After graduation, your school email will be deactivated. Please use your
+                personal email to log in!
               </AlertBox>
-              )}
-            </Grid.Col>
-          </Grid>
-        {/* </Container> */}
+            )}
+          </Grid.Col>
+        </Grid>
       </Box>
     </MantineProvider>
-    // Frontend-Amir
   );
 };
 

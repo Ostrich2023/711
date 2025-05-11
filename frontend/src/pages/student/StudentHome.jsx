@@ -1,110 +1,143 @@
-import { Box, Title, SimpleGrid, Group, Text } from "@mantine/core";
+import { useEffect, useState } from "react";
+import { Box, Title, SimpleGrid, Group, Text, Loader, Center } from "@mantine/core";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
 
 import { useAuth } from "../../context/AuthContext";
 import { useFireStoreUser } from "../../hooks/useFirestoreUser";
 
-import Notification from "../../components/Notification"
-import StatusOverview from "../../components/StatusOverview"
+import Notification from "../../components/Notification";
+import StatusOverview from "../../components/StatusOverview";
 import ActivityList from "../../components/ActivityList";
 import UserTable from "../../components/UserTable";
 
-export default function StudentHome(){
-
-  const { user, role } = useAuth();
+export default function StudentHome() {
+  const { user } = useAuth();
   const { userData, isLoading } = useFireStoreUser(user);
 
-  // My course list
-  const courseData = [
-    {
-      courseName: 'Introduction to Computer Science',
-      courseCode: 'CS101',
-      students: 45,
-      assignments: 5,
-    },
-    {
-      courseName: 'Software Engineering Fundamentals',
-      courseCode: 'SE201',
-      students: 30,
-      assignments: 3,
-    },
-    {
-      courseName: 'Data Science Basics',
-      courseCode: 'DS301',
-      students: 28,
-      assignments: 4,
-    },
-    {
-      courseName: 'Data Science Basics',
-      courseCode: 'DS301',
-      students: 28,
-      assignments: 4,
-    },
-  ];
+  const [skills, setSkills] = useState([]);
+  const [loadingSkills, setLoadingSkills] = useState(true);
+  const [teacherList, setTeacherList] = useState([]);
+  const [courseData, setCourseData] = useState([]);
 
-  // My teacher list
-  const teacherList = [
-    {
-      avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-9.png',
-      name: 'Alice Johnson',
-      email: 'alice@student.edu',
-      course: 'Computer Science',
-      lastActive: '2 days ago',
-    },
-    {
-      avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-6.png',
-      name: 'Bob Smith',
-      email: 'bobsmith@student.edu',
-      course: 'Software Engineering',
-      lastActive: '10 days ago',
-    },
-    {
-      avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-10.png',
-      name: 'Catherine Green',
-      email: 'catherine@student.edu',
-      course: 'Data Science',
-      lastActive: 'Today',
-    },
-    {
-      avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png',
-      name: 'David Brown',
-      email: 'david@student.edu',
-      course: 'Information Technology',
-      lastActive: '5 days ago',
-    },
-    {
-      avatar: 'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-3.png',
-      name: 'Emma White',
-      email: 'emmawhite@student.edu',
-      course: 'Cybersecurity',
-      lastActive: '20 days ago',
-    },
-  ];
+  useEffect(() => {
+    if (user?.uid && userData?.schoolId) {
+      fetchSkills();
+      fetchCourses();
+      fetchTeachers();
+    }
+  }, [user, userData]);
 
-  return(
+  const fetchSkills = async () => {
+    try {
+      const q = query(
+        collection(db, "skills"),
+        where("ownerId", "==", user.uid)
+      );
+      const querySnapshot = await getDocs(q);
+      const skillData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSkills(skillData);
+    } catch (err) {
+      console.error("Failed to fetch skills:", err);
+    } finally {
+      setLoadingSkills(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const q = query(
+        collection(db, "courses"),
+        where("schoolId", "==", userData?.schoolId || "")
+      );
+      const snapshot = await getDocs(q);
+
+      const courseStats = await Promise.all(snapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        const courseId = doc.id;
+
+        const studentsSnap = await getDocs(query(
+          collection(db, "skills"),
+          where("courseId", "==", courseId),
+          where("verified", "==", "approved")
+        ));
+
+        const uniqueStudents = new Set(studentsSnap.docs.map(d => d.data().ownerId));
+
+        return {
+          courseName: data.title,
+          courseCode: data.code,
+          students: uniqueStudents.size
+        };
+      }));
+
+      setCourseData(courseStats);
+    } catch (err) {
+      console.error("Failed to fetch courses:", err);
+    }
+  };
+
+  const fetchTeachers = async () => {
+    try {
+      const q = query(
+        collection(db, "users"),
+        where("role", "==", "teacher"),
+        where("schoolId", "==", userData?.schoolId || "")
+      );
+      const snapshot = await getDocs(q);
+      const teachers = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          avatar: data.avatarUrl || "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-9.png",
+          name: data.name,
+          email: data.email,
+          course: "-", // 可扩展为课程统计
+          lastActive: data.lastLogin || "Unknown"
+        };
+      });
+      setTeacherList(teachers);
+    } catch (err) {
+      console.error("Failed to fetch teachers:", err);
+    }
+  };
+
+  const unverifiedCount = skills.filter(skill => skill.verified === false).length;
+
+  return (
     <Box flex={1} mt="30px">
-      <Group>
-        <Title order={2}>Welcome back, {userData?.name} </Title>
-        <Text mt="10px" c="gray">{userData?.schoolId?.toUpperCase()} · {userData?.role}</Text>
-      </Group>
+      {isLoading ? (
+        <Center mt="xl">
+          <Loader />
+        </Center>
+      ) : (
+        <>
+          <Group>
+            <Title order={2}>Welcome back, {userData?.name}</Title>
+            <Text mt="10px" c="gray">
+              {userData?.schoolId?.toUpperCase()} · {userData?.role}
+            </Text>
+          </Group>
 
-      <Notification
-        count={2}
-        label="approved skills"
-        messagePrefix="You currently have"
-        messageSuffix="pending review."
-      />
+          <Notification
+            count={unverifiedCount}
+            label="pending skills"
+            messagePrefix="You currently have"
+            messageSuffix="skills pending review."
+          />
 
-      {/* <StatusOverview /> */}
+          {!loadingSkills && (
+            <StatusOverview skills={skills} />
+          )}
 
-      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-        <ActivityList 
-        courseData={courseData}/>
-        <UserTable 
-        title="My Teachers"
-        data={teacherList}/>
-      </SimpleGrid>
-
-    </Box> 
-  )
-
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" mt="md">
+            <ActivityList courseData={courseData} />
+            <UserTable title="My Teachers" data={teacherList} />
+          </SimpleGrid>
+        </>
+      )}
+    </Box>
+  );
 }

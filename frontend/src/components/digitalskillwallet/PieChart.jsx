@@ -1,43 +1,35 @@
-import { Box, Flex } from "@mantine/core";
+import { Box, Text, Stack } from "@mantine/core";
 import ReactECharts from "echarts-for-react";
 
-export default function PieChart({ skill, key }) {
+export default function DonutRatingChart({ skill }) {
+  const scorePercent = (skill.score / 5) * 100;
+
   const option = {
-    title: {
-      text: skill.soft_skill,
-      left: "center",
-      top: "5%",
-      textStyle: { fontSize: 14 }
-    },
-    tooltip: { formatter: "{b}: {d}%" },
+    tooltip: { formatter: `{b}: {c}/5` },
     series: [
       {
-        name: skill.soft_skill,
+        name: skill.title,
         type: "pie",
-        radius: ["40%", "70%"],
+        radius: ["50%", "70%"],
         avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderWidth: 2
-        },
         label: {
           show: true,
-          position: "inside",
-          formatter: "{d}%",
-          fontSize: 14,
-          fontWeight: "bold",
-          color: "black"
+          position: "center",
+          formatter: `${skill.score}/5`,
+          fontSize: 18,
+          fontWeight: "bold"
         },
+        labelLine: { show: false },
         data: [
           {
-            value: skill.percentage,
-            name: skill.soft_skill,
-            itemStyle: { color: skill.color }
+            value: skill.score,
+            name: skill.title,
+            itemStyle: { color: "#228be6" }
           },
           {
-            value: 100 - skill.percentage,
+            value: 5 - skill.score,
             name: "Remaining",
-            itemStyle: { color: "#eee" }
+            itemStyle: { color: "#e0e0e0" }
           }
         ]
       }
@@ -45,10 +37,12 @@ export default function PieChart({ skill, key }) {
   };
 
   return (
-
-      <Box key={key} style={{ width: "250px", height: "250px" }}>
-        <ReactECharts option={option} />
-      </Box>
-
+    <Box style={{ width: 200, height: 250 }}>
+      <ReactECharts option={option} style={{ height: 200 }} />
+      <Stack gap="xs" align="center" mt="sm">
+        <Text fw={500}>{skill.courseTitle}</Text>
+        <Text size="sm" c="dimmed">{skill.level}</Text>
+      </Stack>
+    </Box>
   );
 }

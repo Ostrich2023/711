@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { addSkill, listSkills } from "../../services/skillService";
-import { uploadToIPFS } from "../../ipfs/uploadToIPFS";
 import {
+  Box,
   TextInput,
   Textarea,
   Select,
@@ -13,28 +12,29 @@ import {
   Stack,
   Paper,
   Text,
-  Box,
+  Group,
+  Loader,
+  Divider,
 } from "@mantine/core";
-import StatusOverview from "../../components/StatusOverview";
+import axios from "axios";
+import { uploadToIPFS } from "../../ipfs/uploadToIPFS";
+import { listSkills, deleteSkill } from "../../services/skillService";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function StudentRequestSkill() {
   const { user } = useAuth();
   const [skills, setSkills] = useState([]);
-  const [isFetching, setIsFetching] = useState(true);
-  const [form, setForm] = useState({ 
-    title: "",
-    description: "",
-    level: "Beginner",
-    file: null,
-  });
+  const [courseList, setCourseList] = useState([]);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [form, setForm] = useState({ level: "Beginner", file: null });
   const [loading, setLoading] = useState(false);
-
-  if (!user) return <Navigate to="/login" />;
+  const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
-    if(user){
-    fetchSkills();
-    console.log(skills)
+    if (user) {
+      fetchSkills();
+      fetchCourses();
     }
   }, [user]);
 
@@ -46,105 +46,180 @@ export default function StudentRequestSkill() {
     } catch (err) {
       console.error("Failed to fetch skills:", err);
     } finally {
-      setIsFetching(false)
+      setIsFetching(false);
     }
   };
 
-  const handleAdd = async () => {
-    const { title, description, level, file } = form;
-    if (!title.trim() || !description.trim()) {
-      alert("Title and Description are required.");
-      return;
-    }
-
-  let attachmentCid = "";
-
-  if (file) {
-    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    const maxSizeMB = 5;
-
-    if (!allowedTypes.includes(file.type)) {
-      alert("Only PDF or DOCX files are allowed.");
-      return;
-    }
-
-    if (file.size > maxSizeMB * 1024 * 1024) {
-      alert("File size exceeds 5MB.");
-      return;
-    }
-
+  const fetchCourses = async () => {
     try {
-      console.log("Uploading file...");
-      attachmentCid = await uploadToIPFS(file); 
-    } catch (error) {
-      console.error("File upload failed:", error);
-      alert("Failed to upload file to IPFS.");
+      const token = await user.getIdToken();
+      const res = await axios.get(`${BASE_URL}/student/list-courses`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCourseList(res.data);
+    } catch (err) {
+      console.error("Failed to fetch courses:", err);
+    }
+  };
+
+  const selectedCourse = courseList.find(c => c.id === selectedCourseId);
+
+  const handleSubmit = async () => {
+    if (!selectedCourseId || !form.level) {
+      alert("Please complete all required fields.");
       return;
     }
-  }
+
+    let attachmentCid = "";
+
+    if (form.file) {
+      const allowedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+      const maxSizeMB = 5;
+
+      if (!allowedTypes.includes(form.file.type)) {
+        alert("Only PDF or DOCX files are allowed.");
+        return;
+      }
+
+      if (form.file.size > maxSizeMB * 1024 * 1024) {
+        alert("File size exceeds 5MB.");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        attachmentCid = await uploadToIPFS(form.file);
+      } catch (error) {
+        console.error("Upload error:", error);
+        alert("File upload failed.");
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const token = await user.getIdToken();
-      await addSkill(token, {
-        title,
-        description,
-        level,
-        createdAt: new Date().toISOString(),
+      await axios.post(`${BASE_URL}/skill/add`, {
+        courseId: selectedCourseId,
+        level: form.level,
         attachmentCid,
-        userId: user.uid,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setForm({ title: "", description: "", level: "Beginner", file: null });
-      fetchSkills(); 
+
+      alert("Skill submitted.");
+      setForm({ level: "Beginner", file: null });
+      setSelectedCourseId(null);
+      fetchSkills();
     } catch (err) {
-      console.error("Failed to add skill:", err);
-      alert("Failed to save skill to Firestore");
+      console.error("Failed to submit skill:", err);
+      alert("Submission failed.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+      const token = await user.getIdToken();
+      await deleteSkill(token, id);
+      fetchSkills();
+    } catch (err) {
+      console.error("Failed to delete:", err);
+    }
+  };
+
+  if (!user) return <Navigate to="/login" />;
+
   return (
-    <Box flex={1} mt="30px">
-      <Paper shadow="xs" p="md" radius="md" withBorder mb="lg">
-        <Title order={3} mb="md">Add Skill</Title>
+    <Box mt="30px">
+      <Paper shadow="xs" p="md" withBorder mb="xl">
+        <Title order={3} mb="md">Submit Skill</Title>
         <Stack>
-          <TextInput
-            label="Skill Title"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            required
-          />
-          <Textarea
-            label="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            autosize
-            minRows={2}
-            required
-          />
           <Select
-            label="Level"
+            label="Select Course"
+            placeholder="Choose a course"
+            value={selectedCourseId}
+            onChange={setSelectedCourseId}
+            data={courseList.map(c => ({
+              value: c.id,
+              label: `${c.code} - ${c.title}`,
+            }))}
+            required
+          />
+
+          {selectedCourse && (
+            <Paper withBorder p="sm" radius="md" bg="gray.0">
+              <Text fw={500}>Skill: {selectedCourse.skillTemplate?.skillTitle}</Text>
+              <Text size="sm" c="dimmed">{selectedCourse.skillTemplate?.skillDescription}</Text>
+            </Paper>
+          )}
+
+          <Select
+            label="Skill Level"
             data={["Beginner", "Intermediate", "Advanced"]}
             value={form.level}
-            onChange={(val) => setForm({ ...form, level: val })}
-            required
+            onChange={(val) => setForm(prev => ({ ...prev, level: val }))}
           />
+
           <FileInput
-            label="Attachment (PDF or DOCX, max 5MB)"
+            label="Attachment (PDF or DOCX)"
             value={form.file}
-            onChange={(f) => setForm({ ...form, file: f })}
+            onChange={(file) => setForm(prev => ({ ...prev, file }))}
             accept=".pdf,.docx"
           />
-          <Button onClick={handleAdd} loading={loading}>
-            Submit Skill
+
+          <Button onClick={handleSubmit} loading={loading}>
+            Submit
           </Button>
         </Stack>
       </Paper>
 
-      {!isFetching &&
-      (skills.length === 0? <Text>No skills added yet.</Text> :  <StatusOverview skills={skills} />)}
+      <Title order={4}>Your Skills</Title>
+      {isFetching ? (
+        <Loader />
+      ) : skills.length === 0 ? (
+        <Text>No skills submitted yet.</Text>
+      ) : (
+        <Stack mt="md">
+          {skills.map(skill => (
+            <Paper key={skill.id} withBorder p="md" radius="md">
+              <Title order={5}>{skill.title} ({skill.level})</Title>
+              <Text size="sm" c="gray">Course: {skill.courseTitle} ({skill.courseCode})</Text>
+              <Text size="sm" mt="xs">{skill.description}</Text>
 
+              {skill.attachmentCid && (
+                <Text size="sm" mt="xs">
+                  📎 <a href={`https://ipfs.io/ipfs/${skill.attachmentCid}`} target="_blank">View Attachment</a>
+                </Text>
+              )}
 
+              <Divider my="sm" />
+
+              <Text size="sm">
+                Status: {
+                  skill.verified === "approved" ? " Approved"
+                  : skill.verified === "rejected" ? " Rejected"
+                  : "⏳ Pending"
+                }
+              </Text>
+
+              {skill.score !== undefined && (
+                <Text size="sm">Score: {skill.score}/5</Text>
+              )}
+
+              <Group mt="xs">
+                <Button size="xs" color="red" variant="light" onClick={() => handleDelete(skill.id)}>
+                  Delete
+                </Button>
+              </Group>
+            </Paper>
+          ))}
+        </Stack>
+      )}
     </Box>
   );
 }

@@ -1,11 +1,10 @@
-const express = require("express");
-const router = express.Router();
-const admin = require("firebase-admin");
+import express from "express";
+import admin from "firebase-admin";
 
-//  安全引用 Firestore FieldValue（注意：如果你本地模拟器无法解析 serverTimestamp，可以改为 new Date().toISOString()）
+const router = express.Router();
 const FieldValue = admin.firestore?.FieldValue ?? null;
 
-//  Middleware: Verify token and attach user info
+// Middleware: Verify token and attach user info
 async function verifyToken(req, res, next) {
   const idToken = req.headers.authorization?.split("Bearer ")[1];
   if (!idToken) return res.status(401).send("Unauthorized");
@@ -26,44 +25,77 @@ async function verifyToken(req, res, next) {
   }
 }
 
-//  POST /skill/add — Add a new skill (student only)
+// POST /skill/add — Add a new skill (student only)
 router.post("/add", verifyToken, async (req, res) => {
   const { role, uid } = req.user;
-  const { title, description, level, attachmentCid } = req.body;
-
-  console.log("📩 Received skill data:", req.body);
+  const { courseId, attachmentCid, level } = req.body;
 
   if (role !== "student") return res.status(403).send("Only students can add skills");
+  if (!courseId) return res.status(400).send("Missing courseId");
 
   try {
+    // 获取课程数据
+    const courseRef = admin.firestore().doc(`courses/${courseId}`);
+    const courseDoc = await courseRef.get();
+    if (!courseDoc.exists) return res.status(404).send("Course not found");
+
+    const courseData = courseDoc.data();
+    const skillTemplate = courseData.skillTemplate || {};
+
+    // 是否首次提交
+    const existingSnap = await admin.firestore()
+      .collection("skills")
+      .where("courseId", "==", courseId)
+      .where("ownerId", "==", uid)
+      .get();
+
+    const isFirstSubmission = existingSnap.empty;
+
+    // 添加技能
     const docRef = await admin.firestore().collection("skills").add({
       ownerId: uid,
-      title: title || "",
-      description: description || "",
+      courseId,
+      courseCode: courseData.code || "",
+      courseTitle: courseData.title || "",
+      schoolId: courseData.schoolId || "",
+      title: skillTemplate.skillTitle || "",
+      description: skillTemplate.skillDescription || "",
       level: level || "Beginner",
       attachmentCid: attachmentCid || "",
-      createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(), // ✅ 根据环境选择方式
+      verified: "pending",
+      reviewedBy: null,
+      reviewedAt: null,
+      note: "",
+      score: null,
+      createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(),
     });
+
+    // 首次提交则更新 studentCount
+    if (isFirstSubmission) {
+      await courseRef.update({
+        studentCount: FieldValue.increment(1),
+      });
+    }
 
     res.status(201).send({ id: docRef.id });
   } catch (error) {
-    console.error("❌ Error adding skill:", error);
+    console.error("Error adding skill:", error);
     res.status(500).send("Failed to add skill");
   }
 });
 
-//  GET /skill/list — List skills (self for student, any for teacher/admin)
+// GET /skill/list — 学生查看自己提交的所有技能
 router.get("/list", verifyToken, async (req, res) => {
   const { uid, role } = req.user;
-  const targetUid = req.query.uid || uid;
 
-  if (role === "student" && targetUid !== uid)
-    return res.status(403).send("Students can only view their own skills");
+  if (role !== "student") {
+    return res.status(403).send("Only students can view their own skills");
+  }
 
   try {
     const snapshot = await admin.firestore()
       .collection("skills")
-      .where("ownerId", "==", targetUid)
+      .where("ownerId", "==", uid)
       .orderBy("createdAt", "desc")
       .get();
 
@@ -72,33 +104,11 @@ router.get("/list", verifyToken, async (req, res) => {
       ...doc.data(),
     }));
 
-    res.send(skills);
+    res.json(skills);
   } catch (error) {
-    console.error("❌ Error fetching skills:", error);
-    res.status(500).send("Failed to fetch skills");
+    console.error("Failed to fetch skills:", error);
+    res.status(500).send("Failed to load skills");
   }
 });
 
-//  DELETE /skill/delete/:id — Delete skill (owner or admin)
-router.delete("/delete/:id", verifyToken, async (req, res) => {
-  const { role, uid } = req.user;
-  const skillId = req.params.id;
-
-  try {
-    const skillDoc = await admin.firestore().collection("skills").doc(skillId).get();
-    if (!skillDoc.exists) return res.status(404).send("Skill not found");
-
-    const skillData = skillDoc.data();
-    if (skillData.ownerId !== uid && role !== "admin") {
-      return res.status(403).send("Unauthorized to delete this skill");
-    }
-
-    await admin.firestore().collection("skills").doc(skillId).delete();
-    res.send("Skill deleted successfully");
-  } catch (error) {
-    console.error("❌ Error deleting skill:", error);
-    res.status(500).send("Failed to delete skill");
-  }
-});
-
-module.exports = router;
+export default router;

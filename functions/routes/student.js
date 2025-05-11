@@ -1,6 +1,8 @@
-const express = require("express");
+import express from "express";
+import admin from "firebase-admin";
+
 const router = express.Router();
-const admin = require("firebase-admin");
+const FieldValue = admin.firestore?.FieldValue ?? null;
 
 // Middleware: Verify token and attach student info
 async function verifyStudent(req, res, next) {
@@ -54,22 +56,83 @@ router.get("/skills", verifyStudent, async (req, res) => {
 
 // PUT /student/update-school
 router.put("/update-school", verifyStudent, async (req, res) => {
-    const { uid } = req.user;
-    const { schoolId } = req.body;
-  
-    if (!schoolId || typeof schoolId !== "string") {
-      return res.status(400).send("Invalid school ID.");
-    }
-  
-    try {
-      await admin.firestore().doc(`users/${uid}`).update({
-        schoolId: schoolId.trim(),
-      });
-      res.status(200).send("School updated successfully.");
-    } catch (error) {
-      console.error("Error updating school:", error);
-      res.status(500).send("Failed to update school.");
-    }
-  });
+  const { uid } = req.user;
+  const { schoolId } = req.body;
 
-module.exports = router;
+  if (!schoolId || typeof schoolId !== "string") {
+    return res.status(400).send("Invalid school ID.");
+  }
+
+  try {
+    await admin.firestore().doc(`users/${uid}`).update({
+      schoolId: schoolId.trim(),
+    });
+    res.status(200).send("School updated successfully.");
+  } catch (error) {
+    console.error("Error updating school:", error);
+    res.status(500).send("Failed to update school.");
+  }
+});
+
+// GET /student/list-courses
+router.get("/list-courses", verifyStudent, async (req, res) => {
+  try {
+    const schoolId = req.user.schoolId;
+    
+    if (!schoolId) {
+      console.warn("Missing schoolId in student profile:", req.user);
+      return res.status(400).send("Missing schoolId in your profile.");
+    }
+
+    const snapshot = await admin.firestore().collection("courses").get();
+
+    const courses = snapshot.docs
+      .filter(doc => doc.data().schoolId === schoolId)
+      .map(doc => ({
+        id: doc.id,
+        title: doc.data().title,
+        code: doc.data().code,
+        skillTemplate: doc.data().skillTemplate,
+      }));
+
+    res.json(courses);
+  } catch (err) {
+    console.error("Failed to fetch student courses:", err);
+    res.status(500).send("Failed to load courses");
+  }
+});
+
+// GET /student/course-avg-scores
+router.get("/course-avg-scores", verifyStudent, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("skills")
+      .where("ownerId", "==", req.user.uid)
+      .where("verified", "==", "approved")
+      .get();
+
+    const courseScores = {};
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const { courseTitle, score } = data;
+      if (!courseScores[courseTitle]) {
+        courseScores[courseTitle] = { total: 0, count: 0 };
+      }
+      courseScores[courseTitle].total += score || 0;
+      courseScores[courseTitle].count += 1;
+    });
+
+    const results = Object.entries(courseScores).map(([courseTitle, { total, count }]) => ({
+      courseTitle,
+      avgScore: (total / count).toFixed(2)
+    }));
+
+    res.json(results);
+  } catch (error) {
+    console.error("Failed to fetch course average scores:", error);
+    res.status(500).send("Error retrieving course scores");
+  }
+});
+
+export default router;

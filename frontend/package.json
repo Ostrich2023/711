@@ -12,7 +12,6 @@
     "@mantine/core": "^8.0.0",
     "@mantine/hooks": "^8.0.0",
     "@tabler/icons-react": "^3.31.0",
-    "@web3-storage/w3up-client": "^17.2.0",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
     "echarts-for-react": "^3.0.2",

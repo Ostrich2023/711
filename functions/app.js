@@ -1,38 +1,49 @@
-const express = require("express");
-const cors = require("cors");
+import dotenv from "dotenv";
+dotenv.config();
 
-// Route modules
-const userRoutes = require("./routes/user");
-const skillRoutes = require("./routes/skill");
-const studentRoutes = require("./routes/student");
-const schoolRoutes = require("./routes/school");
-const employerRoutes = require("./routes/employer");
-const jobRoutes = require("./routes/job");
-const adminRoutes = require("./routes/admin"); 
+import express from "express";
+import cors from "cors";
+import fileUpload from "express-fileupload";
+
+// 路由模块
+import userRoutes from "./routes/user.js";
+import skillRoutes from "./routes/skill.js";
+import studentRoutes from "./routes/student.js";
+import schoolRoutes from "./routes/school.js";
+import employerRoutes from "./routes/employer.js";
+import jobRoutes from "./routes/job.js";
+import adminRoutes from "./routes/admin.js";
+import courseRoutes from "./routes/course.js";
+import teacherRoutes from "./routes/teacher.js";
+
 const app = express();
 
-// Middleware
-app.use(cors({ origin: true }));
+// 注册中间件
+app.use(
+  cors({
+    origin: [
+      "https://digital-skill-wallet.web.app", // 前端生产地址
+      "http://localhost:5173",                // 本地开发地址
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(fileUpload());
 
-// Health check
-app.get("/", (req, res) => {
-  res.status(200).send("Digital Skill Wallet API is running.");
-});
-
-// Route mounting
+// 注册 REST 路由
 app.use("/user", userRoutes);
 app.use("/skill", skillRoutes);
 app.use("/student", studentRoutes);
 app.use("/school", schoolRoutes);
 app.use("/employer", employerRoutes);
 app.use("/job", jobRoutes);
-app.use("/admin", adminRoutes); 
+app.use("/admin", adminRoutes);
+app.use("/course", courseRoutes);
+app.use("/teacher", teacherRoutes);
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err.stack);
-  res.status(500).send("Internal Server Error");
-});
+// 健康检查
+app.get("/", (_, res) => res.send("Functions API running."));
 
-module.exports = app;
+export default app;

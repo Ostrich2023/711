@@ -1,4 +1,3 @@
-// components/TechnicalSkillsChart.jsx
 import ReactECharts from "echarts-for-react";
 import { Flex } from "@mantine/core";
 import PropTypes from "prop-types";
@@ -7,84 +6,65 @@ const BarChart = ({ data }) => {
   const chartOptions = {
     tooltip: {
       trigger: "axis",
-      formatter: "{b}: {c} hours",
+      axisPointer: { type: "shadow" }
     },
-    xAxis: [
-      {
-        type: "value",
-        min: 0,
-        max: 200,
-        interval: 50,
-        position: "top",
-        axisLine: { lineStyle: { color: "black", width: 2 } },
-        axisLabel: {
-          fontSize: 12,
-          color: "black",
-          formatter: (value) => {
-            if (value === 50) return "Novice";
-            if (value === 100) return "Proficient";
-            if (value === 150) return "Advanced";
-            if (value === 200) return "Expert";
-            return "";
-          },
-        },
-      },
-      {
-        type: "value",
-        min: 0,
-        max: 200,
-        interval: 50,
-        position: "bottom",
-        splitLine: {
-          lineStyle: {
-            color: "black",
-            width: 1,
-          },
-        },
-        axisLabel: {
-          fontSize: 14,
-          color: "black",
-        },
-      },
-    ],
-    yAxis: {
+    legend: {
+      data: ["My Score", "Average Score"],
+      top: 10
+    },
+    grid: {
+      left: "5%",
+      right: "5%",
+      bottom: "10%",
+      containLabel: true
+    },
+    xAxis: {
       type: "category",
-      data: data.map((skill) => skill.tech_skill),
+      data: data.map(item => item.courseTitle),
       axisLabel: {
-        fontSize: window.innerWidth < 768 ? 13 : 14,
+        interval: 0,
         rotate: 30,
-      },
-      axisLine: {
-        lineStyle: {
-          color: "black",
-        },
-      },
+        fontSize: 12
+      }
+    },
+    yAxis: {
+      type: "value",
+      max: 5
     },
     series: [
       {
-        data: data.map((skill) => skill.hours),
+        name: "My Score",
         type: "bar",
+        data: data.map(item => item.score),
         itemStyle: {
-          color: (params) => data[params.dataIndex].color,
+          color: "#4dabf7"
         },
-        barWidth: "60%",
+        barWidth: "30%"
       },
-    ],
+      {
+        name: "Average Score",
+        type: "bar",
+        data: data.map(item => item.avgScore),
+        itemStyle: {
+          color: "#f783ac"
+        },
+        barWidth: "30%"
+      }
+    ]
   };
 
   return (
     <Flex justify="center">
       <ReactECharts
         option={chartOptions}
-        className="chart-container"
-        style={{ height: "300px", width: "100%" }}
+        style={{ height: "350px", width: "100%" }}
       />
     </Flex>
   );
 };
 
 BarChart.propTypes = {
-  data: PropTypes.array.isRequired,
+  data: PropTypes.array.isRequired
 };
 
 export default BarChart;

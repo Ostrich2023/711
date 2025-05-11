@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import admin from "firebase-admin";
+
 const router = express.Router();
-const admin = require("firebase-admin");
 
 // Middleware: check admin
 async function verifyAdmin(req, res, next) {
@@ -11,6 +12,7 @@ async function verifyAdmin(req, res, next) {
     const decoded = await admin.auth().verifyIdToken(token);
     const docRef = await admin.firestore().doc(`users/${decoded.uid}`).get();
     const userData = docRef.data();
+
     if (userData.role !== "admin") return res.status(403).send("Forbidden");
 
     req.user = { uid: decoded.uid };
@@ -36,4 +38,4 @@ router.get("/users", verifyAdmin, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
