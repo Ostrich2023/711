@@ -14,6 +14,9 @@ import employerRoutes from "./routes/employer.js";
 import jobRoutes from "./routes/job.js";
 import adminRoutes from "./routes/admin.js";
 
+import courseRoutes from "./routes/course.js";
+import teacherRoutes from "./routes/teacher.js";
+
 const app = express();
 
 // ✅ 注册中间件
@@ -29,6 +32,9 @@ app.use("/school", schoolRoutes);
 app.use("/employer", employerRoutes);
 app.use("/job", jobRoutes);
 app.use("/admin", adminRoutes);
+
+app.use("/course", courseRoutes);
+app.use("/teacher", teacherRoutes);
 
 // ✅ 文件上传路由
 app.post("/upload", async (req, res) => {
