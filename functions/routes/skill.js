@@ -27,26 +27,41 @@ async function verifyToken(req, res, next) {
 
 // POST /skill/add — Add a new skill (student only)
 router.post("/add", verifyToken, async (req, res) => {
-  const { role, uid } = req.user;
-  const { title, description, level, attachmentCid } = req.body;
+    const { role, uid } = req.user;
+    const { courseId, attachmentCid, level } = req.body;
 
-  if (role !== "student") return res.status(403).send("Only students can add skills");
+    if (role !== "student") return res.status(403).send("Only students can add skills");
+    if (!courseId) return res.status(400).send("Missing courseId");
 
-  try {
-    const docRef = await admin.firestore().collection("skills").add({
-      ownerId: uid,
-      title: title || "",
-      description: description || "",
-      level: level || "Beginner",
-      attachmentCid: attachmentCid || "",
-      createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(),
-    });
+    try {
+        // 获取课程信息
+        const courseDoc = await admin.firestore().collection("courses").doc(courseId).get();
+        if (!courseDoc.exists) return res.status(404).send("Course not found");
 
-    res.status(201).send({ id: docRef.id });
-  } catch (error) {
-    console.error("Error adding skill:", error);
-    res.status(500).send("Failed to add skill");
-  }
+        const courseData = courseDoc.data();
+        const skillTemplate = courseData.skillTemplate || {};
+
+        const docRef = await admin.firestore().collection("skills").add({
+            ownerId: uid,
+            courseId: courseId,
+            courseCode: courseData.code || "",
+            courseTitle: courseData.title || "",
+            title: skillTemplate.skillTitle || "",
+            description: skillTemplate.skillDescription || "",
+            level: level || skillTemplate.level || "Beginner",
+            attachmentCid: attachmentCid || "",
+            verified: null,
+            reviewedBy: null,
+            reviewedAt: null,
+            note: "",
+            createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(),
+        });
+
+        res.status(201).send({ id: docRef.id });
+    } catch (error) {
+        console.error("Error adding skill:", error);
+        res.status(500).send("Failed to add skill");
+    }
 });
 
 // GET /skill/list — List skills (self for student, any for teacher/admin)
