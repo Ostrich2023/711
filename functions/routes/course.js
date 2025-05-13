@@ -2,7 +2,7 @@ import express from "express";
 import admin from "firebase-admin";
 
 const router = express.Router();
-const FieldValue = admin.firestore.FieldValue; //  确保正确引用
+const FieldValue = admin.firestore.FieldValue;
 
 // Middleware: verify teacher
 async function verifyTeacher(req, res, next) {
@@ -12,15 +12,10 @@ async function verifyTeacher(req, res, next) {
     try {
         const decoded = await admin.auth().verifyIdToken(idToken);
         const uid = decoded.uid;
-
         const userDoc = await admin.firestore().doc(`users/${uid}`).get();
         if (!userDoc.exists) return res.status(403).send("User not found");
-
         const user = userDoc.data();
-        if (user.role !== "school") {
-            return res.status(403).send("Access denied. Only teachers allowed.");
-        }
-
+        if (user.role !== "school") return res.status(403).send("Access denied. Only teachers allowed.");
         req.user = { uid, ...user };
         next();
     } catch (err) {
@@ -29,15 +24,22 @@ async function verifyTeacher(req, res, next) {
     }
 }
 
-// POST /course/create — 教师创建课程
+// POST /course/create
 router.post("/create", verifyTeacher, async (req, res) => {
-    const { title, code, major, skillTemplate, softSkills, hardSkills } = req.body;
-
+    const { title, code, major, skillTemplate } = req.body;
     if (!title || !code || !major || !skillTemplate?.skillTitle) {
         return res.status(400).send("Missing required fields");
     }
 
     try {
+        const softSkills = Array.isArray(skillTemplate?.softSkills)
+            ? skillTemplate.softSkills.map(id => admin.firestore().doc(`soft-skills/${id}`))
+            : [];
+
+        const hardSkills = Array.isArray(skillTemplate?.hardSkills)
+            ? skillTemplate.hardSkills
+            : [];
+
         const courseData = {
             title,
             code,
@@ -49,12 +51,8 @@ router.post("/create", verifyTeacher, async (req, res) => {
             skillTemplate: {
                 skillTitle: skillTemplate.skillTitle || "",
                 skillDescription: skillTemplate.skillDescription || "",
-            },
-            skill: {
-                softSkills: Array.isArray(softSkills)
-                    ? softSkills.map(id => admin.firestore().doc(`soft-skills/${id}`))
-                    : [],
-                hardSkills: Array.isArray(hardSkills) ? hardSkills : []
+                softSkills,
+                hardSkills
             }
         };
 
@@ -66,23 +64,27 @@ router.post("/create", verifyTeacher, async (req, res) => {
     }
 });
 
-// PUT /course/update/:id — 教师更新课程
+// PUT /course/update/:id
 router.put("/update/:id", verifyTeacher, async (req, res) => {
     const courseId = req.params.id;
-    const { title, code, major, skillTemplate, softSkills, hardSkills } = req.body;
+    const { title, code, major, skillTemplate } = req.body;
 
     try {
         const courseRef = admin.firestore().doc(`courses/${courseId}`);
         const courseDoc = await courseRef.get();
-
         if (!courseDoc.exists) return res.status(404).send("Course not found");
 
         const courseData = courseDoc.data();
         const isCreator = courseData.createdBy?.path?.endsWith(req.user.uid);
+        if (!isCreator) return res.status(403).send("You are not the creator of this course");
 
-        if (!isCreator) {
-            return res.status(403).send("You are not the creator of this course");
-        }
+        const softSkills = Array.isArray(skillTemplate?.softSkills)
+            ? skillTemplate.softSkills.map(id => admin.firestore().doc(`soft-skills/${id}`))
+            : courseData.skillTemplate?.softSkills || [];
+
+        const hardSkills = Array.isArray(skillTemplate?.hardSkills)
+            ? skillTemplate.hardSkills
+            : courseData.skillTemplate?.hardSkills || [];
 
         await courseRef.update({
             title: title || courseData.title,
@@ -91,12 +93,8 @@ router.put("/update/:id", verifyTeacher, async (req, res) => {
             skillTemplate: {
                 skillTitle: skillTemplate?.skillTitle || courseData.skillTemplate?.skillTitle || "",
                 skillDescription: skillTemplate?.skillDescription || courseData.skillTemplate?.skillDescription || "",
-            },
-            skill: {
-                softSkills: Array.isArray(softSkills)
-                    ? softSkills.map(id => admin.firestore().doc(`soft-skills/${id}`))
-                    : courseData.skill?.softSkills || [],
-                hardSkills: Array.isArray(hardSkills) ? hardSkills : courseData.skill?.hardSkills || []
+                softSkills,
+                hardSkills
             }
         });
 
@@ -107,22 +105,18 @@ router.put("/update/:id", verifyTeacher, async (req, res) => {
     }
 });
 
-// DELETE /course/delete/:id — 教师删除课程
+// DELETE /course/delete/:id
 router.delete("/delete/:id", verifyTeacher, async (req, res) => {
     const courseId = req.params.id;
 
     try {
         const courseRef = admin.firestore().doc(`courses/${courseId}`);
         const courseDoc = await courseRef.get();
-
         if (!courseDoc.exists) return res.status(404).send("Course not found");
 
         const courseData = courseDoc.data();
         const isCreator = courseData.createdBy?.path?.endsWith(req.user.uid);
-
-        if (!isCreator) {
-            return res.status(403).send("You are not the creator of this course");
-        }
+        if (!isCreator) return res.status(403).send("You are not the creator of this course");
 
         await courseRef.delete();
         res.send("Course deleted successfully");
@@ -132,7 +126,7 @@ router.delete("/delete/:id", verifyTeacher, async (req, res) => {
     }
 });
 
-// GET /course/majors — 获取所有 majors（用于下拉框）
+// GET /course/majors
 router.get("/majors", verifyTeacher, async (req, res) => {
     try {
         const snapshot = await admin.firestore().collection("majors").get();
@@ -144,14 +138,11 @@ router.get("/majors", verifyTeacher, async (req, res) => {
     }
 });
 
-// GET /course/soft-skills — 获取所有软技能选项
+// GET /course/soft-skills
 router.get("/soft-skills", verifyTeacher, async (req, res) => {
     try {
         const snapshot = await admin.firestore().collection("soft-skills").get();
-        const skills = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        const skills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         res.send(skills);
     } catch (err) {
         console.error("Failed to fetch soft skills:", err.message);

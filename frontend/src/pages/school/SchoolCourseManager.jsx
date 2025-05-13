@@ -108,8 +108,6 @@ export default function SchoolCourseManager() {
                     skillTemplate: {
                         skillTitle,
                         skillDescription,
-                    },
-                    skill: {
                         softSkills: selectedSoftSkills,
                         hardSkills: hardSkills
                     },
@@ -181,8 +179,6 @@ export default function SchoolCourseManager() {
                     skillTemplate: {
                         skillTitle,
                         skillDescription,
-                    },
-                    skill: {
                         softSkills: selectedSoftSkills,
                         hardSkills: hardSkills
                     },
