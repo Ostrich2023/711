@@ -1,5 +1,5 @@
 import { Box, Card, Group, Text } from "@mantine/core";
-import classes from "../../pages/student/DigitalSkillWallet.module.css";
+import classes from "../../style/DigitalSkillWallet.module.css";
 
 const SkillCard = ({ title, children }) => (
     <Card shadow="sm" radius="md" withBorder bg="var(--mantine-color-white)">

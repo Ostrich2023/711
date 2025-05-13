@@ -31,8 +31,6 @@ import EmployerHome from '../pages/employer/EmployerHome';
 import AdminPage from "../pages/AdminPage";
 import SyncUserDocPage from "../pages/SyncUserDocPage";
 
-// Auth redirect
-import RedirectByRole from "../components/auth/RedirectByRole";
 
 const AppRouter = createBrowserRouter([
   {
@@ -80,7 +78,6 @@ const AppRouter = createBrowserRouter([
       // Admin & Utility
       { path: "admin", element: <AdminPage /> },
       { path: "sync", element: <SyncUserDocPage /> },
-      { path: "redirect", element: <RedirectByRole /> },
 
       // Fallback
       { path: "*", element: <ErrorPage /> }

@@ -25,10 +25,10 @@ const StudentPage = () => {
   ];
 
   return (
-    <Container size="xl" maw="1400px" mt="md">
-      <Group align="flex-start" spacing="xl" noWrap>
+    <Container maw="1500px">
+      <Group align="flex-start">
         {/* Left - Sidebar */}
-        <Box style={{ width: 240 }}>
+        <Box>
           {isLoading ? (
             <Center><Loader size="sm" /></Center>
           ) : (
@@ -37,7 +37,7 @@ const StudentPage = () => {
         </Box>
 
         {/* Right - Routed Pages */}
-        <Box style={{ flex: 1, minWidth: 0 }}>
+        <Box style={{ flex: 1 }}>
           <Outlet />
         </Box>
       </Group>

@@ -4,7 +4,7 @@ import { IconBaselineDensityMedium, IconCertificate, IconArrowRight } from '@tab
 import { useMediaQuery } from '@mantine/hooks'; 
 import { useNavigate } from "react-router-dom";
 
-import classes from './HomeNavbar.module.css';
+import classes from '../style/HomeNavbar.module.css';
 
 import ActionButton from './common/ActionButton';
 

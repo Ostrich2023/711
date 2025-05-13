@@ -7,7 +7,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useFireStoreUser } from "../../hooks/useFirestoreUser";
 
 import Notification from "../../components/Notification";
-import StatusOverview from "../../components/StatusOverview";
 import ActivityList from "../../components/ActivityList";
 import UserTable from "../../components/UserTable";
 
@@ -127,10 +126,6 @@ export default function StudentHome() {
             messagePrefix="You currently have"
             messageSuffix="skills pending review."
           />
-
-          {!loadingSkills && (
-            <StatusOverview skills={skills} />
-          )}
 
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" mt="md">
             <ActivityList courseData={courseData} />

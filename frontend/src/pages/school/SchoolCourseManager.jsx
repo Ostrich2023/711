@@ -8,19 +8,25 @@ import {
     Title,
     Stack,
     Group,
-    Text,
     Loader,
     Select,
     Modal,
     MultiSelect,
+    Grid,
+    Center
 } from "@mantine/core";
 import axios from "axios";
+
 import { useAuth } from "../../context/AuthContext";
+import { useFireStoreUser } from "../../hooks/useFirestoreUser";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+import ActivityList from "../../components/ActivityList";
+
 export default function SchoolCourseManager() {
     const { user } = useAuth();
+    const { isLoading } = useFireStoreUser(user);
     const [form, setForm] = useState({
         title: "",
         code: "",
@@ -28,7 +34,7 @@ export default function SchoolCourseManager() {
         skillDescription: "",
     });
     const [selectedMajor, setSelectedMajor] = useState("");
-    const [courses, setCourses] = useState([]);
+    const [courseList, setCourseList] = useState([]);
     const [majors, setMajors] = useState([]);
     const [softSkillOptions, setSoftSkillOptions] = useState([]);
     const [selectedSoftSkills, setSelectedSoftSkills] = useState([]);
@@ -41,19 +47,19 @@ export default function SchoolCourseManager() {
 
     useEffect(() => {
         if (user) {
-            loadCourses();
-            loadMajors();
-            loadSoftSkills();
+            fetchCourses();
+            fetchMajors();
+            fetchSoftSkills();
         }
     }, [user]);
 
-    const loadCourses = async () => {
+    const fetchCourses = async () => {
         try {
             const token = await user.getIdToken();
             const res = await axios.get(`${BASE_URL}/teacher/my-courses`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setCourses(res.data);
+            setCourseList(res.data);
         } catch (err) {
             console.error("Failed to load courses:", err);
         } finally {
@@ -61,7 +67,7 @@ export default function SchoolCourseManager() {
         }
     };
 
-    const loadMajors = async () => {
+    const fetchMajors = async () => {
         try {
             const token = await user.getIdToken();
             const res = await axios.get(`${BASE_URL}/course/majors`, {
@@ -73,7 +79,7 @@ export default function SchoolCourseManager() {
         }
     };
 
-    const loadSoftSkills = async () => {
+    const fetchSoftSkills = async () => {
         try {
             const token = await user.getIdToken();
             const res = await axios.get(`${BASE_URL}/course/soft-skills`, {
@@ -122,7 +128,7 @@ export default function SchoolCourseManager() {
             setSelectedSoftSkills([]);
             setHardSkills([]);
             setHardSkillInput("");
-            loadCourses();
+            fetchCourses();
         } catch (err) {
             console.error("Course creation failed:", err);
             alert("Failed to create course.");
@@ -140,7 +146,7 @@ export default function SchoolCourseManager() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             alert("Course deleted.");
-            loadCourses();
+            fetchCourses();
         } catch (err) {
             console.error("Delete failed:", err);
             alert("Failed to delete course.");
@@ -190,7 +196,7 @@ export default function SchoolCourseManager() {
             alert("Course updated successfully.");
             setEditModalOpen(false);
             setEditingCourse(null);
-            loadCourses();
+            fetchCourses();
         } catch (err) {
             console.error("Update failed:", err);
             alert("Failed to update course.");
@@ -198,88 +204,106 @@ export default function SchoolCourseManager() {
     };
 
     return (
-        <Box mt="30px">
-            <Title order={2} mb="lg">Course Management</Title>
-
+    <Box mt="30px">
+        {isLoading || loading ? (
+        <Center mt="lg">
+            <Loader />
+        </Center>
+        ) : (
+        <>
+            {/* Course Management */}
             <Paper shadow="xs" p="md" withBorder mb="xl">
-                <Stack>
+            <Title order={3} mb="md">Course Management</Title>
+            <Stack>
+                <Grid gutter="md">
+                <Grid.Col span={6}>
                     <TextInput label="Course Title" value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
+                </Grid.Col>
+                <Grid.Col span={6}>
                     <TextInput label="Course Code" value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
+                </Grid.Col>
+
+                <Grid.Col span={6}>
                     <Select label="Major" data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
+                </Grid.Col>
+                <Grid.Col span={6}>
                     <TextInput label="Skill Title (Template)" value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
+                </Grid.Col>
+
+                <Grid.Col span={12}>
                     <Textarea label="Skill Description" value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
+                </Grid.Col>
+
+                <Grid.Col span={12}>
                     <MultiSelect label="Soft Skills" data={softSkillOptions} value={selectedSoftSkills} onChange={setSelectedSoftSkills} />
+                </Grid.Col>
+
+                <Grid.Col span={9}>
+                    <TextInput label="Add Hard Skill" placeholder="e.g., JavaScript" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                    <Button fullWidth mt={24} onClick={() => {
+                    if (hardSkillInput.trim()) {
+                        setHardSkills(prev => [...prev, hardSkillInput.trim()]);
+                        setHardSkillInput("");
+                    }
+                    }}>Add</Button>
+                </Grid.Col>
+
+                <Grid.Col span={12}>
                     <Group>
-                        <TextInput label="Add Hard Skill" placeholder="e.g., JavaScript" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
-                        <Button onClick={() => {
-                            if (hardSkillInput.trim()) {
-                                setHardSkills(prev => [...prev, hardSkillInput.trim()]);
-                                setHardSkillInput("");
-                            }
-                        }}>+</Button>
+                    {hardSkills.map((skill, i) => (
+                        <Button key={i} variant="light" color="gray" onClick={() => {
+                        setHardSkills(prev => prev.filter((_, idx) => idx !== i));
+                        }}>{skill} ❌</Button>
+                    ))}
                     </Group>
-                    <Group>
-                        {hardSkills.map((skill, i) => (
-                            <Button key={i} variant="light" color="gray" onClick={() => {
-                                setHardSkills(prev => prev.filter((_, idx) => idx !== i));
-                            }}>{skill} ❌</Button>
-                        ))}
-                    </Group>
-                    <Button onClick={handleCreate} loading={creating}>Create Course</Button>
-                </Stack>
+                </Grid.Col>
+
+                <Grid.Col span={12}>
+                    <Button onClick={handleCreate} loading={creating} fullWidth>
+                    Create Course
+                    </Button>
+                </Grid.Col>
+                </Grid>
+            </Stack>
             </Paper>
 
-            <Title order={3} mb="md">Your Courses</Title>
-            {loading ? (
-                <Loader />
-            ) : courses.length === 0 ? (
-                <Text>No courses created yet.</Text>
-            ) : (
-                courses.map((course) => (
-                    <Paper key={course.id} p="md" radius="md" withBorder mb="md">
-                        <Group position="apart">
-                            <Box>
-                                <Text fw={500}>{course.title}</Text>
-                                <Text size="sm" c="gray">{course.code}</Text>
-                                <Text size="sm" mt="xs">Skill: {course.skillTemplate?.skillTitle}</Text>
-                                <Text size="sm" c="dimmed">{course.skillTemplate?.skillDescription}</Text>
-                            </Box>
-                            <Group>
-                                <Button variant="light" onClick={() => openEditModal(course)}>Edit</Button>
-                                <Button color="red" variant="light" onClick={() => handleDelete(course.id)}>Delete</Button>
-                            </Group>
-                        </Group>
-                    </Paper>
-                ))
-            )}
+            {/* My Courses */}
+            <ActivityList courseList={courseList} />
+        </>
+        )}
 
-            <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Course" centered>
-                <Stack>
-                    <TextInput label="Course Title" value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
-                    <TextInput label="Course Code" value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
-                    <Select label="Major" data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
-                    <TextInput label="Skill Title (Template)" value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
-                    <Textarea label="Skill Description" value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
-                    <MultiSelect label="Soft Skills" data={softSkillOptions} value={selectedSoftSkills} onChange={setSelectedSoftSkills} />
-                    <Group>
-                        <TextInput label="Add Hard Skill" placeholder="e.g., JavaScript" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
-                        <Button onClick={() => {
-                            if (hardSkillInput.trim()) {
-                                setHardSkills(prev => [...prev, hardSkillInput.trim()]);
-                                setHardSkillInput("");
-                            }
-                        }}>+</Button>
-                    </Group>
-                    <Group>
-                        {hardSkills.map((skill, i) => (
-                            <Button key={i} variant="light" color="gray" onClick={() => {
-                                setHardSkills(prev => prev.filter((_, idx) => idx !== i));
-                            }}>{skill} ❌</Button>
-                        ))}
-                    </Group>
-                    <Button onClick={handleUpdate}>Update Course</Button>
-                </Stack>
-            </Modal>
-        </Box>
+        <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Course" centered>
+        <Stack>
+            <TextInput label="Course Title" value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
+            <TextInput label="Course Code" value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
+            <Select label="Major" data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
+            <TextInput label="Skill Title (Template)" value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
+            <Textarea label="Skill Description" value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
+            <MultiSelect label="Soft Skills" data={softSkillOptions} value={selectedSoftSkills} onChange={setSelectedSoftSkills} />
+            
+            <Group>
+            <TextInput label="Add Hard Skill" placeholder="e.g., JavaScript" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
+            <Button onClick={() => {
+                if (hardSkillInput.trim()) {
+                setHardSkills(prev => [...prev, hardSkillInput.trim()]);
+                setHardSkillInput("");
+                }
+            }}>+</Button>
+            </Group>
+
+            <Group>
+            {hardSkills.map((skill, i) => (
+                <Button key={i} variant="light" color="gray" onClick={() => {
+                setHardSkills(prev => prev.filter((_, idx) => idx !== i));
+                }}>{skill} ❌</Button>
+            ))}
+            </Group>
+
+            <Button onClick={handleUpdate}>Update Course</Button>
+        </Stack>
+        </Modal>
+    </Box>
     );
 }

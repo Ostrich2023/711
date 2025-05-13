@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, Group, Text, Box, Rating, Checkbox } from "@mantine/core";
-import classes from "../../pages/student/DigitalSkillWallet.module.css";
+import classes from "../../style/DigitalSkillWallet.module.css";
 
 const VerifiedSkillCard = ({ skill, checked, onChange }) => {
   return (

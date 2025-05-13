@@ -1,6 +1,6 @@
 import { Alert } from '@mantine/core';
 import { IconInfoCircle } from '@tabler/icons-react';
-import classes from "../../pages/student/DigitalSkillWallet.module.css";
+import classes from "../../style/DigitalSkillWallet.module.css";
 
 function AlertBox({ onClose, title, children }) {
   return (

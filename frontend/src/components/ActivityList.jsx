@@ -2,30 +2,40 @@ import { Box, Title, Paper, Text, Group, Button, Badge, Stack } from '@mantine/c
 
 export default function ActivityList(props) {
   return (
-    <Box w="100%" mb="50px">
-      <Stack spacing="xs">
-        <Group>
-            <Title order={3}>My Courses</Title>
-            <Button variant="light" ml="auto" mt="15px">More</Button>
-        </Group>
-        {props.courseData.map((course, index) => (
-            <Paper key={`${course.courseCode}-${index}`} withBorder p="md" radius="md" style={{ height: "99px" }}>
-              <Group justify="space-between" align="center">
-                <div>
-                  <Text fw={600}>{course.courseName}</Text>
-                  <Text size="xs" c="dimmed">
-                    {course.courseCode}
-                  </Text>
-                  <Group mt="xs">
-                    <Badge color="blue" variant="light" radius="sm">
-                      {course.students} Students
-                    </Badge>
-                  </Group>
-                </div>
+  <Box w="100%" mb="50px" px="sm">
+    <Stack spacing="xs">
+      <Group justify="space-between" align="flex-end">
+        <Title order={3}>My Courses</Title>
+        <Button variant="light" size="xs">More</Button>
+      </Group>
+
+      {props.courseList.map((course) => (
+        <Paper
+          key={course.id}
+          withBorder
+          p="md"
+          radius="md"
+          style={{ width: "100%" }}
+        >
+          <Group justify="space-between" align="center">
+            <div>
+              <Text fw={600}>{course.title}</Text>
+              <Text size="xs" c="dimmed">{course.code}</Text>
+              <Group mt="xs">
+                <Badge color="blue" variant="light" radius="sm">
+                  {course.studentCount} Students
+                </Badge>
+                {course.skillTemplate.hardSkills?.map((skill, index)=>(
+                  <Badge key={index} color="green" variant="light" radius="sm">
+                    {skill}
+                  </Badge>
+                ))}
               </Group>
-            </Paper>
-          ))}
-      </Stack>
-    </Box>
+            </div>
+          </Group>
+        </Paper>
+      ))}
+    </Stack>
+  </Box>
   );
 }

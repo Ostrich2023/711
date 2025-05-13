@@ -3,8 +3,6 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   Box,
-  TextInput,
-  Textarea,
   Select,
   FileInput,
   Button,
@@ -178,7 +176,7 @@ export default function StudentRequestSkill() {
         </Stack>
       </Paper>
 
-      <Title order={4}>Your Skills</Title>
+      <Title order={3}>Your Skills</Title>
       {isFetching ? (
         <Loader />
       ) : skills.length === 0 ? (

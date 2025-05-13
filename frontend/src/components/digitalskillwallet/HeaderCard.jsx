@@ -1,6 +1,6 @@
 import { Paper, Flex } from "@mantine/core";
 import { UserButton } from "../employer/UserButton";
-import classes from "../../pages/student/DigitalSkillWallet.module.css";
+import classes from "../../style/DigitalSkillWallet.module.css";
 
 export default function HeaderCard({ userData, userType = "User" }) {
     const idLabel = {

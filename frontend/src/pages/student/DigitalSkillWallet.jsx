@@ -26,8 +26,7 @@ import BarChart from "../../components/digitalskillwallet/BarChart";
 import HeaderCard from "../../components/digitalskillwallet/HeaderCard";
 import PieChart from "../../components/digitalskillwallet/PieChart";
 import SkillCard from "../../components/digitalskillwallet/SkillCard";
-import NormButton from "../../components/digitalskillwallet/NormButton";
-import classes from "./DigitalSkillWallet.module.css";
+import classes from "../../style/DigitalSkillWallet.module.css";
 
 const theme = createTheme({
   components: {
