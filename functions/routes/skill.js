@@ -12,7 +12,7 @@ async function verifyToken(req, res, next) {
   try {
     const decoded = await admin.auth().verifyIdToken(idToken);
     const userDoc = await admin.firestore().doc(`users/${decoded.uid}`).get();
-    if (!userDoc.exists) return res.status(403).send("User document not found");
+    if (!userDoc.exists) return res.status(403).send("User not found");
 
     req.user = {
       uid: decoded.uid,
@@ -25,16 +25,19 @@ async function verifyToken(req, res, next) {
   }
 }
 
-// POST /skill/add — Add a new skill (student only)
+// POST /skill/add
 router.post("/add", verifyToken, async (req, res) => {
   const { role, uid } = req.user;
-  const { courseId, attachmentCid, level } = req.body;
+  const { courseId, attachmentCid, level, softSkills } = req.body;
 
   if (role !== "student") return res.status(403).send("Only students can add skills");
   if (!courseId) return res.status(400).send("Missing courseId");
 
+  if (!Array.isArray(softSkills) || softSkills.length === 0 || softSkills.length > 5) {
+    return res.status(400).send("Please select 1 to 5 soft skills");
+  }
+
   try {
-    // 获取课程数据
     const courseRef = admin.firestore().doc(`courses/${courseId}`);
     const courseDoc = await courseRef.get();
     if (!courseDoc.exists) return res.status(404).send("Course not found");
@@ -42,7 +45,6 @@ router.post("/add", verifyToken, async (req, res) => {
     const courseData = courseDoc.data();
     const skillTemplate = courseData.skillTemplate || {};
 
-    // 是否首次提交
     const existingSnap = await admin.firestore()
       .collection("skills")
       .where("courseId", "==", courseId)
@@ -51,7 +53,6 @@ router.post("/add", verifyToken, async (req, res) => {
 
     const isFirstSubmission = existingSnap.empty;
 
-    // 添加技能
     const docRef = await admin.firestore().collection("skills").add({
       ownerId: uid,
       courseId,
@@ -62,6 +63,9 @@ router.post("/add", verifyToken, async (req, res) => {
       description: skillTemplate.skillDescription || "",
       level: level || "Beginner",
       attachmentCid: attachmentCid || "",
+      softSkills, // array of soft-skill ID
+      hardSkillScores: null,
+      softSkillScores: null,
       verified: "pending",
       reviewedBy: null,
       reviewedAt: null,
@@ -70,7 +74,6 @@ router.post("/add", verifyToken, async (req, res) => {
       createdAt: FieldValue ? FieldValue.serverTimestamp() : new Date().toISOString(),
     });
 
-    // 首次提交则更新 studentCount
     if (isFirstSubmission) {
       await courseRef.update({
         studentCount: FieldValue.increment(1),
@@ -84,30 +87,85 @@ router.post("/add", verifyToken, async (req, res) => {
   }
 });
 
-// GET /skill/list — 学生查看自己提交的所有技能
+// GET /skill/list — enhanced: resolve softSkill names and major
 router.get("/list", verifyToken, async (req, res) => {
   const { uid, role } = req.user;
-
-  if (role !== "student") {
-    return res.status(403).send("Only students can view their own skills");
-  }
+  if (role !== "student") return res.status(403).send("Only students can view their skills");
 
   try {
-    const snapshot = await admin.firestore()
+    const db = admin.firestore();
+    const userDoc = await db.doc(`users/${uid}`).get();
+    const studentMajorId = userDoc.data()?.major;
+
+    const majorDoc = await db.doc(`majors/${studentMajorId}`).get();
+    const majorName = majorDoc.exists ? majorDoc.data().name : null;
+
+    const skillSnap = await db
       .collection("skills")
       .where("ownerId", "==", uid)
       .orderBy("createdAt", "desc")
       .get();
 
-    const skills = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const softSkillDocs = await db.collection("soft-skills").get();
+    const softSkillMap = {};
+    softSkillDocs.forEach((doc) => {
+      softSkillMap[doc.id] = doc.data().name;
+    });
 
-    res.json(skills);
+    const results = skillSnap.docs.map((doc) => {
+      const data = doc.data();
+      const resolvedSoftSkills = (data.softSkills || []).map((id) => softSkillMap[id] || id);
+      return {
+        id: doc.id,
+        ...data,
+        softSkills: resolvedSoftSkills,
+        major: majorName,
+      };
+    });
+
+    res.json(results);
   } catch (error) {
-    console.error("Failed to fetch skills:", error);
+    console.error("Failed to fetch skills:", error.message);
     res.status(500).send("Failed to load skills");
+  }
+});
+
+// PUT /skill/review/:id — 教师评分技能
+router.put("/review/:id", verifyToken, async (req, res) => {
+  const { role, uid } = req.user;
+  const skillId = req.params.id;
+  const { hardSkillScores, softSkillScores, note } = req.body;
+
+  if (role !== "school") {
+    return res.status(403).send("Only teachers can review skills");
+  }
+
+  if (
+    typeof hardSkillScores !== "object" ||
+    typeof softSkillScores !== "object"
+  ) {
+    return res.status(400).send("Missing or invalid rubric score structure");
+  }
+
+  try {
+    const skillRef = admin.firestore().doc(`skills/${skillId}`);
+    const skillDoc = await skillRef.get();
+
+    if (!skillDoc.exists) return res.status(404).send("Skill not found");
+
+    await skillRef.update({
+      hardSkillScores,
+      softSkillScores,
+      note: note || "",
+      verified: "approved",
+      reviewedBy: uid,
+      reviewedAt: FieldValue.serverTimestamp(),
+    });
+
+    res.send("Skill reviewed successfully");
+  } catch (error) {
+    console.error("Skill review failed:", error.message);
+    res.status(500).send("Failed to review skill");
   }
 });
 

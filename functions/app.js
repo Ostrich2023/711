@@ -2,6 +2,19 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+
+// Debug wrap — 捕捉非法路径注册
+const wrapMethods = ["get", "post", "put", "delete", "use"];
+wrapMethods.forEach((method) => {
+  const original = express.Router.prototype[method];
+  express.Router.prototype[method] = function (path, ...handlers) {
+    if (typeof path === "string" && path.startsWith("http")) {
+      console.trace(`❗Illegal router.${method} path: ${path}`);
+    }
+    return original.call(this, path, ...handlers);
+  };
+});
+
 import cors from "cors";
 import fileUpload from "express-fileupload";
 
@@ -18,21 +31,28 @@ import teacherRoutes from "./routes/teacher.js";
 
 const app = express();
 
-// 注册中间件
+// 处理所有 OPTIONS 请求，解决 CORS 预检失败
+app.options("*", cors());
+
+// 跨域中间件
 app.use(
   cors({
     origin: [
-      "https://digital-skill-wallet.web.app", // 前端生产地址
-      "http://localhost:5173",                // 本地开发地址
+      "https://digital-skill-wallet.web.app", // Firebase Hosting 地址
+      "http://localhost:5173",                // 本地开发环境
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
+
+// JSON 解析中间件
 app.use(express.json());
+
+// 文件上传支持
 app.use(fileUpload());
 
-// 注册 REST 路由
+// 注册各模块路由
 app.use("/user", userRoutes);
 app.use("/skill", skillRoutes);
 app.use("/student", studentRoutes);
