@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import admin from "firebase-admin";
 
 const router = express.Router();
@@ -76,31 +76,52 @@ router.put("/update-school", verifyStudent, async (req, res) => {
 
 // GET /student/list-courses
 router.get("/list-courses", verifyStudent, async (req, res) => {
-  try {
-    const schoolId = req.user.schoolId;
-    
-    if (!schoolId) {
-      console.warn("Missing schoolId in student profile:", req.user);
-      return res.status(400).send("Missing schoolId in your profile.");
+    try {
+        const { schoolId, major } = req.user;
+
+        if (!schoolId || !major) {
+            return res.status(400).send("Missing schoolId or major in profile.");
+        }
+
+        const majorRef = admin.firestore().doc(`majors/${major}`);
+
+        const snapshot = await admin.firestore().collection("courses")
+            .where("schoolId", "==", schoolId)
+            .where("major", "==", majorRef)
+            .get();
+
+        const courses = [];
+
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+
+            // resolve major reference
+            let majorId = "";
+            let majorName = "";
+            if (data.major && data.major.path) {
+                const refParts = data.major.path.split("/");
+                majorId = refParts[refParts.length - 1];
+                const majorSnap = await data.major.get();
+                majorName = majorSnap.exists ? majorSnap.data().name : "Unknown";
+            }
+
+            courses.push({
+                id: doc.id,
+                title: data.title,
+                code: data.code,
+                skillTemplate: data.skillTemplate,
+                major: { id: majorId, name: majorName }, // 课程专业
+                schoolId: data.schoolId
+            });
+        }
+
+        res.json(courses);
+    } catch (err) {
+        console.error("Failed to fetch student courses:", err);
+        res.status(500).send("Failed to load courses");
     }
-
-    const snapshot = await admin.firestore().collection("courses").get();
-
-    const courses = snapshot.docs
-      .filter(doc => doc.data().schoolId === schoolId)
-      .map(doc => ({
-        id: doc.id,
-        title: doc.data().title,
-        code: doc.data().code,
-        skillTemplate: doc.data().skillTemplate,
-      }));
-
-    res.json(courses);
-  } catch (err) {
-    console.error("Failed to fetch student courses:", err);
-    res.status(500).send("Failed to load courses");
-  }
 });
+
 
 // GET /student/course-avg-scores
 router.get("/course-avg-scores", verifyStudent, async (req, res) => {
