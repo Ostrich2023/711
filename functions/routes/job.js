@@ -24,8 +24,8 @@ async function verifyToken(req, res, next) {
   }
 }
 
-// GET /job/:jobId
-router.get("/:jobId", verifyToken, async (req, res) => {
+// GET /job/detail/:jobId
+router.get("/detail/:jobId", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
 
@@ -48,8 +48,8 @@ router.get("/:jobId", verifyToken, async (req, res) => {
   }
 });
 
-// POST /job
-router.post("/", verifyToken, async (req, res) => {
+// POST /job/create
+router.post("/create", verifyToken, async (req, res) => {
   const { title, description, price, location, skills } = req.body;
   const { uid, role } = req.user;
 
@@ -78,8 +78,8 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-// GET /job
-router.get("/", verifyToken, async (req, res) => {
+// GET /job/list
+router.get("/list", verifyToken, async (req, res) => {
   const { uid, role } = req.user;
 
   try {
@@ -98,8 +98,8 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /job/:jobId
-router.put("/:jobId", verifyToken, async (req, res) => {
+// PUT /job/update/:jobId
+router.put("/update/:jobId", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { title, description, price, location, skills } = req.body;
   const { uid, role } = req.user;
@@ -121,8 +121,8 @@ router.put("/:jobId", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /job/:jobId/assign/:studentId
-router.put("/:jobId/assign/:studentId", verifyToken, async (req, res) => {
+// PUT /job/assign/:jobId/:studentId
+router.put("/assign/:jobId/:studentId", verifyToken, async (req, res) => {
   const { jobId, studentId } = req.params;
   const { uid, role } = req.user;
 
@@ -145,8 +145,8 @@ router.put("/:jobId/assign/:studentId", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /job/:jobId/verify
-router.put("/:jobId/verify", verifyToken, async (req, res) => {
+// PUT /job/verify/:jobId
+router.put("/verify/:jobId", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
 
@@ -168,8 +168,8 @@ router.put("/:jobId/verify", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /job/:jobId/accept
-router.put("/:jobId/accept", verifyToken, async (req, res) => {
+// PUT /job/accept/:jobId
+router.put("/accept/:jobId", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
 
@@ -190,8 +190,8 @@ router.put("/:jobId/accept", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /job/:jobId/reject
-router.put("/:jobId/reject", verifyToken, async (req, res) => {
+// PUT /job/reject/:jobId
+router.put("/reject/:jobId", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
 
@@ -212,8 +212,8 @@ router.put("/:jobId/reject", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /job/:jobId/complete
-router.put("/:jobId/complete", verifyToken, async (req, res) => {
+// PUT /job/complete/:jobId
+router.put("/complete/:jobId", verifyToken, async (req, res) => {
   const { jobId } = req.params;
   const { uid, role } = req.user;
 

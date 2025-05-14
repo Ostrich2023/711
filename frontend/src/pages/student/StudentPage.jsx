@@ -4,6 +4,7 @@ import {
   IconHome2,
   IconClipboardList,
   IconSettings,
+  IconBook2,
 } from "@tabler/icons-react";
 import { Navigate, Outlet } from "react-router-dom";
 
@@ -21,6 +22,7 @@ const StudentPage = () => {
   const navbarData = [
     { link: ".", label: "Home", icon: IconHome2 },
     { link: "request-skill", label: "Request Skill", icon: IconClipboardList },
+    { link: "my-courses", label: "My Courses", icon: IconBook2 }, // 新增课程导航
     { link: "settings", label: "Settings", icon: IconSettings },
   ];
 

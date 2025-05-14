@@ -1,141 +1,149 @@
 import { useEffect, useState } from "react";
-import { Box, Title, SimpleGrid, Group, Text, Loader, Center } from "@mantine/core";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  Box,
+  Title,
+  Text,
+  Group,
+  Loader,
+  Center,
+  Paper,
+  Stack,
+  Badge,
+  SimpleGrid,
+} from "@mantine/core";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../../firebase";
-
 import { useAuth } from "../../context/AuthContext";
 import { useFireStoreUser } from "../../hooks/useFirestoreUser";
-
-import Notification from "../../components/Notification";
-import StatusOverview from "../../components/StatusOverview";
-import ActivityList from "../../components/ActivityList";
-import UserTable from "../../components/UserTable";
 
 export default function StudentHome() {
   const { user } = useAuth();
   const { userData, isLoading } = useFireStoreUser(user);
 
   const [skills, setSkills] = useState([]);
-  const [loadingSkills, setLoadingSkills] = useState(true);
-  const [teacherList, setTeacherList] = useState([]);
-  const [courseData, setCourseData] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [teachers, setTeachers] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user?.uid && userData?.schoolId) {
-      fetchSkills();
-      fetchCourses();
-      fetchTeachers();
+      fetchStudentSkills();
     }
   }, [user, userData]);
 
-  const fetchSkills = async () => {
+  const fetchStudentSkills = async () => {
     try {
-      const q = query(
-        collection(db, "skills"),
-        where("ownerId", "==", user.uid)
+      const skillSnap = await getDocs(
+        query(collection(db, "skills"), where("ownerId", "==", user.uid))
       );
-      const querySnapshot = await getDocs(q);
-      const skillData = querySnapshot.docs.map(doc => ({
+      const skillData = skillSnap.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
+
       setSkills(skillData);
+
+      // Extract unique courseIds
+      const courseIds = [...new Set(skillData.map(s => s.courseId))];
+
+      const courseData = [];
+      const teacherMap = {};
+
+      for (const courseId of courseIds) {
+        const courseDoc = await getDoc(doc(db, "courses", courseId));
+        if (courseDoc.exists()) {
+          const course = courseDoc.data();
+          course.id = courseDoc.id;
+
+          // fetch teacher
+          const teacherRef = course.createdBy;
+          if (teacherRef && teacherRef.path) {
+            const teacherDoc = await getDoc(teacherRef);
+            if (teacherDoc.exists()) {
+              teacherMap[course.id] = teacherDoc.data();
+            }
+          }
+
+          courseData.push(course);
+        }
+      }
+
+      setCourses(courseData);
+      setTeachers(teacherMap);
     } catch (err) {
-      console.error("Failed to fetch skills:", err);
+      console.error("Failed to load skills or courses:", err);
     } finally {
-      setLoadingSkills(false);
+      setLoading(false);
     }
   };
-
-  const fetchCourses = async () => {
-    try {
-      const q = query(
-        collection(db, "courses"),
-        where("schoolId", "==", userData?.schoolId || "")
-      );
-      const snapshot = await getDocs(q);
-
-      const courseStats = await Promise.all(snapshot.docs.map(async (doc) => {
-        const data = doc.data();
-        const courseId = doc.id;
-
-        const studentsSnap = await getDocs(query(
-          collection(db, "skills"),
-          where("courseId", "==", courseId),
-          where("verified", "==", "approved")
-        ));
-
-        const uniqueStudents = new Set(studentsSnap.docs.map(d => d.data().ownerId));
-
-        return {
-          courseName: data.title,
-          courseCode: data.code,
-          students: uniqueStudents.size
-        };
-      }));
-
-      setCourseData(courseStats);
-    } catch (err) {
-      console.error("Failed to fetch courses:", err);
-    }
-  };
-
-  const fetchTeachers = async () => {
-    try {
-      const q = query(
-        collection(db, "users"),
-        where("role", "==", "teacher"),
-        where("schoolId", "==", userData?.schoolId || "")
-      );
-      const snapshot = await getDocs(q);
-      const teachers = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          avatar: data.avatarUrl || "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-9.png",
-          name: data.name,
-          email: data.email,
-          course: "-", // 可扩展为课程统计
-          lastActive: data.lastLogin || "Unknown"
-        };
-      });
-      setTeacherList(teachers);
-    } catch (err) {
-      console.error("Failed to fetch teachers:", err);
-    }
-  };
-
-  const unverifiedCount = skills.filter(skill => skill.verified === false).length;
 
   return (
     <Box flex={1} mt="30px">
-      {isLoading ? (
+      {isLoading || loading ? (
         <Center mt="xl">
           <Loader />
         </Center>
       ) : (
         <>
-          <Group>
+          <Group mb="sm">
             <Title order={2}>Welcome back, {userData?.name}</Title>
-            <Text mt="10px" c="gray">
-              {userData?.schoolId?.toUpperCase()} · {userData?.role}
-            </Text>
+            <Text c="dimmed">{userData?.schoolId?.toUpperCase()} · Student</Text>
           </Group>
 
-          <Notification
-            count={unverifiedCount}
-            label="pending skills"
-            messagePrefix="You currently have"
-            messageSuffix="skills pending review."
-          />
-
-          {!loadingSkills && (
-            <StatusOverview skills={skills} />
+          {/* Skills Overview */}
+          <Title order={3} mt="md" mb="sm">My Skills</Title>
+          {skills.length === 0 ? (
+            <Text>No skills submitted yet.</Text>
+          ) : (
+            <Stack>
+              {skills.map(skill => (
+                <Paper key={skill.id} withBorder p="md">
+                  <Group justify="space-between">
+                    <Box>
+                      <Text fw={600}>{skill.title} ({skill.level})</Text>
+                      <Text size="sm" c="dimmed">
+                        {skill.courseCode} - {skill.courseTitle}
+                      </Text>
+                      <Text size="xs" mt="xs">{skill.description}</Text>
+                      {skill.verified === "approved" ? (
+                        <Badge color="green">Approved</Badge>
+                      ) : skill.verified === "rejected" ? (
+                        <Badge color="red">Rejected</Badge>
+                      ) : (
+                        <Badge color="gray">Pending</Badge>
+                      )}
+                    </Box>
+                  </Group>
+                </Paper>
+              ))}
+            </Stack>
           )}
 
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" mt="md">
-            <ActivityList courseData={courseData} />
-            <UserTable title="My Teachers" data={teacherList} />
-          </SimpleGrid>
+          {/* Courses */}
+          <Title order={3} mt="xl" mb="sm">My Courses</Title>
+          {courses.length === 0 ? (
+            <Text>No course participation detected.</Text>
+          ) : (
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              {courses.map(course => (
+                <Paper key={course.id} withBorder p="md">
+                  <Text fw={600}>{course.title}</Text>
+                  <Text size="sm" c="dimmed">{course.code}</Text>
+                  <Text size="xs" mt="xs">{course.skillTemplate?.skillDescription}</Text>
+                  <Text size="xs" mt="xs">
+                    Teacher: {teachers[course.id]?.name || "Unknown"}
+                  </Text>
+                </Paper>
+              ))}
+            </SimpleGrid>
+          )}
         </>
       )}
     </Box>
