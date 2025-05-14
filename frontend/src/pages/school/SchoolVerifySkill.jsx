@@ -51,7 +51,7 @@ export default function SchoolVerifySkill() {
         res.data.map(async (skill) => {
           let hardSkills = [];
           try {
-            const courseRes = await axios.get(`${BASE_URL}/school/course/${skill.courseId}/details`, {
+             const courseRes = await axios.get(`${BASE_URL}/course/details/${skill.courseId}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             hardSkills = courseRes.data.hardSkills || [];
@@ -202,14 +202,14 @@ export default function SchoolVerifySkill() {
                       }
                     }}
                     data={[
-                      { value: "approved", label: "✅ Approve" },
-                      { value: "rejected", label: "❌ Reject" },
+                      { value: "approved", label: " Approve" },
+                      { value: "rejected", label: " Reject" },
                     ]}
                   />
 
                   {!decision && (
                     <Text size="sm" c="red">
-                      ⚠️ Please select Approve or Reject to continue.
+                       Please select Approve or Reject to continue.
                     </Text>
                   )}
 

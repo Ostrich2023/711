@@ -108,12 +108,30 @@ router.get("/list-courses", verifyStudent, async (req, res) => {
       .where("major", "==", majorRef)
       .get();
 
-    const courses = snapshot.docs.map(doc => ({
-      id: doc.id,
-      title: doc.data().title,
-      code: doc.data().code,
-      skillTemplate: doc.data().skillTemplate,
-    }));
+    const courses = [];
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+
+      // resolve major reference
+      let majorId = "";
+      let majorName = "";
+      if (data.major && data.major.path) {
+        const refParts = data.major.path.split("/");
+        majorId = refParts[refParts.length - 1];
+        const majorSnap = await data.major.get();
+        majorName = majorSnap.exists ? majorSnap.data().name : "Unknown";
+      }
+
+      courses.push({
+        id: doc.id,
+        title: data.title,
+        code: data.code,
+        skillTemplate: data.skillTemplate,
+        major: { id: majorId, name: majorName }, // 课程专业
+        schoolId: data.schoolId
+      });
+    }
 
     res.json(courses);
   } catch (err) {
@@ -121,6 +139,7 @@ router.get("/list-courses", verifyStudent, async (req, res) => {
     res.status(500).send("Failed to load courses");
   }
 });
+
 
 // GET /student/course-avg-scores
 router.get("/course-avg-scores", verifyStudent, async (req, res) => {

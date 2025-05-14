@@ -190,4 +190,29 @@ router.get("/soft-skills", verifyUser, async (req, res) => {
   }
 });
 
+// GET /course/:courseId/details
+router.get("/details/:courseId", verifyUser, async (req, res) => {
+  const { courseId } = req.params;
+
+  try {
+    const doc = await admin.firestore().doc(`courses/${courseId}`).get();
+    if (!doc.exists) return res.status(404).send("Course not found");
+
+    const data = doc.data();
+    const majorName = await resolveMajorName(data.major);
+
+    res.json({
+      id: doc.id,
+      title: data.title,
+      code: data.code,
+      hardSkills: data.hardSkills || [],
+      skillTemplate: data.skillTemplate || {},
+      majorName,
+    });
+  } catch (err) {
+    console.error("Failed to fetch course details:", err);
+    res.status(500).send("Failed to fetch course details");
+  }
+});
+
 export default router;
