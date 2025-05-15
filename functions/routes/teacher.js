@@ -3,135 +3,256 @@ import admin from "firebase-admin";
 
 const router = express.Router();
 
-// Middleware: verify teacher
-async function verifyTeacher(req, res, next) {
-    const idToken = req.headers.authorization?.split("Bearer ")[1];
-    if (!idToken) return res.status(401).send("Unauthorized");
+// Middleware: verify token and extract teacher info
+async function verifyToken(req, res, next) {
+  const idToken = req.headers.authorization?.split("Bearer ")[1];
+  if (!idToken) return res.status(401).send("Unauthorized");
 
-    try {
-        const decoded = await admin.auth().verifyIdToken(idToken);
-        const uid = decoded.uid;
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const userDoc = await admin.firestore().doc(`users/${decoded.uid}`).get();
+    if (!userDoc.exists) return res.status(403).send("User not found");
 
-        const userDoc = await admin.firestore().doc(`users/${uid}`).get();
-        if (!userDoc.exists) return res.status(403).send("User not found");
-
-        const user = userDoc.data();
-        if (user.role !== "school") {
-            return res.status(403).send("Access denied. Only teachers allowed.");
-        }
-
-        req.user = { uid, ...user };
-        next();
-    } catch (err) {
-        console.error("Teacher token verification failed:", err);
-        return res.status(403).send("Invalid token");
+    const userData = userDoc.data();
+    if (userData.role !== "school") {
+      return res.status(403).send("Access denied. Only teachers allowed.");
     }
+
+    req.user = {
+      uid: decoded.uid,
+      role: userData.role,
+      schoolId: userData.schoolId,
+    };
+    next();
+  } catch (err) {
+    console.error("Token error:", err);
+    return res.status(403).send("Invalid token");
+  }
 }
 
-// GET /teacher/me
-router.get("/me", verifyTeacher, (req, res) => {
-    const { uid, email, schoolId, name } = req.user;
-    res.json({ uid, email, name, schoolId, role: "teacher" });
-});
-
-// POST /teacher/verify-skill/:id — 支持 approved/rejected 三状态验证
-router.post("/verify-skill/:id", verifyTeacher, async (req, res) => {
-  const skillId = req.params.id;
-  const { score, decision, note } = req.body;
-
-  // 校验状态值
-  if (!["approved", "rejected"].includes(decision)) {
-    return res.status(400).send("Invalid decision. Must be 'approved' or 'rejected'.");
-  }
-
-  // 如果是通过，必须要打分
-  if (decision === "approved") {
-    if (score == null || typeof score !== "number" || score < 0 || score > 5) {
-      return res.status(400).send("Score must be a number between 0 and 5.");
-    }
-  }
-
+// 获取本校所有学生
+router.get("/students", verifyToken, async (req, res) => {
   try {
-    const skillRef = admin.firestore().doc(`skills/${skillId}`);
-    const skillDoc = await skillRef.get();
+    const snapshot = await admin.firestore()
+      .collection("users")
+      .where("role", "==", "student")
+      .where("schoolId", "==", req.user.schoolId)
+      .get();
 
-    if (!skillDoc.exists) return res.status(404).send("Skill not found");
-
-    const updateData = {
-      verified: decision,
-      reviewedBy: req.user.uid,
-      reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
-      note: note || "",
-    };
-
-    if (decision === "approved") {
-      updateData.score = score;
-    }
-
-    await skillRef.update(updateData);
-    res.send("Skill reviewed successfully.");
-  } catch (error) {
-    console.error("Skill verification failed:", error);
-    res.status(500).send("Failed to review skill.");
+    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(students);
+  } catch (err) {
+    console.error("Error fetching students:", err);
+    res.status(500).send("Failed to retrieve students.");
   }
 });
 
-// GET /teacher/my-courses
-router.get("/my-courses", verifyTeacher, async (req, res) => {
+// 获取某个学生的技能
+router.get("/student/:id/skills", verifyToken, async (req, res) => {
+  const studentId = req.params.id;
+
   try {
-    const courseSnapshot = await admin.firestore()
+    const studentDoc = await admin.firestore().doc(`users/${studentId}`).get();
+    if (!studentDoc.exists) return res.status(404).send("Student not found");
+
+    const student = studentDoc.data();
+    if (student.role !== "student" || student.schoolId !== req.user.schoolId) {
+      return res.status(403).send("Access denied for students from other schools.");
+    }
+
+    const snapshot = await admin.firestore()
+      .collection("skills")
+      .where("ownerId", "==", studentId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const skills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(skills);
+  } catch (err) {
+    console.error("Error fetching skills:", err);
+    res.status(500).send("Failed to retrieve skills.");
+  }
+});
+
+// 获取本校教师
+router.get("/teachers", verifyToken, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("users")
+      .where("role", "==", "school")
+      .where("schoolId", "==", req.user.schoolId)
+      .get();
+
+    const teachers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(teachers);
+  } catch (err) {
+    console.error("Error fetching teachers:", err);
+    res.status(500).send("Failed to retrieve teachers.");
+  }
+});
+
+// 获取本校课程
+router.get("/courses", verifyToken, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("courses")
+      .where("schoolId", "==", req.user.schoolId)
+      .get();
+
+    const courses = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    res.json(courses);
+  } catch (err) {
+    console.error("Error fetching courses:", err);
+    res.status(500).send("Failed to retrieve courses.");
+  }
+});
+
+//  // GET /course/:courseId/students
+router.get("/course/:courseId/students", verifyToken, async (req, res) => {
+  const courseId = req.params.courseId;
+
+  try {
+    const snapshot = await admin.firestore()
+      .collection("skills")
+      .where("courseId", "==", courseId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const skills = [];
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const studentDoc = await admin.firestore().doc(`users/${data.ownerId}`).get();
+      const student = studentDoc.exists ? studentDoc.data() : null;
+      if (student && student.schoolId === req.user.schoolId) {
+        skills.push({
+          id: doc.id,
+          ...data,
+          student: {
+            id: studentDoc.id,
+            name: student.name,
+            email: student.email,
+            major: student.major,
+          },
+        });
+      }
+    }
+
+    res.json(skills);
+  } catch (err) {
+    console.error("Error fetching course student skills:", err);
+    res.status(500).send("Failed to retrieve course student data.");
+  }
+});
+
+// GET /school/:schoolId/students
+router.get("/:schoolId/students", async (req, res) => {
+  const { schoolId } = req.params;
+
+  try {
+    const snapshot = await admin.firestore()
+      .collection("users")
+      .where("role", "==", "student")
+      .where("schoolId", "==", schoolId)
+      .get();
+
+    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(students);
+  } catch (err) {
+    console.error("Public school-student fetch failed:", err);
+    res.status(500).send("Failed to retrieve students.");
+  }
+});
+
+// GET /school/course/:courseId/details
+router.get("/course/:courseId/details", verifyToken, async (req, res) => {
+  const courseId = req.params.courseId;
+
+  try {
+    const courseRef = admin.firestore().doc(`courses/${courseId}`);
+    const courseDoc = await courseRef.get();
+    if (!courseDoc.exists) return res.status(404).send("Course not found");
+
+    const course = courseDoc.data();
+
+    const creatorRef = course.createdBy;
+    const teacherDoc = await creatorRef.get();
+    const teacher = teacherDoc.exists ? teacherDoc.data() : null;
+
+    res.json({
+      id: courseDoc.id,
+      ...course,
+      teacher: teacher ? {
+        id: teacherDoc.id,
+        name: teacher.name,
+        email: teacher.email,
+      } : null,
+    });
+  } catch (err) {
+    console.error("Error fetching course details:", err);
+    res.status(500).send("Failed to retrieve course details.");
+  }
+});
+
+// GET /teacher/my-courses — 获取当前教师创建的课程
+router.get("/my-courses", verifyToken, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
       .collection("courses")
       .where("createdBy", "==", admin.firestore().doc(`users/${req.user.uid}`))
       .get();
 
-    const courses = [];
-
-    for (const doc of courseSnapshot.docs) {
-      const course = doc.data();
-      const courseId = doc.id;
-
-      // 查询该课程关联的技能数量
-      const skillSnapshot = await admin.firestore()
-        .collection("skills")
-        .where("courseId", "==", courseId)
-        .get();
-
-      courses.push({
-        id: courseId,
-        ...course,
-        studentCount: skillSnapshot.size, // 加上这个字段
-      });
-    }
+    const courses = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
     res.json(courses);
   } catch (err) {
-    console.error("Failed to fetch teacher courses:", err);
-    res.status(500).send("Error fetching courses");
+    console.error("Failed to fetch teacher courses:", err.message);
+    res.status(500).send("Failed to retrieve courses.");
   }
 });
 
-// GET /teacher/pending-skills
-router.get("/pending-skills", verifyTeacher, async (req, res) => {
+// GET /teacher/pending-skills — 获取当前教师所属学校的待审核技能
+router.get("/pending-skills", verifyToken, async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("skills")
-      .where("verified", "==", "pending") //  修复：改为 "pending"
+      .where("verified", "==", "pending")
       .get();
 
-    const results = [];
+    const pendingSkills = [];
+
     for (const doc of snapshot.docs) {
       const data = doc.data();
-      const ownerDoc = await admin.firestore().doc(`users/${data.ownerId}`).get();
 
-      if (ownerDoc.exists && ownerDoc.data().schoolId === req.user.schoolId) {
-        results.push({ id: doc.id, ...data });
-      }
+      // 确保是本校学生
+      const studentDoc = await admin.firestore().doc(`users/${data.ownerId}`).get();
+      if (!studentDoc.exists) continue;
+
+      const studentData = studentDoc.data();
+      if (studentData.schoolId !== req.user.schoolId) continue;
+
+      pendingSkills.push({
+        id: doc.id,
+        ...data,
+        student: {
+          id: studentDoc.id,
+          name: studentData.name,
+          email: studentData.email,
+          major: studentData.major,
+        },
+      });
     }
 
-    res.json(results);
+    res.json(pendingSkills);
   } catch (err) {
     console.error("Error fetching pending skills:", err);
-    res.status(500).send("Failed to fetch skills");
+    res.status(500).send("Failed to retrieve pending skills.");
   }
 });
 

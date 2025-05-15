@@ -4,150 +4,215 @@ import admin from "firebase-admin";
 const router = express.Router();
 const FieldValue = admin.firestore.FieldValue;
 
-// Middleware: verify teacher
-async function verifyTeacher(req, res, next) {
-    const idToken = req.headers.authorization?.split("Bearer ")[1];
-    if (!idToken) return res.status(401).send("Unauthorized");
+// 通用身份验证
+async function verifyUser(req, res, next) {
+  const idToken = req.headers.authorization?.split("Bearer ")[1];
+  if (!idToken) return res.status(401).send("Unauthorized");
 
-    try {
-        const decoded = await admin.auth().verifyIdToken(idToken);
-        const uid = decoded.uid;
-        const userDoc = await admin.firestore().doc(`users/${uid}`).get();
-        if (!userDoc.exists) return res.status(403).send("User not found");
-        const user = userDoc.data();
-        if (user.role !== "school") return res.status(403).send("Access denied. Only teachers allowed.");
-        req.user = { uid, ...user };
-        next();
-    } catch (err) {
-        console.error("Teacher token verification failed:", err);
-        return res.status(403).send("Invalid token");
-    }
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const userDoc = await admin.firestore().doc(`users/${decoded.uid}`).get();
+    if (!userDoc.exists) return res.status(403).send("User not found");
+    req.user = { uid: decoded.uid, ...userDoc.data() };
+    next();
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    return res.status(403).send("Invalid token");
+  }
+}
+
+// 教师验证中间件
+function isTeacher(req, res, next) {
+  if (req.user.role !== "school") return res.status(403).send("Only teachers allowed");
+  next();
+}
+
+// 解析专业名称
+async function resolveMajorName(majorRef) {
+  if (!majorRef?.path) return null;
+  try {
+    const doc = await majorRef.get();
+    return doc.exists ? doc.data().name : null;
+  } catch {
+    return null;
+  }
 }
 
 // POST /course/create
-router.post("/create", verifyTeacher, async (req, res) => {
-    const { title, code, major, skillTemplate } = req.body;
-    if (!title || !code || !major || !skillTemplate?.skillTitle) {
-        return res.status(400).send("Missing required fields");
-    }
+router.post("/create", verifyUser, isTeacher, async (req, res) => {
+  const { title, code, major, skillTemplate, hardSkills } = req.body;
 
-    try {
-        const softSkills = Array.isArray(skillTemplate?.softSkills)
-            ? skillTemplate.softSkills.map(id => admin.firestore().doc(`soft-skills/${id}`))
-            : [];
+  if (!title || !code || !major || !skillTemplate?.skillTitle || !Array.isArray(hardSkills)) {
+    return res.status(400).send("Missing required fields");
+  }
 
-        const hardSkills = Array.isArray(skillTemplate?.hardSkills)
-            ? skillTemplate.hardSkills
-            : [];
+  try {
+    const courseData = {
+      title,
+      code,
+      schoolId: req.user.schoolId,
+      major: admin.firestore().doc(`majors/${major}`),
+      createdBy: admin.firestore().doc(`users/${req.user.uid}`),
+      createdAt: FieldValue.serverTimestamp(),
+      studentCount: 0,
+      hardSkills,
+      skillTemplate: {
+        skillTitle: skillTemplate.skillTitle,
+        skillDescription: skillTemplate.skillDescription || "",
+      },
+    };
 
-        const courseData = {
-            title,
-            code,
-            schoolId: req.user.schoolId,
-            major: admin.firestore().doc(`majors/${major}`),
-            createdBy: admin.firestore().doc(`users/${req.user.uid}`),
-            createdAt: FieldValue.serverTimestamp(),
-            studentCount: 0,
-            skillTemplate: {
-                skillTitle: skillTemplate.skillTitle || "",
-                skillDescription: skillTemplate.skillDescription || "",
-                softSkills,
-                hardSkills
-            }
-        };
-
-        const ref = await admin.firestore().collection("courses").add(courseData);
-        res.status(201).send({ id: ref.id });
-    } catch (err) {
-        console.error("Failed to create course:", err.message);
-        res.status(500).send("Course creation failed");
-    }
+    const ref = await admin.firestore().collection("courses").add(courseData);
+    res.status(201).send({ id: ref.id });
+  } catch (err) {
+    console.error("Course creation failed:", err);
+    res.status(500).send("Course creation failed");
+  }
 });
 
 // PUT /course/update/:id
-router.put("/update/:id", verifyTeacher, async (req, res) => {
-    const courseId = req.params.id;
-    const { title, code, major, skillTemplate } = req.body;
+router.put("/update/:id", verifyUser, isTeacher, async (req, res) => {
+  const { title, code, major, skillTemplate, hardSkills } = req.body;
+  const courseId = req.params.id;
 
-    try {
-        const courseRef = admin.firestore().doc(`courses/${courseId}`);
-        const courseDoc = await courseRef.get();
-        if (!courseDoc.exists) return res.status(404).send("Course not found");
+  try {
+    const courseRef = admin.firestore().doc(`courses/${courseId}`);
+    const courseDoc = await courseRef.get();
+    if (!courseDoc.exists) return res.status(404).send("Course not found");
 
-        const courseData = courseDoc.data();
-        const isCreator = courseData.createdBy?.path?.endsWith(req.user.uid);
-        if (!isCreator) return res.status(403).send("You are not the creator of this course");
+    const courseData = courseDoc.data();
+    const isCreator = courseData.createdBy?.path?.endsWith(req.user.uid);
+    if (!isCreator) return res.status(403).send("You are not the creator");
 
-        const softSkills = Array.isArray(skillTemplate?.softSkills)
-            ? skillTemplate.softSkills.map(id => admin.firestore().doc(`soft-skills/${id}`))
-            : courseData.skillTemplate?.softSkills || [];
+    await courseRef.update({
+      title: title || courseData.title,
+      code: code || courseData.code,
+      major: major ? admin.firestore().doc(`majors/${major}`) : courseData.major,
+      hardSkills: Array.isArray(hardSkills) ? hardSkills : courseData.hardSkills,
+      skillTemplate: {
+        skillTitle: skillTemplate?.skillTitle || courseData.skillTemplate.skillTitle,
+        skillDescription: skillTemplate?.skillDescription || courseData.skillTemplate.skillDescription,
+      },
+    });
 
-        const hardSkills = Array.isArray(skillTemplate?.hardSkills)
-            ? skillTemplate.hardSkills
-            : courseData.skillTemplate?.hardSkills || [];
-
-        await courseRef.update({
-            title: title || courseData.title,
-            code: code || courseData.code,
-            major: major ? admin.firestore().doc(`majors/${major}`) : courseData.major,
-            skillTemplate: {
-                skillTitle: skillTemplate?.skillTitle || courseData.skillTemplate?.skillTitle || "",
-                skillDescription: skillTemplate?.skillDescription || courseData.skillTemplate?.skillDescription || "",
-                softSkills,
-                hardSkills
-            }
-        });
-
-        res.send("Course updated successfully");
-    } catch (err) {
-        console.error("Course update failed:", err.message);
-        res.status(500).send("Course update failed");
-    }
+    res.send("Course updated");
+  } catch (err) {
+    console.error("Course update failed:", err);
+    res.status(500).send("Update failed");
+  }
 });
 
 // DELETE /course/delete/:id
-router.delete("/delete/:id", verifyTeacher, async (req, res) => {
-    const courseId = req.params.id;
+router.delete("/delete/:id", verifyUser, isTeacher, async (req, res) => {
+  const courseId = req.params.id;
 
-    try {
-        const courseRef = admin.firestore().doc(`courses/${courseId}`);
-        const courseDoc = await courseRef.get();
-        if (!courseDoc.exists) return res.status(404).send("Course not found");
+  try {
+    const courseRef = admin.firestore().doc(`courses/${courseId}`);
+    const courseDoc = await courseRef.get();
+    if (!courseDoc.exists) return res.status(404).send("Course not found");
 
-        const courseData = courseDoc.data();
-        const isCreator = courseData.createdBy?.path?.endsWith(req.user.uid);
-        if (!isCreator) return res.status(403).send("You are not the creator of this course");
+    const isCreator = courseDoc.data().createdBy?.path?.endsWith(req.user.uid);
+    if (!isCreator) return res.status(403).send("You are not the creator");
 
-        await courseRef.delete();
-        res.send("Course deleted successfully");
-    } catch (err) {
-        console.error("Course deletion failed:", err.message);
-        res.status(500).send("Course deletion failed");
+    await courseRef.delete();
+    res.send("Course deleted");
+  } catch (err) {
+    console.error("Course deletion failed:", err);
+    res.status(500).send("Deletion failed");
+  }
+});
+
+// GET /course/list-by-school
+router.get("/list-by-school", verifyUser, async (req, res) => {
+  const { role, schoolId, major } = req.user;
+  if (!schoolId) return res.status(400).send("Missing schoolId");
+
+  try {
+    let query = admin.firestore().collection("courses").where("schoolId", "==", schoolId);
+
+    if (role === "student") {
+      const majorRef = admin.firestore().doc(`majors/${major}`);
+      query = query.where("major", "==", majorRef);
     }
+
+    if (!["student", "school"].includes(role)) {
+      return res.status(403).send("Access denied");
+    }
+
+    const snapshot = await query.get();
+    const results = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        const majorName = await resolveMajorName(data.major);
+        return {
+          id: doc.id,
+          title: data.title,
+          code: data.code,
+          majorName,
+          skillTemplate: data.skillTemplate,
+          studentCount: data.studentCount || 0,
+        };
+      })
+    );
+
+    res.json(results);
+  } catch (err) {
+    console.error("Course fetch failed:", err);
+    res.status(500).send("Failed to fetch courses");
+  }
 });
 
 // GET /course/majors
-router.get("/majors", verifyTeacher, async (req, res) => {
-    try {
-        const snapshot = await admin.firestore().collection("majors").get();
-        const majors = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.send(majors);
-    } catch (err) {
-        console.error("Failed to fetch majors:", err.message);
-        res.status(500).send("Failed to retrieve majors");
-    }
+router.get("/majors", verifyUser, async (req, res) => {
+  if (!["school", "student"].includes(req.user.role)) return res.status(403).send("Access denied");
+
+  try {
+    const snapshot = await admin.firestore().collection("majors").get();
+    const majors = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    res.send(majors);
+  } catch (err) {
+    console.error("Failed to fetch majors:", err);
+    res.status(500).send("Failed to retrieve majors");
+  }
 });
 
 // GET /course/soft-skills
-router.get("/soft-skills", verifyTeacher, async (req, res) => {
-    try {
-        const snapshot = await admin.firestore().collection("soft-skills").get();
-        const skills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.send(skills);
-    } catch (err) {
-        console.error("Failed to fetch soft skills:", err.message);
-        res.status(500).send("Failed to fetch soft skills");
-    }
+router.get("/soft-skills", verifyUser, async (req, res) => {
+  if (!["school", "student"].includes(req.user.role)) return res.status(403).send("Access denied");
+
+  try {
+    const snapshot = await admin.firestore().collection("soft-skills").get();
+    const skills = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    res.send(skills);
+  } catch (err) {
+    console.error("Failed to fetch soft skills:", err);
+    res.status(500).send("Failed to fetch soft skills");
+  }
+});
+
+// GET /course/:courseId/details
+router.get("/details/:courseId", verifyUser, async (req, res) => {
+  const { courseId } = req.params;
+
+  try {
+    const doc = await admin.firestore().doc(`courses/${courseId}`).get();
+    if (!doc.exists) return res.status(404).send("Course not found");
+
+    const data = doc.data();
+    const majorName = await resolveMajorName(data.major);
+
+    res.json({
+      id: doc.id,
+      title: data.title,
+      code: data.code,
+      hardSkills: data.hardSkills || [],
+      skillTemplate: data.skillTemplate || {},
+      majorName,
+    });
+  } catch (err) {
+    console.error("Failed to fetch course details:", err);
+    res.status(500).send("Failed to fetch course details");
+  }
 });
 
 export default router;
