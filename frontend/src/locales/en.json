@@ -343,6 +343,9 @@
     "adaptability": "Adaptability"
   },
   "student": {
-  "pendingSkillsMessage": "You have {{count}} skill application(s) under review."
-}
+  "skillLabel": "skill request(s)",
+  "reviewPrefix": "You have",
+  "reviewSuffix": "waiting for review",
+  "pendingSkillsMessage": "You have {{count}} pending skill(s)"
+  }
 }

@@ -4,9 +4,8 @@ import {
   Group, Text, Loader, Select, Modal, Tabs
 } from "@mantine/core";
 import axios from "axios";
-import classes from "../../style/SchoolCourseManager.module.css"
+import classes from "../../style/SchoolCourseManager.module.css";
 import { useTranslation } from "react-i18next";
-
 import { useAuth } from "../../context/AuthContext";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -14,6 +13,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function SchoolCourseManager() {
   const { t } = useTranslation();
   const { user } = useAuth();
+
   const [form, setForm] = useState({ title: "", code: "", skillTitle: "", skillDescription: "" });
   const [selectedMajor, setSelectedMajor] = useState("");
   const [courses, setCourses] = useState([]);
@@ -96,7 +96,6 @@ export default function SchoolCourseManager() {
 
   const handleDelete = async (id) => {
     if (!confirm(t("deleteConfirm") || "Are you sure you want to delete?")) return;
-
     try {
       const token = await user.getIdToken();
       await axios.delete(`${BASE_URL}/course/delete/${id}`, {
@@ -156,82 +155,39 @@ export default function SchoolCourseManager() {
 
       <Tabs radius="md" defaultValue="create" mt="20px">
         <Tabs.List>
-          <Tabs.Tab value="create"  style={{ fontSize: 16, fontWeight: 600 }}>{t("course.create")}</Tabs.Tab>
-          <Tabs.Tab value="list"  style={{ fontSize: 16, fontWeight: 600 }}>{t("course.manage")}</Tabs.Tab>
+          <Tabs.Tab value="create" style={{ fontSize: 16, fontWeight: 600 }}>{t("course.create")}</Tabs.Tab>
+          <Tabs.Tab value="list" style={{ fontSize: 16, fontWeight: 600 }}>{t("course.manage")}</Tabs.Tab>
         </Tabs.List>
 
-        {/* Add a course */}
+        {/* Create Course */}
         <Tabs.Panel value="create">
           <Paper shadow="xs" p="lg" withBorder radius="md" mt="20px">
             <Stack spacing="md">
               <Group grow>
-                <TextInput
-                  label={t("course.title")}
-                  value={form.title}
-                  onChange={(e) => handleChange("title", e.target.value)}
-                />
-                <TextInput
-                  label={t("course.code")}
-                  value={form.code}
-                  onChange={(e) => handleChange("code", e.target.value)}
-                />
+                <TextInput label={t("course.title")} value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
+                <TextInput label={t("course.code")} value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
               </Group>
 
-              <Select
-                label={t("profile.major")}
-                data={majors.map((m) => ({ value: m.id, label: m.name }))}
-                value={selectedMajor}
-                onChange={setSelectedMajor}
-              />
+              <Select label={t("profile.major")} data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
 
-              <Group grow>
-                <TextInput
-                  label={t("course.skillTitle")}
-                  value={form.skillTitle}
-                  onChange={(e) => handleChange("skillTitle", e.target.value)}
-                />
-              </Group>
-
-              <Textarea
-                label={t("course.skillDescription")}
-                minRows={3}
-                value={form.skillDescription}
-                onChange={(e) => handleChange("skillDescription", e.target.value)}
-              />
+              <TextInput label={t("course.skillTitle")} value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
+              <Textarea label={t("course.skillDescription")} minRows={3} value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
 
               <Group spacing="xs" align="flex-end">
-                <TextInput
-                  label={t("course.addHardSkill")}
-                  placeholder="e.g. React, Python"
-                  value={hardSkillInput}
-                  onChange={(e) => setHardSkillInput(e.target.value)}
-                />
-                <Button
-                  onClick={() => {
-                    if (hardSkillInput.trim()) {
-                      setHardSkills((prev) => [...prev, hardSkillInput.trim()]);
-                      setHardSkillInput("");
-                    }
-                  }}
-                >
-                  +
-                </Button>
+                <TextInput label={t("course.addHardSkill")} placeholder="e.g. React, Python" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
+                <Button onClick={() => {
+                  if (hardSkillInput.trim()) {
+                    setHardSkills((prev) => [...prev, hardSkillInput.trim()]);
+                    setHardSkillInput("");
+                  }
+                }}>+</Button>
               </Group>
 
               <Group spacing="xs">
                 {hardSkills.map((skill, i) => (
-                  <Button
-                    key={i}
-                    variant="light"
-                    size="xs"
-                    color="gray"
-                    radius="xl"
-                    onClick={() => {
-                      setHardSkills((prev) => prev.filter((_, idx) => idx !== i));
-                    }}
-                  >
-                    {skill} ❌
-                  </Button>
+                  <Button key={i} variant="light" size="xs" color="gray" radius="xl" onClick={() => {
+                    setHardSkills((prev) => prev.filter((_, idx) => idx !== i));
+                  }}>{skill} ❌</Button>
                 ))}
               </Group>
 
@@ -239,10 +195,10 @@ export default function SchoolCourseManager() {
                 {t("course.create")}
               </Button>
             </Stack>
-          </Paper>        
+          </Paper>
         </Tabs.Panel>
 
-        { /* Course List */}
+        {/* Manage Courses */}
         <Tabs.Panel value="list">
           {loading ? (
             <Loader />
@@ -250,7 +206,7 @@ export default function SchoolCourseManager() {
             <Text>{t("course.noCourses")}</Text>
           ) : (
             <Box>
-              {courses.map((course, i) => (
+              {courses.map((course) => (
                 <Box key={course.id} py="sm" px="md" className={classes.course} onClick={() => openEditModal(course)}>
                   <Box style={{ flex: 1, minWidth: 0 }}>
                     <Text fw={500}>{course.title}</Text>
@@ -259,9 +215,8 @@ export default function SchoolCourseManager() {
                     <Text size="sm" c="dimmed">{course.skillTemplate?.skillDescription}</Text>
                   </Box>
 
-                  {/* 这部分删除，把按钮挪到modal里 在modal里实现edit/delete功能 */}
-                  <Group spacing="xs" mt="xs">                   
-                    <Button variant="light" >{t("edit")}</Button>
+                  <Group spacing="xs" mt="xs">
+                    <Button variant="light">{t("edit")}</Button>
                     <Button color="red" variant="light" onClick={() => handleDelete(course.id)}>{t("delete")}</Button>
                   </Group>
                 </Box>
@@ -269,6 +224,7 @@ export default function SchoolCourseManager() {
             </Box>
           )}
 
+          {/* 修复删除按键 */}
           <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title={t("course.edit")} centered>
             <Stack>
               <TextInput label={t("course.title")} value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
@@ -276,6 +232,7 @@ export default function SchoolCourseManager() {
               <Select label={t("profile.major")} data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
               <TextInput label={t("course.skillTitle")} value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
               <Textarea label={t("course.skillDescription")} value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
+
               <Group>
                 <TextInput placeholder="e.g. React" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
                 <Button onClick={() => {
@@ -285,6 +242,7 @@ export default function SchoolCourseManager() {
                   }
                 }}>+</Button>
               </Group>
+
               <Group>
                 {hardSkills.map((skill, i) => (
                   <Button key={i} variant="light" color="gray" onClick={() => {
@@ -292,15 +250,17 @@ export default function SchoolCourseManager() {
                   }}>{skill} ❌</Button>
                 ))}
               </Group>
+
               <Group>
-              <Button onClick={handleUpdate}>{t("update")}</Button>
-              <Button color="red" variant="light" onClick={() => handleDelete(course.id)}>{t("delete")}</Button>                
+                <Button onClick={handleUpdate}>{t("update")}</Button>
+                <Button color="red" variant="light" onClick={() => handleDelete(editingCourse.id)}>
+                  {t("delete")}
+                </Button>
               </Group>
             </Stack>
-          </Modal>        
+          </Modal>
         </Tabs.Panel>
       </Tabs>
     </Box>
   );
 }
-

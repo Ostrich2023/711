@@ -25,6 +25,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useFireStoreUser } from "../../hooks/useFirestoreUser";
 import { useTranslation } from "react-i18next";
 import { IconInfoCircle } from "@tabler/icons-react";
+import Notification from "../../components/Notification";
 
 export default function StudentHome() {
   const { t } = useTranslation();
@@ -99,9 +100,21 @@ export default function StudentHome() {
             <Title order={2}>
               {t("welcome")}, {userData?.name}
             </Title>
-            <Text c="dimmed">{userData?.schoolId?.toUpperCase()} · {t("student")}</Text>
+
+            {/* ✅ 修复后的 Notification */}
+            <Notification
+              count={pendingCount}
+              label="student.skillLabel"
+              messagePrefix="student.reviewPrefix"
+              messageSuffix="student.reviewSuffix"
+            />
+
+            <Text c="dimmed">
+              {userData?.schoolId?.toUpperCase()} · {t("student")}
+            </Text>
           </Group>
 
+          {/* 可选：保留原 Alert */}
           {pendingCount > 0 && (
             <Alert
               icon={<IconInfoCircle size={16} />}

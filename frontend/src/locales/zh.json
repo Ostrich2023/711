@@ -343,6 +343,9 @@
     "adaptability": "适应能力"
   },
   "student": {
-  "pendingSkillsMessage": "你有 {{count}} 个技能申请正在审核中。"
-}
+    "skillLabel": "技能申请",
+    "reviewPrefix": "你有",
+    "reviewSuffix": "项技能正在等待审核",
+    "pendingSkillsMessage": "你有 {{count}} 项技能正在审核中"
+  }
 }
