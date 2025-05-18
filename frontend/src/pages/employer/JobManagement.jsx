@@ -1,31 +1,73 @@
-import React, { useState } from "react";
-import { Tabs, Box } from "@mantine/core";
-import JobForms, { MyJobs, JobDetail } from "./JobForms";
+import React, { useEffect, useState } from "react";
+import { Box, Button, Group, Title, Text } from "@mantine/core";
+import { useNavigate, Navigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useFireStoreUser } from "../../hooks/useFirestoreUser";
+import { fetchJobs, verifyJobCompletion } from "../../services/jobService";
+import JobTable from "../../components/JobTable";
 
-export default function JobManagement() {
-    const [activeTab, setActiveTab] = useState("create");
+export default function JobListPage() {
+  const { user, role, token } = useAuth();
+  const { userData } = useFireStoreUser(user);
+  const [jobs, setJobs] = useState([]);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-    return (
-        <Box maw={800} mx="auto" mt="xl">
-            <Tabs value={activeTab} onChange={setActiveTab}>
-                <Tabs.List>
-                    <Tabs.Tab value="create">Create Job</Tabs.Tab>
-                    <Tabs.Tab value="my-jobs">My Jobs</Tabs.Tab>
-                    <Tabs.Tab value="job-detail">Job Detail</Tabs.Tab>
-                </Tabs.List>
+  const loadJobs = async () => {
+    try {
+      const fetchedJobs = await fetchJobs(token);
+      setJobs(fetchedJobs);
+      setError(null);
+    } catch (err) {
+      console.error("Error loading jobs:", err);
+      setError("Failed to load jobs.");
+      setJobs([]);
+    }
+  };
 
-                <Tabs.Panel value="create" pt="md">
-                    <JobForms />
-                </Tabs.Panel>
+  useEffect(() => {
+    if (token) loadJobs();
+  }, [token]);
 
-                <Tabs.Panel value="my-jobs" pt="md">
-                    <MyJobs />
-                </Tabs.Panel>
+  const handleVerify = async (jobId) => {
+    try {
+      await verifyJobCompletion(jobId, token);
+      await loadJobs(); // refresh the job list after verification
+    } catch (err) {
+      console.error("Error verifying job:", err);
+      alert("Failed to verify job.");
+    }
+  };
 
-                <Tabs.Panel value="job-detail" pt="md">
-                    <JobDetail jobId={"some-job-id"} />
-                </Tabs.Panel>
-            </Tabs>
+  const handleEdit = (jobId) => {
+    navigate(`/employer/edit-job/${jobId}`);
+  };
+
+  if (!user || role !== "employer") return <Navigate to="/" />;
+
+  return (
+    <Box style={{ flex: 1, padding: "20px" }}>
+    <Group justify="space-between" align="center" mb="md">
+      <Title order={2}>My Jobs</Title>
+      <Button onClick={() => navigate("/employer/add-job")} variant="filled">
+        + Post Job
+      </Button>
+    </Group>
+
+      {jobs.length > 0 ? (
+        <JobTable
+          title="Job Listings"
+          data={jobs}
+          onVerify={handleVerify}
+          onEdit={handleEdit}
+          onRefresh={loadJobs}
+        />
+      ) : (
+        <Box>
+          <Text>No jobs posted yet.</Text>
+          {error && <Text color="red">{error}</Text>}
         </Box>
-    );
+      )}
+    </Box>
+  );
 }

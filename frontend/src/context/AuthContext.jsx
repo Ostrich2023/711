@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
     // 使用 onAuthStateChanged 监听用户登录状态变化 自动获取当前页面用户信息uid和email
@@ -18,11 +19,14 @@ export const AuthProvider = ({ children }) => {
       if (currentUser) {
         // 读取该用户的数据库数据role 参数为db users currentUser.uid
         const docSnap = await getDoc(doc(db, "users", currentUser.uid));
+        const token = await currentUser.getIdToken();
+        setToken(token);
         if (docSnap.exists()) {
           setRole(docSnap.data().role);
         }
       } else {
         setRole(null);
+        setToken(null);
       }
       // 设置加载状态为 false
       setLoading(false);
@@ -33,7 +37,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, setUser, setRole }}>
+    <AuthContext.Provider value={{ user, role, token, loading, setUser, setRole }}>
       {children}
     </AuthContext.Provider>
   );
