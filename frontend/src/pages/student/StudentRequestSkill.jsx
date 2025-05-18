@@ -77,7 +77,12 @@ export default function StudentRequestSkill() {
     const res = await axios.get(`${BASE_URL}/student/list-courses`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setCourseList(res.data.filter((c) => c.schoolId === schoolId && c.major === majorId));
+    setCourseList(
+  res.data.filter((c) => {
+    const courseMajorId = typeof c.major === "object" && c.major.id ? c.major.id : c.major;
+    return c.schoolId === schoolId && courseMajorId === majorId;
+  })
+);
   };
 
   const fetchSkills = async () => {

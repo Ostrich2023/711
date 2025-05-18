@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -24,6 +23,9 @@ import VerifiedSkillCard from "../../components/digitalskillwallet/VerifiedSkill
 
 import classes from "../../style/DigitalSkillWallet.module.css";
 import { useTranslation } from "react-i18next";
+import axios from "axios";
+import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getApp } from "firebase/app";
 
 const theme = createTheme({
   components: {
@@ -51,11 +53,13 @@ const DigitalSkillWallet = () => {
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [teacher, setTeacher] = useState(null);
   const [showAlert, setShowAlert] = useState(true);
+  const [softSkillMap, setSoftSkillMap] = useState({});
 
   useEffect(() => {
     if (!user || role !== "student") return;
     loadProfile();
     fetchVerifiedSkills();
+    fetchSoftSkills();
   }, []);
 
   useEffect(() => {
@@ -113,6 +117,16 @@ const DigitalSkillWallet = () => {
     }
   };
 
+  const fetchSoftSkills = async () => {
+    const db = getFirestore(getApp());
+    const snap = await getDocs(collection(db, "soft-skills"));
+    const map = {};
+    snap.forEach((doc) => {
+      map[doc.id] = doc.data().name;
+    });
+    setSoftSkillMap(map);
+  };
+
   const calculateTotalScore = (skill) => {
     const soft = Object.values(skill?.softSkillScores || {}).reduce(
       (sum, val) => sum + (typeof val === "object" ? Number(val.score) || 0 : 0),
@@ -147,18 +161,20 @@ const DigitalSkillWallet = () => {
   const renderPieChartData = () => {
     if (!selectedSkill?.softSkillScores) return [];
     return Object.entries(selectedSkill.softSkillScores).map(([id, value]) => ({
-      label: t(`softSkills.${id}`), // 从 i18n 中获取对应语言标签
-      value: Number(value),
+      label: softSkillMap[id] || id,
+      value: typeof value === "object" ? Number(value.score) || 0 : 0,
     }));
   };
 
   const renderBarChartData = () => {
     if (!selectedSkill?.hardSkillScores) return [];
     return Object.entries(selectedSkill.hardSkillScores).map(([label, value]) => ({
-      label: String(label), // 保证为字符串，避免出现 object
-      value: Number(value),
+      label: String(label),
+      value: typeof value === "object" ? Number(value.score) || 0 : 0,
     }));
   };
+
+  if (!user || role !== "student") return <Navigate to="/" />;
 
 
   if (!user || role !== "student") return <Navigate to="/" />;
