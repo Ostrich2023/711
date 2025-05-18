@@ -84,7 +84,7 @@
     "profile": "Profile",
     "requestSkill": "Request Skill",
     "wallet": "Digital Skill Wallet",
-    "courses": "My Courses",
+    "courses": "Course Management",
     "settings": "Settings"
   },
   "school": {
@@ -180,7 +180,16 @@
     "error": "An error occurred while processing the course."
   },
   "course": {
-    "students": "Students"
+    "students": "Students",
+    "title": "Title",
+    "code":"Code",
+    "skill": "skill",
+    "skillTitle":"Skill Title",
+    "skillDescription": "Skill Description",
+    "addHardSkill": "Add Hard Skill",
+    "create": "Create Course",
+    "manage":"Manage Course",
+    "noCourses":"You haven’t createded any courses."
   },
   "global": {
     "more": "More",

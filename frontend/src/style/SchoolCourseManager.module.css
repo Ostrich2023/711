@@ -1,0 +1,13 @@
+.course {
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+}
+
+.course:hover {
+  background-color: var(--mantine-color-gray-0);
+}
+
+.course:active {
+  background-color: var(--mantine-color-gray-2);
+}

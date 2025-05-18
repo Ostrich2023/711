@@ -1,9 +1,10 @@
 ﻿import React, { useEffect, useState } from "react";
 import {
   Box, TextInput, Textarea, Button, Paper, Title, Stack,
-  Group, Text, Loader, Select, Modal
+  Group, Text, Loader, Select, Modal, Tabs
 } from "@mantine/core";
 import axios from "axios";
+import classes from "../../style/SchoolCourseManager.module.css"
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../context/AuthContext";
@@ -153,83 +154,152 @@ export default function SchoolCourseManager() {
     <Box mt="30px">
       <Title order={2}>{t("navbar.courses")}</Title>
 
-      <Paper shadow="xs" p="md" withBorder mb="xl">
-        <Stack>
-          <TextInput label={t("course.title")} value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
-          <TextInput label={t("course.code")} value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
-          <Select label={t("profile.major")} data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
-          <TextInput label={t("course.skillTitle")} value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
-          <Textarea label={t("course.skillDescription")} value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
-          <Group>
-            <TextInput placeholder="e.g. React, Python" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
-            <Button onClick={() => {
-              if (hardSkillInput.trim()) {
-                setHardSkills(prev => [...prev, hardSkillInput.trim()]);
-                setHardSkillInput("");
-              }
-            }}>+</Button>
-          </Group>
-          <Group>
-            {hardSkills.map((skill, i) => (
-              <Button key={i} variant="light" color="gray" onClick={() => {
-                setHardSkills(prev => prev.filter((_, idx) => idx !== i));
-              }}>{skill} ❌</Button>
-            ))}
-          </Group>
-          <Button onClick={handleCreate} loading={creating}>{t("course.create")}</Button>
-        </Stack>
-      </Paper>
+      <Tabs radius="md" defaultValue="create" mt="20px">
+        <Tabs.List>
+          <Tabs.Tab value="create"  style={{ fontSize: 16, fontWeight: 600 }}>{t("course.create")}</Tabs.Tab>
+          <Tabs.Tab value="list"  style={{ fontSize: 16, fontWeight: 600 }}>{t("course.manage")}</Tabs.Tab>
+        </Tabs.List>
 
-      <Title order={3}>{t("course.existingCourses")}</Title>
-      {loading ? (
-        <Loader />
-      ) : courses.length === 0 ? (
-        <Text>{t("course.noCourses")}</Text>
-      ) : (
-        courses.map((course) => (
-          <Paper key={course.id} p="md" radius="md" withBorder mb="md">
-            <Group position="apart">
-              <Box>
-                <Text fw={500}>{course.title}</Text>
-                <Text size="sm" c="gray">{course.code}</Text>
-                <Text size="sm" mt="xs">{t("course.skill")}: {course.skillTemplate?.skillTitle}</Text>
-                <Text size="sm" c="dimmed">{course.skillTemplate?.skillDescription}</Text>
-              </Box>
-              <Group>
-                <Button variant="light" onClick={() => openEditModal(course)}>{t("edit")}</Button>
-                <Button color="red" variant="light" onClick={() => handleDelete(course.id)}>{t("delete")}</Button>
+        {/* Add a course */}
+        <Tabs.Panel value="create">
+          <Paper shadow="xs" p="lg" withBorder radius="md" mt="20px">
+            <Stack spacing="md">
+              <Group grow>
+                <TextInput
+                  label={t("course.title")}
+                  value={form.title}
+                  onChange={(e) => handleChange("title", e.target.value)}
+                />
+                <TextInput
+                  label={t("course.code")}
+                  value={form.code}
+                  onChange={(e) => handleChange("code", e.target.value)}
+                />
               </Group>
-            </Group>
-          </Paper>
-        ))
-      )}
 
-      <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title={t("course.edit")} centered>
-        <Stack>
-          <TextInput label={t("course.title")} value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
-          <TextInput label={t("course.code")} value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
-          <Select label={t("profile.major")} data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
-          <TextInput label={t("course.skillTitle")} value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
-          <Textarea label={t("course.skillDescription")} value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
-          <Group>
-            <TextInput placeholder="e.g. React" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
-            <Button onClick={() => {
-              if (hardSkillInput.trim()) {
-                setHardSkills(prev => [...prev, hardSkillInput.trim()]);
-                setHardSkillInput("");
-              }
-            }}>+</Button>
-          </Group>
-          <Group>
-            {hardSkills.map((skill, i) => (
-              <Button key={i} variant="light" color="gray" onClick={() => {
-                setHardSkills(prev => prev.filter((_, idx) => idx !== i));
-              }}>{skill} ❌</Button>
-            ))}
-          </Group>
-          <Button onClick={handleUpdate}>{t("update")}</Button>
-        </Stack>
-      </Modal>
+              <Select
+                label={t("profile.major")}
+                data={majors.map((m) => ({ value: m.id, label: m.name }))}
+                value={selectedMajor}
+                onChange={setSelectedMajor}
+              />
+
+              <Group grow>
+                <TextInput
+                  label={t("course.skillTitle")}
+                  value={form.skillTitle}
+                  onChange={(e) => handleChange("skillTitle", e.target.value)}
+                />
+              </Group>
+
+              <Textarea
+                label={t("course.skillDescription")}
+                minRows={3}
+                value={form.skillDescription}
+                onChange={(e) => handleChange("skillDescription", e.target.value)}
+              />
+
+              <Group spacing="xs" align="flex-end">
+                <TextInput
+                  label={t("course.addHardSkill")}
+                  placeholder="e.g. React, Python"
+                  value={hardSkillInput}
+                  onChange={(e) => setHardSkillInput(e.target.value)}
+                />
+                <Button
+                  onClick={() => {
+                    if (hardSkillInput.trim()) {
+                      setHardSkills((prev) => [...prev, hardSkillInput.trim()]);
+                      setHardSkillInput("");
+                    }
+                  }}
+                >
+                  +
+                </Button>
+              </Group>
+
+              <Group spacing="xs">
+                {hardSkills.map((skill, i) => (
+                  <Button
+                    key={i}
+                    variant="light"
+                    size="xs"
+                    color="gray"
+                    radius="xl"
+                    onClick={() => {
+                      setHardSkills((prev) => prev.filter((_, idx) => idx !== i));
+                    }}
+                  >
+                    {skill} ❌
+                  </Button>
+                ))}
+              </Group>
+
+              <Button fullWidth size="md" onClick={handleCreate} loading={creating}>
+                {t("course.create")}
+              </Button>
+            </Stack>
+          </Paper>        
+        </Tabs.Panel>
+
+        { /* Course List */}
+        <Tabs.Panel value="list">
+          {loading ? (
+            <Loader />
+          ) : courses.length === 0 ? (
+            <Text>{t("course.noCourses")}</Text>
+          ) : (
+            <Box>
+              {courses.map((course, i) => (
+                <Box key={course.id} py="sm" px="md" className={classes.course} onClick={() => openEditModal(course)}>
+                  <Box style={{ flex: 1, minWidth: 0 }}>
+                    <Text fw={500}>{course.title}</Text>
+                    <Text size="sm" c="gray">{course.code}</Text>
+                    <Text size="sm" mt="xs">{t("course.skill")}: {course.skillTemplate?.skillTitle}</Text>
+                    <Text size="sm" c="dimmed">{course.skillTemplate?.skillDescription}</Text>
+                  </Box>
+
+                  {/* 这部分删除，把按钮挪到modal里 在modal里实现edit/delete功能 */}
+                  <Group spacing="xs" mt="xs">                   
+                    <Button variant="light" >{t("edit")}</Button>
+                    <Button color="red" variant="light" onClick={() => handleDelete(course.id)}>{t("delete")}</Button>
+                  </Group>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title={t("course.edit")} centered>
+            <Stack>
+              <TextInput label={t("course.title")} value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
+              <TextInput label={t("course.code")} value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
+              <Select label={t("profile.major")} data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
+              <TextInput label={t("course.skillTitle")} value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
+              <Textarea label={t("course.skillDescription")} value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
+              <Group>
+                <TextInput placeholder="e.g. React" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
+                <Button onClick={() => {
+                  if (hardSkillInput.trim()) {
+                    setHardSkills(prev => [...prev, hardSkillInput.trim()]);
+                    setHardSkillInput("");
+                  }
+                }}>+</Button>
+              </Group>
+              <Group>
+                {hardSkills.map((skill, i) => (
+                  <Button key={i} variant="light" color="gray" onClick={() => {
+                    setHardSkills(prev => prev.filter((_, idx) => idx !== i));
+                  }}>{skill} ❌</Button>
+                ))}
+              </Group>
+              <Group>
+              <Button onClick={handleUpdate}>{t("update")}</Button>
+              <Button color="red" variant="light" onClick={() => handleDelete(course.id)}>{t("delete")}</Button>                
+              </Group>
+            </Stack>
+          </Modal>        
+        </Tabs.Panel>
+      </Tabs>
     </Box>
   );
 }

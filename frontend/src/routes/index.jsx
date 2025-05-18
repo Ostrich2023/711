@@ -9,7 +9,9 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import UnauthorizedPage from '../pages/Unauthorized';
 import WhyKanavoogle from '../pages/WhyKanavoogle';
+import Services from '../pages/Services'
 import ErrorPage from '../pages/ErrorPage';
+
 
 // Student
 import StudentPage from "../pages/student/StudentPage";
@@ -46,6 +48,7 @@ const AppRouter = createBrowserRouter([
       { path: "login", element: <Login /> },
       { path: "unauthorized", element: <UnauthorizedPage /> },
       { path: "why-kanavoogle", element: <WhyKanavoogle /> },
+      { path: "services", element: <Services /> },
 
       // Student routes
       {

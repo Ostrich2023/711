@@ -180,7 +180,16 @@
     "error": "处理课程时发生错误。"
   },
   "course": {
-    "students": "学生名单"
+    "students": "学生名单",
+    "title": "课程名称",
+    "code":"课程代码",
+    "skill": "技能",
+    "skillTitle":"技能名称",
+    "skillDescription": "课程概述",
+    "addHardSkill": "添加硬技能",
+    "create": "创建课程",
+    "manage":"管理课程",
+    "noCourses":"你目前没有创建任何课程"
   },
   "global": {
     "more": "更多",

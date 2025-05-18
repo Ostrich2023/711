@@ -46,7 +46,7 @@ const HomePage = () => {
       className={classes.card}
       padding="xl"
     >
-      <feature.icon size={50} stroke={1.5} color={theme.colors.blue[6]} />
+      <feature.icon size={30} stroke={1.5} color={theme.colors.blue[6]} />
       <Text fz="lg" fw={500} className={classes.cardTitle} mt="md">
         {feature.title}
       </Text>
