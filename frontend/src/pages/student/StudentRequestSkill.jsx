@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Box, Text, Title, Stack, Group, Paper, Button, Select,
-  FileInput, Divider, Loader, Modal, MultiSelect, Table, Badge, Tooltip
+  Box, Text, Title, Stack, Group, Paper, Button, Select, Tabs, SimpleGrid,
+  FileInput, Divider, Loader, Modal, MultiSelect, Collapse , Badge, 
 } from "@mantine/core";
+import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { uploadToIPFS } from "../../ipfs/uploadToIPFS";
@@ -12,6 +13,56 @@ import { getFirestore, collection, getDocs, doc, getDoc } from "firebase/firesto
 import { getApp } from "firebase/app";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+function SkillReviewDetails({ skill, softSkillMap }) {
+  const [opened, setOpened] = useState(false);
+
+  return (
+    <Box mt="sm">
+      <Button
+        variant="subtle"
+        size="xs"
+        onClick={() => setOpened((o) => !o)}
+        rightSection={opened ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
+        mb="xs"
+      >
+        {opened ? "Hide Details" : "Show Details"}
+      </Button>
+
+      <Collapse in={opened}>
+        {/* Hard Skills */}
+        {skill.hardSkillScores && (
+          <Box mt="sm">
+            <Title order={5} size="sm" mb={4}>Hard Skills</Title>
+            <SimpleGrid cols={2} spacing="xs">
+              {Object.entries(skill.hardSkillScores).map(([k, v], i) => (
+                <Group key={i} spacing={6} align="flex-start">
+                  <Text size="sm" fw={500}> {k}</Text>
+                  <Text size="sm" c="gray">{v.score}/5</Text>
+                </Group>
+              ))}
+            </SimpleGrid>
+          </Box>
+        )}
+
+        {/* Soft Skills */}
+        {skill.softSkillScores && (
+          <Box mt="sm">
+            <Title order={5} size="sm" mb={4}>Soft Skills</Title>
+            <SimpleGrid cols={2} spacing="xs">
+              {Object.entries(skill.softSkillScores).map(([k, v], i) => (
+                <Group key={i} spacing={6} align="flex-start">
+                  <Text size="sm" fw={500}> {softSkillMap[k] || k}</Text>
+                  <Text size="sm" c="gray">{v.score}/5</Text>
+                </Group>
+              ))}
+            </SimpleGrid>
+          </Box>
+        )}
+      </Collapse>
+    </Box>
+  );
+}
 
 export default function StudentRequestSkill() {
   const { t } = useTranslation();
@@ -28,6 +79,8 @@ export default function StudentRequestSkill() {
   const [softSkillMap, setSoftSkillMap] = useState({});
   const [selectedMajor, setSelectedMajor] = useState("");
   const [schoolId, setSchoolId] = useState(null);
+
+   const [opened, setOpened] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -140,138 +193,160 @@ export default function StudentRequestSkill() {
     <Box mt="md">
       <Title order={2}>{t("request.submit")}</Title>
 
-      <Paper withBorder shadow="xs" p="md" mt="md">
-        <Stack spacing="sm">
-          <Select
-            label={t("request.course")}
-            placeholder={t("request.course")}
-            data={courseList.map(c => ({ value: c.id, label: `${c.code} - ${c.title}` }))}
-            value={selectedCourseId}
-            onChange={setSelectedCourseId}
-          />
-          <Select
-            label={t("request.level")}
-            data={[
-              { value: "Beginner", label: "Beginner" },
-              { value: "Intermediate", label: "Intermediate" },
-              { value: "Advanced", label: "Advanced" },
-            ]}
-            value={form.level}
-            onChange={(v) => setForm({ ...form, level: v })}
-          />
-          <MultiSelect
-            label={t("request.softSkills")}
-            data={Object.entries(softSkillMap).map(([id, name]) => ({ value: id, label: name }))}
-            value={form.softSkills}
-            onChange={(v) => setForm({ ...form, softSkills: v })}
-            maxSelectedValues={5}
-          />
-          <FileInput
-            label={t("request.file")}
-            description={t("request.fileNote")}
-            accept=".pdf,.doc,.docx"
-            value={form.file}
-            onChange={(f) => setForm({ ...form, file: f })}
-          />
-          <Button loading={loading} onClick={handleSubmit}>
-            {t("request.submitBtn")}
-          </Button>
-        </Stack>
-      </Paper>
+      <Tabs radius="md" defaultValue="list" mt="20px">
+        <Tabs.List>
+          <Tabs.Tab value="list" style={{ fontSize: 16, fontWeight: 600 }}>{t("request.history")}</Tabs.Tab>
+          <Tabs.Tab value="create" style={{ fontSize: 16, fontWeight: 600 }}>{t("request.create")}</Tabs.Tab>
+        </Tabs.List>
 
-      <Divider my="lg" />
-      <Title order={3}>{t("request.history")}</Title>
+      <Tabs.Panel value="create">
+        <Paper withBorder shadow="xs" p="md" mt="md">
+          <Stack spacing="sm">
+            <Group grow>
+              <Select
+                label={t("request.course")}
+                placeholder={t("request.course")}
+                data={courseList.map(c => ({ value: c.id, label: `${c.code} - ${c.title}` }))}
+                value={selectedCourseId}
+                onChange={setSelectedCourseId}
+              />
+              <Select
+                label={t("request.level")}
+                data={[
+                  { value: "Beginner", label: "Beginner" },
+                  { value: "Intermediate", label: "Intermediate" },
+                  { value: "Advanced", label: "Advanced" },
+                ]}
+                value={form.level}
+                onChange={(v) => setForm({ ...form, level: v })}
+              />              
+            </Group>
 
-      {isFetching ? <Loader mt="md" /> : (
-        <Table striped withBorder withColumnBorders>
-          <thead>
-            <tr>
-              <th>{t("request.course")}</th>
-              <th>{t("request.submit")}</th>
-              <th>{t("request.level")}</th>
-              <th>{t("request.softSkills")}</th>
-              <th>{t("request.status")}</th>
-              <th>{t("request.file")}</th>
-              <th>{t("request.rubricTitle")}</th>
-              <th>{t("request.action")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {skills.map((skill) => (
-              <tr key={skill.id}>
-                <td>{skill.courseCode} - {skill.courseTitle}</td>
-                <td>{skill.title}</td>
-                <td>{skill.level}</td>
-                <td>
-                  <Group spacing="xs">
+            <MultiSelect
+              label={t("request.softSkills")}
+              data={Object.entries(softSkillMap).map(([id, name]) => ({ value: id, label: name }))}
+              value={form.softSkills}
+              onChange={(v) => setForm({ ...form, softSkills: v })}
+              maxSelectedValues={5}
+            />
+            <FileInput
+              label={t("request.file")}
+              description={t("request.fileNote")}
+              accept=".pdf,.doc,.docx"
+              value={form.file}
+              onChange={(f) => setForm({ ...form, file: f })}
+            />
+            <Button loading={loading} onClick={handleSubmit}>
+              {t("request.submitBtn")}
+            </Button>
+          </Stack>
+        </Paper>  
+      </Tabs.Panel>
+
+      <Tabs.Panel value="list">
+        {isFetching ? (
+          <Loader mt="md" />
+        ) : skills.length === 0 ? (
+          <Text>{t("course.noCourses")}</Text>
+        ) : (
+          <Stack spacing={0}>
+            {skills.map((skill, index) => (
+              <Box
+                key={skill.id}
+                p="md"
+                onClick={() => {}}
+                style={{
+                  borderTop: index === 0 ? "1px solid #e0e0e0" : "none",
+                  borderBottom: "1px solid #e0e0e0",
+                  backgroundColor: "#fff",
+                }}
+              >
+              <Group>
+                <Text fw={600} size="18px">{skill.title}</Text>
+                <Text size="sm" c="gray">
+                  {skill.courseCode} - {skill.courseTitle}
+                </Text>
+                <Text size="sm" mt={4}>{skill.level}</Text>                
+              </Group>
+
+
+                <Box mt="xs" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+                  {/* 左边的状态和技能 tags */}
+                  <Group spacing="xs" wrap="wrap">
+                    {skill.verified === "approved" ? (
+                      <Badge color="green" size="xs" radius="xl" variant="filled">APPROVED</Badge>
+                    ) : skill.verified === "rejected" ? (
+                      <Badge color="red" size="xs" radius="xl" variant="filled">REJECTED</Badge>
+                    ) : (
+                      <Badge color="gray" size="xs" radius="xl" variant="filled">PENDING</Badge>
+                    )}
+
                     {(skill.softSkills || []).map((sid, i) => (
-                      <Badge key={i} variant="outline" color="blue" size="sm">
+                      <Badge key={i} variant="light" color="blue" size="xs">
                         {softSkillMap[sid] || sid}
                       </Badge>
                     ))}
                   </Group>
-                </td>
-                <td>
-                  {skill.verified === "approved" ? t("request.statusApproved")
-                    : skill.verified === "rejected" ? t("request.statusRejected")
-                      : t("request.statusPending")}
-                </td>
-                <td>
-                  {skill.attachmentCid ? (
-                    <a href={`https://ipfs.io/ipfs/${skill.attachmentCid}`} target="_blank" rel="noreferrer">
-                      {t("request.viewFile")}
-                    </a>
-                  ) : "-"}
-                </td>
-                <td>
-                  <Stack spacing={2}>
-                    {skill.hardSkillScores &&
-                      Object.entries(skill.hardSkillScores).map(([k, v], i) => (
-                        <Tooltip label={v.comment || t("request.rubricComment")} key={i}>
-                          <Text size="xs">🛠 {k}: {v.score}/5</Text>
-                        </Tooltip>
-                      ))}
-                    {skill.softSkillScores &&
-                      Object.entries(skill.softSkillScores).map(([k, v], i) => (
-                        <Tooltip label={v.comment || t("request.rubricComment")} key={i}>
-                          <Text size="xs">🤝 {softSkillMap[k] || k}: {v.score}/5</Text>
-                        </Tooltip>
-                      ))}
-                    {skill.note && (
-                      <Text size="xs" c="dimmed">📝 {skill.note}</Text>
-                    )}
-                  </Stack>
-                </td>
-                <td>
-                  <Button
-                    size="xs"
-                    color="red"
-                    variant="light"
-                    onClick={() => handleDelete(skill.id)}
-                  >
-                    {t("request.delete")}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
 
-      <Modal opened={forceMajorModal} onClose={() => {}} title={t("request.selectMajorModalTitle")} centered withCloseButton={false}>
-        <Stack>
-          <Text>{t("request.selectMajorNotice")}</Text>
-          <Select
-            placeholder={t("request.chooseMajor")}
-            data={majorList}
-            value={selectedMajor}
-            onChange={setSelectedMajor}
-          />
-          <Button disabled={!selectedMajor} onClick={updateMajor}>
-            {t("request.saveMajor")}
-          </Button>
-        </Stack>
-      </Modal>
+                  {/* 右边的删除按钮 */}
+                  <Group>
+                    <Button
+                      size="xs"
+                      color="blue"
+                      variant="light"
+                      onClick={() => {
+                        if (skill.attachmentCid) {
+                          window.open(`https://ipfs.io/ipfs/${skill.attachmentCid}`, '_blank');
+                        } else {
+                          alert("No attachment available");
+                        }
+                      }}
+                    >
+                      View Attachment
+                    </Button>
+                    <Button
+                      size="xs"
+                      color="red"
+                      variant="light"
+                      onClick={() => handleDelete(skill.id)}
+                    >
+                      {t("request.delete")}
+                    </Button>   
+                  </Group>
+  
+                </Box>
+
+                <SkillReviewDetails skill={skill} softSkillMap={softSkillMap} />
+
+              </Box>
+            ))}
+          </Stack>
+        )}
+
+        {/* 强制选择专业的 Modal */}
+        <Modal
+          opened={forceMajorModal}
+          onClose={() => {}}
+          title={t("request.selectMajorModalTitle")}
+          centered
+          withCloseButton={false}
+        >
+          <Stack>
+            <Text>{t("request.selectMajorNotice")}</Text>
+            <Select
+              placeholder={t("request.chooseMajor")}
+              data={majorList}
+              value={selectedMajor}
+              onChange={setSelectedMajor}
+            />
+            <Button disabled={!selectedMajor} onClick={updateMajor}>
+              {t("request.saveMajor")}
+            </Button>
+          </Stack>
+        </Modal>
+      </Tabs.Panel>
+
+      </Tabs>
     </Box>
   );
 }

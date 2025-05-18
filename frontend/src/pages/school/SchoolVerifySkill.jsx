@@ -192,34 +192,34 @@ export default function SchoolVerifySkill() {
           {filteredSkills.length === 0 ? (
             <Text>{t("teacher.review.noMatches")}</Text>
           ) : (
-            <Table withBorder striped>
-              <thead>
-                <tr>
-                  <th>{t("profile.name")}</th>
-                  <th>{t("profile.id")}</th>
-                  <th>{t("profile.major")}</th>
-                  <th>{t("request.course")}</th>
-                  <th>{t("request.level")}</th>
-                  <th>{t("request.action")}</th>
+          <Table withBorder striped highlightOnHover>
+            <thead>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t("profile.name")}</th>
+                <th style={{ textAlign: "left" }}>{t("profile.id")}</th>
+                <th style={{ textAlign: "left" }}>{t("profile.major")}</th>
+                <th style={{ textAlign: "left" }}>{t("request.course")}</th>
+                <th style={{ textAlign: "left" }}>{t("request.level")}</th>
+                <th style={{ textAlign: "left" }}>{t("request.action")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSkills.map(skill => (
+                <tr key={skill.id}>
+                  <td style={{ textAlign: "left" }}>{skill.student?.name || "Unknown"}</td>
+                  <td style={{ textAlign: "left", wordBreak: "break-word" }}>{skill.student?.id}</td>
+                  <td style={{ textAlign: "left" }}>{majorMap[skill.student?.major] || skill.student?.major}</td>
+                  <td style={{ textAlign: "left" }}>{skill.courseCode}</td>
+                  <td style={{ textAlign: "left" }}>{skill.level}</td>
+                  <td style={{ textAlign: "left" }}>
+                    <Button size="xs" onClick={() => setSelectedSkillId(skill.id)}>
+                      {t("request.rubricTitle")}
+                    </Button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredSkills.map(skill => (
-                  <tr key={skill.id}>
-                    <td>{skill.student?.name || "Unknown"}</td>
-                    <td>{skill.student?.id}</td>
-                    <td>{majorMap[skill.student?.major] || skill.student?.major}</td>
-                    <td>{skill.courseCode}</td>
-                    <td>{skill.level}</td>
-                    <td>
-                      <Button size="xs" onClick={() => setSelectedSkillId(skill.id)}>
-                        {t("request.rubricTitle")}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+              ))}
+            </tbody>
+          </Table>
           )}
         </>
       ) :  (

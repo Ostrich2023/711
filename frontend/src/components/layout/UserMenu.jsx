@@ -63,9 +63,6 @@ export default function UserMenu(props) {
 
         <Menu.Divider />
 
-        <Menu.Item leftSection={<IconSettings size={16} stroke={1.5}/>}>
-          Settings
-        </Menu.Item>
         <Menu.Item leftSection={<IconLogout size={16} stroke={1.5}/>} onClick={handleLogout}>Logout</Menu.Item>
 
       </Menu.Dropdown>

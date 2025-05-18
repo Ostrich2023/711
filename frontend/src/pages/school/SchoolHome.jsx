@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Box, SimpleGrid, Title, Text, Group, Loader, Center } from "@mantine/core";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
@@ -15,6 +16,8 @@ import ActivityList from "../../components/ActivityList";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function SchoolHome() {
+  const navigate = useNavigate();
+
   const { t } = useTranslation();
   const { user } = useAuth();
   const { userData, isLoading } = useFireStoreUser(user);
@@ -98,7 +101,7 @@ export default function SchoolHome() {
           />
 
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-            <ActivityList courseList={courseList} />
+            <ActivityList courseList={courseList} onClickMore={() => navigate('/school/manage-courses')}/>
             <UserTable title={t("school.myStudents")} data={studentList} />
           </SimpleGrid>
         </>
