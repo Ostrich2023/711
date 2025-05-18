@@ -24,10 +24,8 @@ const StudentPage = () => {
   // 侧边栏导航数据
 const navbarData = [
   { link: "", labelKey: "navbar.home", icon: IconHome2 },
-  { link: "profile", labelKey: "navbar.profile", icon: IconUser },
   { link: "request-skill", labelKey: "navbar.requestSkill", icon: IconClipboardList },
   { link: "settings", labelKey: "navbar.settings", icon: IconSettings },
-  { link: "wallet", labelKey: "navbar.wallet", icon: IconCertificate },
 ];
   return (
     <Container maw="1500px">

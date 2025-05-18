@@ -42,7 +42,8 @@
     "level": "Level",
     "teacher": "Teacher",
     "noSkillsYet": "No skills submitted yet.",
-    "noCourses": "No enrolled courses found."
+    "noCourses": "No enrolled courses found.",
+    "skillOverview": "Skill Overview"
   },
   "request": {
     "submit": "Submit Skill",
@@ -65,7 +66,9 @@
     "selectMajorModalTitle": "Select Your Major",
     "selectMajorNotice": "You must select your major before submitting skills.",
     "chooseMajor": "Choose your major",
-    "saveMajor": "Save Major"
+    "saveMajor": "Save Major",
+    "create":"Request Skill",
+    "history": "Request History"
   },
   "settings": {
     "title": "Settings",
@@ -149,7 +152,13 @@
       "myCourses": "My Courses",
       "myStudents": "My Students",
       "settings": "Settings"
-    }
+    },
+    "review": {
+      "search": "Search student or skill",
+      "courseFilter": "Filter by course",
+      "majorFilter": "Filter by major",
+      "title": "Skill Review"
+   }
   },
   "role": {
     "school": "School Admin",

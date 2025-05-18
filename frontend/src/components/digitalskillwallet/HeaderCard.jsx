@@ -16,12 +16,6 @@ export default function HeaderCard({ userData, userType = "User" }) {
           </p>
         </div>
         <div className={classes.userButtonWrapper}>
-          <UserButton
-            collapsed={true}
-            name={userData.name}
-            role={userData.role}
-            image={userData.image}
-          />
         </div>
       </Flex>
     </Paper>

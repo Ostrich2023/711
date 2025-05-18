@@ -27,6 +27,9 @@ import { useTranslation } from "react-i18next";
 import { IconInfoCircle } from "@tabler/icons-react";
 import Notification from "../../components/Notification";
 
+import StatusOverview from "../../components/StatusOverview"
+import ActivityList from "../../components/ActivityList";
+
 export default function StudentHome() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -95,7 +98,7 @@ export default function StudentHome() {
           <Loader />
         </Center>
       ) : (
-        <>
+        <>   
           <Group mb="sm">
             <Title order={2}>
               {t("welcome")}, {userData?.name}
@@ -124,42 +127,9 @@ export default function StudentHome() {
             />
           )}
 
-          <Title order={3} mt="md" mb="sm">{t("mySkills")}</Title>
-          {skills.length === 0 ? (
-            <Text>{t("noSkillsYet")}</Text>
-          ) : (
-            <SimpleGrid cols={2} spacing="md">
-              {skills.map(skill => (
-                <Paper key={skill.id} withBorder p="md" radius="md">
-                  <Stack spacing="xs">
-                    <Group justify="space-between">
-                      <Text fw={500}>{skill.title}</Text>
-                      <Badge color={skill.verified === "approved" ? "green" : "gray"}>
-                        {skill.verified}
-                      </Badge>
-                    </Group>
-                    <Text size="sm" c="dimmed">{skill.courseCode} - {skill.courseTitle}</Text>
-                    <Text size="sm">{t("level")}: {skill.level}</Text>
-                  </Stack>
-                </Paper>
-              ))}
-            </SimpleGrid>
-          )}
+          <StatusOverview skills={skills}/>
 
-          <Title order={3} mt="xl" mb="sm">{t("myCourses")}</Title>
-          {courses.length === 0 ? (
-            <Text>{t("noCourses")}</Text>
-          ) : (
-            <Stack>
-              {courses.map(course => (
-                <Paper key={course.id} withBorder p="md">
-                  <Text fw={500}>{course.title}</Text>
-                  <Text size="sm" c="dimmed">{course.code}</Text>
-                  <Text size="sm">{t("teacher")}: {teachers[course.id]?.name || "Unknown"}</Text>
-                </Paper>
-              ))}
-            </Stack>
-          )}
+          <ActivityList courseList={courses}/>
         </>
       )}
     </Box>

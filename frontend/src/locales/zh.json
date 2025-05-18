@@ -42,7 +42,8 @@
     "level": "等级",
     "teacher": "教师",
     "noSkillsYet": "你还没有提交任何技能。",
-    "noCourses": "未找到你参与的课程。"
+    "noCourses": "未找到你参与的课程。",
+    "skillOverview": "技能概览"
   },
   "request": {
     "submit": "提交技能",
@@ -149,6 +150,12 @@
       "myCourses": "我的课程",
       "myStudents": "我的学生",
       "settings": "设置"
+    },
+    "review": {
+      "search": "搜索学生或技能",
+      "courseFilter": "按课程筛选",
+      "majorFilter": "按专业筛选",
+      "title": "技能审核"
     }
   },
   "role": {
