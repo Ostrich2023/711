@@ -1,6 +1,8 @@
 import express from "express";
 import admin from "firebase-admin";
 
+import { verifyEmployer } from "../middlewares/verifyRole.js"; 
+
 const router = express.Router();
 const FieldValue = admin.firestore?.FieldValue ?? null;
 
@@ -168,5 +170,39 @@ router.put("/review/:id", verifyToken, async (req, res) => {
     res.status(500).send("Failed to review skill");
   }
 });
+
+// GET /skill/approved
+router.get("/approved", verifyEmployer, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("skills")
+      .where("verified", "==", "approved")
+      .get();
+
+    const studentMap = new Map();
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (!studentMap.has(data.ownerId)) {
+        const userDoc = await admin.firestore().doc(`users/${data.ownerId}`).get();
+        studentMap.set(data.ownerId, {
+          studentId: data.ownerId,
+          name: userDoc.exists ? userDoc.data().name : "Unknown",
+          skills: [],
+        });
+      }
+      studentMap.get(data.ownerId).skills.push({
+        title: data.title,
+        courseTitle: data.courseTitle,
+      });
+    }
+
+    res.json(Array.from(studentMap.values()));
+  } catch (error) {
+    console.error("Error fetching approved students:", error.message);
+    res.status(500).send("Failed to load approved students");
+  }
+});
+
 
 export default router;

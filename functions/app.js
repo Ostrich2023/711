@@ -35,16 +35,21 @@ const app = express();
 app.options("*", cors());
 
 // 跨域中间件
-app.use(
-  cors({
-    origin: [
-      "https://digital-skill-wallet.web.app", // Firebase Hosting 地址
-      "http://localhost:5173",                // 本地开发环境
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: [
+    "https://digital-skill-wallet.web.app", // Firebase Hosting
+    "http://localhost:5173",                // 本地前端
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+};
+
+
+// 处理所有 OPTIONS 预检请求
+app.options("*", cors(corsOptions));
+
+// 应用到所有 API 路径
+app.use(cors(corsOptions));
 
 // JSON 解析中间件
 app.use(express.json());

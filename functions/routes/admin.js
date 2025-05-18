@@ -1,29 +1,10 @@
 import express from "express";
 import admin from "firebase-admin";
+import { verifyAdmin } from "../middlewares/verifyRole.js";
 
 const router = express.Router();
 
-// Middleware: check admin
-async function verifyAdmin(req, res, next) {
-  const token = req.headers.authorization?.split("Bearer ")[1];
-  if (!token) return res.status(401).send("Unauthorized");
-
-  try {
-    const decoded = await admin.auth().verifyIdToken(token);
-    const docRef = await admin.firestore().doc(`users/${decoded.uid}`).get();
-    const userData = docRef.data();
-
-    if (userData.role !== "admin") return res.status(403).send("Forbidden");
-
-    req.user = { uid: decoded.uid };
-    next();
-  } catch (err) {
-    console.error("Admin check failed:", err);
-    return res.status(403).send("Invalid token");
-  }
-}
-
-// GET /admin/users
+// GET /admin/users — 获取所有用户
 router.get("/users", verifyAdmin, async (req, res) => {
   try {
     const snapshot = await admin.firestore().collection("users").get();

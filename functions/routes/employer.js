@@ -121,4 +121,127 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
   }
 });
 
+// GET /employer/applications/:jobId
+router.get("/applications/:jobId", verifyEmployer, async (req, res) => {
+  const { jobId } = req.params;
+
+  try {
+    const snapshot = await admin.firestore()
+      .collection("applications")
+      .where("jobId", "==", jobId)
+      .orderBy("appliedAt", "desc")
+      .get();
+
+    const applications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(applications);
+  } catch (error) {
+    console.error("Error fetching job applications:", error.message);
+    res.status(500).send("Failed to retrieve applications");
+  }
+});
+
+// GET /employer/recent-applications
+router.get("/recent-applications", verifyEmployer, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("applications")
+      .where("employerId", "==", req.user.uid)
+      .orderBy("appliedAt", "desc")
+      .limit(10)
+      .get();
+
+    const applications = [];
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const studentDoc = await admin.firestore().doc(`users/${data.studentId}`).get();
+      const studentName = studentDoc.exists ? studentDoc.data().name : "Unknown";
+
+      applications.push({
+        id: doc.id,
+        jobId: data.jobId,
+        studentId: data.studentId,
+        studentName,
+        message: data.message || "",
+        appliedAt: data.appliedAt,
+      });
+    }
+
+    res.json(applications);
+  } catch (error) {
+    console.error("Error fetching recent applications:", error);
+    res.status(500).send("Failed to retrieve recent applications");
+  }
+});
+
+// GET /employer/application-summary
+router.get("/application-summary", verifyEmployer, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("applications")
+      .where("employerId", "==", req.user.uid)
+      .get();
+
+    let total = 0;
+    let viewed = 0;
+    let unread = 0;
+
+    snapshot.forEach(doc => {
+      total += 1;
+      const data = doc.data();
+      if (data.viewed) viewed += 1;
+      else unread += 1;
+    });
+
+    res.json({ total, viewed, unread });
+  } catch (error) {
+    console.error("Error fetching application summary:", error);
+    res.status(500).send("Failed to fetch summary");
+  }
+});
+
+// GET /employer/approved-students
+router.get("/approved-students", verifyEmployer, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("skills")
+      .where("verified", "==", "approved")
+      .get();
+
+    const studentMap = new Map();
+
+    for (const doc of snapshot.docs) {
+      const skill = doc.data();
+      const studentId = skill.ownerId;
+
+      if (!studentMap.has(studentId)) {
+        studentMap.set(studentId, []);
+      }
+      studentMap.get(studentId).push({ id: doc.id, ...skill });
+    }
+
+    const results = [];
+
+    for (const [studentId, skills] of studentMap.entries()) {
+      const studentDoc = await admin.firestore().doc(`users/${studentId}`).get();
+      if (!studentDoc.exists) continue;
+      const student = studentDoc.data();
+      results.push({
+        studentId,
+        studentName: student.name || "Unknown",
+        email: student.email,
+        customUid: student.customUid,
+        schoolId: student.schoolId,
+        major: student.major,
+        skills,
+      });
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error loading approved students:", error);
+    res.status(500).send("Failed to load approved students");
+  }
+});
+
 export default router;

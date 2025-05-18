@@ -67,8 +67,7 @@
     "selectMajorNotice": "You must select your major before submitting skills.",
     "chooseMajor": "Choose your major",
     "saveMajor": "Save Major",
-    "create":"Request Skill",
-    "history": "Request History"
+    "create":"Request Skill"
   },
   "settings": {
     "title": "Settings",
@@ -352,9 +351,9 @@
     "adaptability": "Adaptability"
   },
   "student": {
-  "skillLabel": "skill request(s)",
-  "reviewPrefix": "You have",
-  "reviewSuffix": "waiting for review",
-  "pendingSkillsMessage": "You have {{count}} pending skill(s)"
+    "skillLabel": "skill request(s)",
+    "reviewPrefix": "You have",
+    "reviewSuffix": "waiting for review",
+    "pendingSkillsMessage": "You have {{count}} skill(s) pending"
   }
 }

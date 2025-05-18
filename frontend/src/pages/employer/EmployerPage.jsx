@@ -20,11 +20,12 @@ const EmployerPage = () => {
 
   if (!user || role !== "employer") return <Navigate to="/" />;
 
-  const navbarData = [
-    { link: '.', label: 'Home', icon: IconHome2 },
-    { link: 'request-skill', label: 'Post Jobs', icon: IconClipboardList },
-    { link: '', label: 'Settings', icon: IconSettings },
-  ];
+const navbarData = [
+  { link: '.', label: 'Home', icon: IconHome2 },
+  { link: 'request-skill', label: 'Post Jobs', icon: IconClipboardList },
+  { link: 'applications', label: 'Applications', icon: IconCertificate },
+  { link: 'settings', label: 'Settings', icon: IconSettings },
+];
 
   return (
     <Container size="xl" maw="1400px">

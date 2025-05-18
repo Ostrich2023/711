@@ -12,6 +12,7 @@ import {
   Select,
   Anchor,
   RingProgress,
+  Button
 } from "@mantine/core";
 
 import AlertBox from "../../components/digitalskillwallet/AlertBox";
@@ -303,6 +304,28 @@ const DigitalSkillWallet = () => {
                 {t("wallet.graduationReminderMessage")}
               </AlertBox>
             )}
+          </Grid.Col>
+          <Grid.Col span={10}>
+            <Flex justify="space-around" mt="lg">
+              <Button
+                fullWidth
+                variant="light"
+                component="a"
+                href="/student/applications"
+                style={{ flex: 1, marginRight: "0.5rem" }}
+              >
+                My Applications
+              </Button>
+              <Button
+                fullWidth
+                variant="light"
+                component="a"
+                href="/student/jobs"
+                style={{ flex: 1, marginLeft: "0.5rem" }}
+              >
+                Job Board
+              </Button>
+            </Flex>
           </Grid.Col>
         </Grid>
       </Box>

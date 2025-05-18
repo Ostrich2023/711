@@ -19,6 +19,9 @@ import StudentHome from '../pages/student/StudentHome';
 import StudentRequestSkill from '../pages/student/StudentRequestSkill';
 import StudentSettings from '../pages/student/StudentSettings';
 import DigitalSkillWallet from '../pages/student/DigitalSkillWallet';
+import StudentProfile from '../pages/student/StudentProfile';
+import JobDetail from '../pages/student/JobDetail'; 
+import MyJobApplications from '../pages/student/MyJobApplications'; 
 
 // School
 import SchoolPage from "../pages/school/SchoolPage";
@@ -31,6 +34,8 @@ import SchoolSettings from '../pages/school/SchoolSettings';
 import EmployerPage from "../pages/employer/EmployerPage";
 import EmployerHome from '../pages/employer/EmployerHome';
 import JobManagement from '../pages/employer/JobManagement';
+import EmployerApplications from '../pages/employer/EmployerApplications'
+import EmployerSettings from '../pages/employer/EmployerSettings';
 
 // Admin
 import AdminPage from "../pages/AdminPage";
@@ -50,37 +55,41 @@ const AppRouter = createBrowserRouter([
       { path: "services", element: <Services /> },
 
       // Student routes
-      {
-        path: "student",
-        element: <StudentPage />,
-        children: [
-          { index: true, element: <StudentHome /> },
-          { path: "request-skill", element: <StudentRequestSkill /> },
-          { path: "settings", element: <StudentSettings /> },
-        ]
-      },
-      
-      { path: "digital-skill-wallet", element: <DigitalSkillWallet /> },
+    {
+      path: "student",
+      element: <StudentPage />,
+      children: [
+        { index: true, element: <StudentHome /> },
+        { path: "profile", element: <StudentProfile /> },
+        { path: "request-skill", element: <StudentRequestSkill /> },
+        { path: "settings", element: <StudentSettings /> },
+        { path: "wallet", element: <DigitalSkillWallet /> },
+        { path: "jobs/:jobId", element: <JobDetail /> },           // 新增职位详情页
+        { path: "my-applications", element: <MyJobApplications /> } // 新增我的申请页
+      ]
+    },
 
       // School routes
-    {
-      path: "school",
-      element: <SchoolPage />,
-      children: [
-        { index: true, element: <SchoolHome /> },
-        { path: "verify-skill", element: <SchoolVerifySkill /> },
-        { path: "manage-courses", element: <SchoolCourseManager /> }, 
-        { path: "settings", element: <SchoolSettings /> }, // ✅ 现在不会跳 ErrorPage 了
-      ]
-    },  
+  {
+    path: "school",
+    element: <SchoolPage />,
+    children: [
+      { index: true, element: <SchoolHome /> },
+      { path: "verify-skill", element: <SchoolVerifySkill /> },
+      { path: "manage-courses", element: <SchoolCourseManager /> }, 
+      { path: "settings", element: <SchoolSettings /> }, // 现在不会跳 ErrorPage 了
+    ]
+  },  
 
       // Employer routes
       {
         path: "employer",
         element: <EmployerPage />,
         children: [
-            { index: true, element: <EmployerHome /> },
-            { path: "request-skill", element: <JobManagement /> },
+          { index: true, element: <EmployerHome /> },
+          { path: "request-skill", element: <JobManagement /> },
+          { path: "applications", element: <EmployerApplications /> },
+          { path: "settings", element: <EmployerSettings /> } // 添加 settings 页面
         ]
       },
 

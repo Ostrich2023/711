@@ -1,17 +1,14 @@
 import express from "express";
 import admin from "firebase-admin";
-import { verifyToken } from "../middlewares/auth.js";
+import { verifyRole } from "../middlewares/verifyRole.js";
 
 const router = express.Router();
 
 // 获取所有专业（允许 teacher 与 school）
-router.get("/majors", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/majors", verifyRole(["school", "teacher"]), async (req, res) => {
   try {
     const snapshot = await admin.firestore().collection("majors").get();
-    const majors = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const majors = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.status(200).json(majors);
   } catch (err) {
     console.error("Error fetching majors:", err);
@@ -20,7 +17,7 @@ router.get("/majors", verifyToken(["school", "teacher"]), async (req, res) => {
 });
 
 // 获取本校所有学生
-router.get("/students", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/students", verifyRole(["school", "teacher"]), async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("users")
@@ -37,7 +34,7 @@ router.get("/students", verifyToken(["school", "teacher"]), async (req, res) => 
 });
 
 // 获取某个学生技能
-router.get("/student/:id/skills", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/student/:id/skills", verifyRole(["school", "teacher"]), async (req, res) => {
   const studentId = req.params.id;
 
   try {
@@ -64,7 +61,7 @@ router.get("/student/:id/skills", verifyToken(["school", "teacher"]), async (req
 });
 
 // 获取本校教师
-router.get("/teachers", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/teachers", verifyRole(["school", "teacher"]), async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("users")
@@ -81,17 +78,14 @@ router.get("/teachers", verifyToken(["school", "teacher"]), async (req, res) => 
 });
 
 // 获取本校课程
-router.get("/courses", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/courses", verifyRole(["school", "teacher"]), async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("courses")
       .where("schoolId", "==", req.user.schoolId)
       .get();
 
-    const courses = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(courses);
   } catch (err) {
     console.error("Error fetching courses:", err);
@@ -100,7 +94,7 @@ router.get("/courses", verifyToken(["school", "teacher"]), async (req, res) => {
 });
 
 // 获取课程下所有学生技能记录（附带学生信息）
-router.get("/course/:courseId/students", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/course/:courseId/students", verifyRole(["school", "teacher"]), async (req, res) => {
   const courseId = req.params.courseId;
 
   try {
@@ -138,7 +132,7 @@ router.get("/course/:courseId/students", verifyToken(["school", "teacher"]), asy
 });
 
 // 获取课程详情（包含创建教师信息）
-router.get("/course/:courseId/details", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/course/:courseId/details", verifyRole(["school", "teacher"]), async (req, res) => {
   const courseId = req.params.courseId;
 
   try {
@@ -168,18 +162,14 @@ router.get("/course/:courseId/details", verifyToken(["school", "teacher"]), asyn
 });
 
 // 当前教师创建的课程
-router.get("/my-courses", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/my-courses", verifyRole(["school", "teacher"]), async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("courses")
       .where("createdBy", "==", admin.firestore().doc(`users/${req.user.uid}`))
       .get();
 
-    const courses = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
+    const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(courses);
   } catch (err) {
     console.error("Failed to fetch teacher courses:", err.message);
@@ -188,7 +178,7 @@ router.get("/my-courses", verifyToken(["school", "teacher"]), async (req, res) =
 });
 
 // 获取当前学校的待审核技能
-router.get("/pending-skills", verifyToken(["school", "teacher"]), async (req, res) => {
+router.get("/pending-skills", verifyRole(["school", "teacher"]), async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("skills")

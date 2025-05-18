@@ -49,4 +49,24 @@ router.get("/:id", async (req, res) => {
     res.status(500).send("Failed to fetch user");
   }
 });
+
+// PUT /user/update — 更新任意字段（如邮箱、公司类型、公司描述、logoUrl）
+router.put("/update", verifyToken, async (req, res) => {
+  const { uid } = req.user;
+  const { email, companyType, companyDescription, logoUrl } = req.body;
+
+  const updates = {};
+  if (email) updates.email = email;
+  if (companyType) updates.companyType = companyType;
+  if (companyDescription) updates.companyDescription = companyDescription;
+  if (logoUrl) updates.logoUrl = logoUrl;
+
+  try {
+    await admin.firestore().collection("users").doc(uid).update(updates);
+    res.status(200).send("User info updated successfully");
+  } catch (error) {
+    console.error("Error updating user info:", error.message);
+    res.status(500).send("Failed to update user info");
+  }
+});
 export default router;
