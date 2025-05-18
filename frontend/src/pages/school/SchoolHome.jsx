@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Box, SimpleGrid, Title, Text, Group, Loader, Center } from "@mantine/core";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
+
 import { useAuth } from "../../context/AuthContext";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 import { useFireStoreUser } from "../../hooks/useFirestoreUser";
 import { db } from "../../firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -13,7 +12,10 @@ import Notification from "../../components/Notification";
 import UserTable from "../../components/UserTable";
 import ActivityList from "../../components/ActivityList";
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function SchoolHome() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { userData, isLoading } = useFireStoreUser(user);
 
@@ -23,16 +25,18 @@ export default function SchoolHome() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if(user){
-      fetchCourses()
+    if (user && userData?.schoolId) {
+      fetchCourses();
+      fetchPendingSkillCount();
+      fetchStudents();
     }
-  }, [user]);
+  }, [user, userData]);
 
   const fetchCourses = async () => {
     try {
       const token = await user.getIdToken();
       const res = await axios.get(`${BASE_URL}/teacher/my-courses`, {
-          headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setCourseList(res.data);
     } catch (err) {
@@ -40,7 +44,36 @@ export default function SchoolHome() {
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const fetchPendingSkillCount = async () => {
+    try {
+      const token = await user.getIdToken();
+      const res = await axios.get(`${BASE_URL}/teacher/pending-skills`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPendingSkillCount(res.data.length);
+    } catch (err) {
+      console.error("Failed to load pending skill count:", err);
+    }
+  };
+
+  const fetchStudents = async () => {
+    if (!userData?.schoolId) return;
+
+    try {
+      const q = query(
+        collection(db, "users"),
+        where("role", "==", "student"),
+        where("schoolId", "==", userData.schoolId)
+      );
+      const snapshot = await getDocs(q);
+      const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setStudentList(students);
+    } catch (err) {
+      console.error("Failed to load student list:", err);
+    }
+  };
 
   return (
     <Box flex={1} mt="30px">
@@ -49,22 +82,24 @@ export default function SchoolHome() {
       ) : (
         <>
           <Group>
-            <Title order={2}>Welcome back, {userData?.name}</Title>
+            <Title order={2}>
+              {t("school.welcome")}, {userData?.name}
+            </Title>
             <Text mt="10px" c="gray">
-              {userData?.schoolId?.toUpperCase()} · {userData?.role}
+              {userData?.schoolId?.toUpperCase()} · {t(`role.${userData?.role}`)}
             </Text>
           </Group>
 
           <Notification
             count={pendingSkillCount}
-            label="skill submissions"
-            messagePrefix="You currently have"
-            messageSuffix="ready for review and certification."
+            label={t("school.skillLabel")}
+            messagePrefix={t("school.reviewPrefix")}
+            messageSuffix={t("school.reviewSuffix")}
           />
 
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
             <ActivityList courseList={courseList} />
-            <UserTable title="My Students" data={studentList} />
+            <UserTable title={t("school.myStudents")} data={studentList} />
           </SimpleGrid>
         </>
       )}

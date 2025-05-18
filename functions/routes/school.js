@@ -93,4 +93,18 @@ router.get("/:schoolId/students", async (req, res) => {
   }
 });
 
+// GET /school/majors (authenticated school admin)
+router.get("/majors", verifyToken, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore().collection("majors").get();
+    const majors = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    res.status(200).json(majors);
+  } catch (err) {
+    console.error("Error fetching majors:", err);
+    res.status(500).json({ message: "Failed to fetch majors." });
+  }
+});
 export default router;

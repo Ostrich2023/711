@@ -30,9 +30,20 @@ async function verifyStudent(req, res, next) {
 }
 
 // GET /student/me
-router.get("/me", verifyStudent, (req, res) => {
+router.get("/me", verifyStudent, async (req, res) => {
   const { uid, email, customUid, schoolId, role, major } = req.user;
-  res.json({ uid, email, customUid, schoolId, role, major });
+  let majorName = "";
+  if (major) {
+    try {
+      const majorSnap = await admin.firestore().doc(`majors/${major}`).get();
+      if (majorSnap.exists) {
+        majorName = majorSnap.data().name;
+      }
+    } catch (err) {
+      console.warn("Failed to load major name:", err);
+    }
+  }
+  res.json({ uid, email, customUid, schoolId, role, major, majorName });
 });
 
 // GET /student/skills
@@ -128,7 +139,7 @@ router.get("/list-courses", verifyStudent, async (req, res) => {
         title: data.title,
         code: data.code,
         skillTemplate: data.skillTemplate,
-        major: { id: majorId, name: majorName }, // 课程专业
+        major: { id: majorId, name: majorName },
         schoolId: data.schoolId
       });
     }
@@ -139,7 +150,6 @@ router.get("/list-courses", verifyStudent, async (req, res) => {
     res.status(500).send("Failed to load courses");
   }
 });
-
 
 // GET /student/course-avg-scores
 router.get("/course-avg-scores", verifyStudent, async (req, res) => {
@@ -174,7 +184,7 @@ router.get("/course-avg-scores", verifyStudent, async (req, res) => {
   }
 });
 
-// GET /student/my-teachers — 获取本校所有教师
+// GET /student/my-teachers
 router.get("/my-teachers", verifyStudent, async (req, res) => {
   try {
     const snapshot = await admin.firestore()

@@ -15,13 +15,16 @@ import ErrorPage from '../pages/ErrorPage';
 import StudentPage from "../pages/student/StudentPage";
 import StudentHome from '../pages/student/StudentHome';
 import StudentRequestSkill from '../pages/student/StudentRequestSkill';
+import StudentSettings from '../pages/student/StudentSettings';
 import DigitalSkillWallet from '../pages/student/DigitalSkillWallet';
+import StudentProfile from '../pages/student/StudentProfile';
 
 // School
 import SchoolPage from "../pages/school/SchoolPage";
 import SchoolHome from '../pages/school/SchoolHome';
 import SchoolVerifySkill from '../pages/school/SchoolVerifySkill';
 import SchoolCourseManager from '../pages/school/SchoolCourseManager'; 
+import SchoolSettings from '../pages/school/SchoolSettings';
 
 // Employer
 import EmployerPage from "../pages/employer/EmployerPage";
@@ -50,22 +53,24 @@ const AppRouter = createBrowserRouter([
         element: <StudentPage />,
         children: [
           { index: true, element: <StudentHome /> },
+          { path: "profile", element: <StudentProfile /> },
           { path: "request-skill", element: <StudentRequestSkill /> },
+          { path: "settings", element: <StudentSettings /> },
+          { path: "wallet", element: <DigitalSkillWallet /> },
         ]
       },
-
-      { path: "digital-skill-wallet", element: <DigitalSkillWallet /> },
 
       // School routes
-      {
-        path: "school",
-        element: <SchoolPage />,
-        children: [
-          { index: true, element: <SchoolHome /> },
-          { path: "verify-skill", element: <SchoolVerifySkill /> },
-          { path: "manage-courses", element: <SchoolCourseManager /> }, 
-        ]
-      },
+  {
+    path: "school",
+    element: <SchoolPage />,
+    children: [
+      { index: true, element: <SchoolHome /> },
+      { path: "verify-skill", element: <SchoolVerifySkill /> },
+      { path: "manage-courses", element: <SchoolCourseManager /> }, 
+      { path: "settings", element: <SchoolSettings /> }, // ✅ 现在不会跳 ErrorPage 了
+    ]
+  },  
 
       // Employer routes
       {

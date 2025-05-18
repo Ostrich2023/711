@@ -1,48 +1,69 @@
-import { Box, Text, Stack } from "@mantine/core";
+import { Box, Text, Stack, Center } from "@mantine/core";
 import ReactECharts from "echarts-for-react";
+import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 
-export default function DonutRatingChart({ skill }) {
-  const scorePercent = (skill.score / 5) * 100;
+const PieChart = ({ data = [] }) => {
+  const { t } = useTranslation();
+
+  const chartData = data.map(item => ({
+    name: typeof item.label === "object" ? JSON.stringify(item.label) : String(item.label),
+    value: Number(item.value),
+  }));
 
   const option = {
-    tooltip: { formatter: `{b}: {c}/5` },
+    tooltip: {
+      trigger: "item",
+      formatter: (params) => {
+        const name = params.name.length > 16 ? params.name.slice(0, 16) + "…" : params.name;
+        return `${name}: ${params.value}/5 (${params.percent}%)`;
+      },
+    },
     series: [
       {
-        name: skill.title,
+        name: t("wallet.softSkillScores"),
         type: "pie",
-        radius: ["50%", "70%"],
+        radius: ["40%", "70%"],
         avoidLabelOverlap: false,
         label: {
           show: true,
-          position: "center",
-          formatter: `${skill.score}/5`,
-          fontSize: 18,
-          fontWeight: "bold"
-        },
-        labelLine: { show: false },
-        data: [
-          {
-            value: skill.score,
-            name: skill.title,
-            itemStyle: { color: "#228be6" }
+          formatter: (params) => {
+            const name = params.name.length > 16 ? params.name.slice(0, 16) + "…" : params.name;
+            return `${name}: ${params.value}`;
           },
-          {
-            value: 5 - skill.score,
-            name: "Remaining",
-            itemStyle: { color: "#e0e0e0" }
-          }
-        ]
-      }
-    ]
+          fontSize: 12,
+        },
+        labelLine: {
+          show: true,
+        },
+        data: chartData,
+      },
+    ],
   };
 
   return (
-    <Box style={{ width: 200, height: 250 }}>
-      <ReactECharts option={option} style={{ height: 200 }} />
-      <Stack gap="xs" align="center" mt="sm">
-        <Text fw={500}>{skill.courseTitle}</Text>
-        <Text size="sm" c="dimmed">{skill.level}</Text>
+    <Box style={{ width: "100%", height: 300 }}>
+      {chartData.length > 0 ? (
+        <ReactECharts option={option} style={{ height: "100%" }} />
+      ) : (
+        <Center h={300}>
+          <Text color="dimmed">{t("chart.noSoftSkill") || "No soft skill score data available"}</Text>
+        </Center>
+      )}
+      <Stack align="center" mt="sm">
+        <Text fw={500}>{t("wallet.softSkillScores")}</Text>
       </Stack>
     </Box>
   );
-}
+};
+
+PieChart.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })
+  ).isRequired,
+};
+
+export default PieChart;

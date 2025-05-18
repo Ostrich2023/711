@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { getDoc, doc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import i18n from "../i18n"; // 多语言支持
 
 const AuthContext = createContext();
 
@@ -11,24 +12,38 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 使用 onAuthStateChanged 监听用户登录状态变化 自动获取当前页面用户信息uid和email
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      // 如果用户已登录，获取用户在数据库的更多信息
       if (currentUser) {
-        // 读取该用户的数据库数据role 参数为db users currentUser.uid
-        const docSnap = await getDoc(doc(db, "users", currentUser.uid));
-        if (docSnap.exists()) {
-          setRole(docSnap.data().role);
+        setUser(currentUser);
+
+        try {
+          const snap = await getDoc(doc(db, "users", currentUser.uid));
+          if (snap.exists()) {
+            const data = snap.data();
+
+            setRole(data.role || null);
+
+            // 主题设置（同步到 localStorage 供 Mantine 使用）
+            if (data.theme) {
+              localStorage.setItem("mantine-color-scheme", data.theme);
+            }
+
+            // 语言设置
+            if (data.language) {
+              i18n.changeLanguage(data.language);
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to fetch user preferences:", err.message);
         }
       } else {
+        setUser(null);
         setRole(null);
       }
-      // 设置加载状态为 false
+
       setLoading(false);
     });
 
-     // 清除监听器，防止组件卸载时还在监听
     return () => unsub();
   }, []);
 

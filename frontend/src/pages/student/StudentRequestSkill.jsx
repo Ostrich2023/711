@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Box, Text, Title, Stack, Group, Paper, Button, Select,
   FileInput, Divider, Loader, Modal, MultiSelect, Table, Badge, Tooltip
@@ -14,6 +14,7 @@ import { getApp } from "firebase/app";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function StudentRequestSkill() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [skills, setSkills] = useState([]);
   const [courseList, setCourseList] = useState([]);
@@ -76,139 +77,118 @@ export default function StudentRequestSkill() {
     const res = await axios.get(`${BASE_URL}/student/list-courses`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setCourseList(res.data.filter((c) => c.schoolId === schoolId && c.major?.id === majorId));
+    setCourseList(res.data.filter((c) => c.schoolId === schoolId && c.major === majorId));
   };
 
   const fetchSkills = async () => {
-    const token = await user.getIdToken();
-    const data = await listSkills(token);
-    setSkills(data);
-    setIsFetching(false);
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedCourseId || !form.level || form.softSkills.length === 0) {
-      alert("Please complete all required fields.");
-      return;
+    setIsFetching(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await listSkills(token);
+      setSkills(res);
+    } catch (err) {
+      console.error("Failed to fetch skills:", err);
+    } finally {
+      setIsFetching(false);
     }
-
-    let attachmentCid = "";
-    if (form.file) {
-      const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-      if (!allowedTypes.includes(form.file.type)) {
-        alert("Only PDF or DOCX files are allowed.");
-        return;
-      }
-      if (form.file.size > 5 * 1024 * 1024) {
-        alert("File size exceeds 5MB.");
-        return;
-      }
-      try {
-        setLoading(true);
-        attachmentCid = await uploadToIPFS(form.file);
-      } catch (error) {
-        console.error("Upload error:", error);
-        alert("File upload failed.");
-        setLoading(false);
-        return;
-      }
-    }
-
-    const token = await user.getIdToken();
-    await axios.post(`${BASE_URL}/skill/add`, {
-      courseId: selectedCourseId,
-      level: form.level,
-      softSkills: form.softSkills,
-      attachmentCid,
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    alert("Skill submitted.");
-    setForm({ level: "Beginner", file: null, softSkills: [] });
-    setSelectedCourseId(null);
-    fetchSkills();
-    setLoading(false);
-  };
-
-  const updateMajor = async () => {
-    const token = await user.getIdToken();
-    await axios.put(`${BASE_URL}/student/update-major`, {
-      major: selectedMajor,
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    alert("Major saved.");
-    setForceMajorModal(false);
-    fetchCourses(schoolId, selectedMajor);
   };
 
   const handleDelete = async (id) => {
     const token = await user.getIdToken();
-    await deleteSkill(token, id);
+    await deleteSkill(id, token);
     fetchSkills();
   };
 
-  if (!user) return <Navigate to="/login" />;
+  const updateMajor = async () => {
+    const token = await user.getIdToken();
+    await axios.put(`${BASE_URL}/student/update-major`, { major: selectedMajor }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setForceMajorModal(false);
+    fetchCourses(schoolId, selectedMajor);
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedCourseId || !form.file || form.softSkills.length === 0) return;
+    setLoading(true);
+    try {
+      const cid = await uploadToIPFS(form.file);
+      const token = await user.getIdToken();
+      await axios.post(`${BASE_URL}/skill/add`, {
+        courseId: selectedCourseId,
+        fileCid: cid,
+        level: form.level,
+        softSkills: form.softSkills,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchSkills();
+      setForm({ level: "Beginner", file: null, softSkills: [] });
+    } catch (err) {
+      console.error("Failed to submit:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Box mt="30px">
-      <Paper shadow="xs" p="md" withBorder mb="xl">
-        <Title order={3} mb="md">Submit Skill</Title>
-        <Stack>
+    <Box mt="md">
+      <Title order={2}>{t("request.submit")}</Title>
+
+      <Paper withBorder shadow="xs" p="md" mt="md">
+        <Stack spacing="sm">
           <Select
-            label="Select Course"
-            placeholder="Choose a course"
+            label={t("request.course")}
+            placeholder={t("request.course")}
+            data={courseList.map(c => ({ value: c.id, label: `${c.code} - ${c.title}` }))}
             value={selectedCourseId}
             onChange={setSelectedCourseId}
-            data={courseList.map((c) => ({
-              value: c.id,
-              label: `${c.code} - ${c.title}`,
-            }))}
-            required
           />
           <Select
-            label="Skill Level"
-            data={["Beginner", "Intermediate", "Advanced"]}
+            label={t("request.level")}
+            data={[
+              { value: "Beginner", label: "Beginner" },
+              { value: "Intermediate", label: "Intermediate" },
+              { value: "Advanced", label: "Advanced" },
+            ]}
             value={form.level}
-            onChange={(val) => setForm((prev) => ({ ...prev, level: val }))}
+            onChange={(v) => setForm({ ...form, level: v })}
           />
           <MultiSelect
-            label="Select Soft Skills"
-            placeholder="Choose up to 5 soft skills"
+            label={t("request.softSkills")}
             data={Object.entries(softSkillMap).map(([id, name]) => ({ value: id, label: name }))}
             value={form.softSkills}
-            onChange={(val) => {
-              if (val.length <= 5) setForm((prev) => ({ ...prev, softSkills: val }));
-              else alert("You can only select up to 5 soft skills.");
-            }}
-            required
+            onChange={(v) => setForm({ ...form, softSkills: v })}
+            maxSelectedValues={5}
           />
           <FileInput
-            label="Attachment (PDF or DOCX)"
+            label={t("request.file")}
+            description={t("request.fileNote")}
+            accept=".pdf,.doc,.docx"
             value={form.file}
-            onChange={(file) => setForm((prev) => ({ ...prev, file }))}
-            accept=".pdf,.docx"
+            onChange={(f) => setForm({ ...form, file: f })}
           />
-          <Text size="sm" color="dimmed">
-            Current Major: {majorList.find((m) => m.value === selectedMajor)?.label || "Not set"}
-          </Text>
-          <Button onClick={handleSubmit} loading={loading}>Submit</Button>
+          <Button loading={loading} onClick={handleSubmit}>
+            {t("request.submitBtn")}
+          </Button>
         </Stack>
       </Paper>
 
-      <Title order={4}>Your Skills</Title>
-      {isFetching ? <Loader /> : (
+      <Divider my="lg" />
+      <Title order={3}>{t("request.history")}</Title>
+
+      {isFetching ? <Loader mt="md" /> : (
         <Table striped withBorder withColumnBorders>
           <thead>
             <tr>
-              <th>Course</th>
-              <th>Skill</th>
-              <th>Level</th>
-              <th>Soft Skills</th>
-              <th>Status</th>
-              <th>File</th>
-              <th>Rubric</th>
-              <th>Action</th>
+              <th>{t("request.course")}</th>
+              <th>{t("request.submit")}</th>
+              <th>{t("request.level")}</th>
+              <th>{t("request.softSkills")}</th>
+              <th>{t("request.status")}</th>
+              <th>{t("request.file")}</th>
+              <th>{t("request.rubricTitle")}</th>
+              <th>{t("request.action")}</th>
             </tr>
           </thead>
           <tbody>
@@ -227,14 +207,14 @@ export default function StudentRequestSkill() {
                   </Group>
                 </td>
                 <td>
-                  {skill.verified === "approved" ? "✅ Approved"
-                    : skill.verified === "rejected" ? "❌ Rejected"
-                      : "⏳ Pending"}
+                  {skill.verified === "approved" ? t("request.statusApproved")
+                    : skill.verified === "rejected" ? t("request.statusRejected")
+                      : t("request.statusPending")}
                 </td>
                 <td>
                   {skill.attachmentCid ? (
                     <a href={`https://ipfs.io/ipfs/${skill.attachmentCid}`} target="_blank" rel="noreferrer">
-                      📄 View
+                      {t("request.viewFile")}
                     </a>
                   ) : "-"}
                 </td>
@@ -242,14 +222,14 @@ export default function StudentRequestSkill() {
                   <Stack spacing={2}>
                     {skill.hardSkillScores &&
                       Object.entries(skill.hardSkillScores).map(([k, v], i) => (
-                        <Tooltip label={v.comment || "No comment"} key={i}>
+                        <Tooltip label={v.comment || t("request.rubricComment")} key={i}>
                           <Text size="xs">🛠 {k}: {v.score}/5</Text>
                         </Tooltip>
                       ))}
                     {skill.softSkillScores &&
                       Object.entries(skill.softSkillScores).map(([k, v], i) => (
-                        <Tooltip label={v.comment || "No comment"} key={i}>
-                          <Text size="xs">🤝 {k}: {v.score}/5</Text>
+                        <Tooltip label={v.comment || t("request.rubricComment")} key={i}>
+                          <Text size="xs">🤝 {softSkillMap[k] || k}: {v.score}/5</Text>
                         </Tooltip>
                       ))}
                     {skill.note && (
@@ -264,7 +244,7 @@ export default function StudentRequestSkill() {
                     variant="light"
                     onClick={() => handleDelete(skill.id)}
                   >
-                    Delete
+                    {t("request.delete")}
                   </Button>
                 </td>
               </tr>
@@ -273,17 +253,17 @@ export default function StudentRequestSkill() {
         </Table>
       )}
 
-      <Modal opened={forceMajorModal} onClose={() => {}} title="Select Your Major" centered withCloseButton={false}>
+      <Modal opened={forceMajorModal} onClose={() => {}} title={t("request.selectMajorModalTitle")} centered withCloseButton={false}>
         <Stack>
-          <Text>You must select your major before submitting skills.</Text>
+          <Text>{t("request.selectMajorNotice")}</Text>
           <Select
-            placeholder="Choose your major"
+            placeholder={t("request.chooseMajor")}
             data={majorList}
             value={selectedMajor}
             onChange={setSelectedMajor}
           />
           <Button disabled={!selectedMajor} onClick={updateMajor}>
-            Save Major
+            {t("request.saveMajor")}
           </Button>
         </Stack>
       </Modal>

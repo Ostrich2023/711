@@ -10,6 +10,7 @@ import {
   Stack,
   Badge,
   SimpleGrid,
+  Alert
 } from "@mantine/core";
 import {
   collection,
@@ -22,8 +23,11 @@ import {
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import { useFireStoreUser } from "../../hooks/useFirestoreUser";
+import { useTranslation } from "react-i18next";
+import { IconInfoCircle } from "@tabler/icons-react";
 
 export default function StudentHome() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { userData, isLoading } = useFireStoreUser(user);
 
@@ -31,6 +35,7 @@ export default function StudentHome() {
   const [courses, setCourses] = useState([]);
   const [teachers, setTeachers] = useState({});
   const [loading, setLoading] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     if (user?.uid && userData?.schoolId) {
@@ -49,10 +54,9 @@ export default function StudentHome() {
       }));
 
       setSkills(skillData);
+      setPendingCount(skillData.filter(s => s.verified === "pending").length);
 
-      // Extract unique courseIds
       const courseIds = [...new Set(skillData.map(s => s.courseId))];
-
       const courseData = [];
       const teacherMap = {};
 
@@ -62,7 +66,6 @@ export default function StudentHome() {
           const course = courseDoc.data();
           course.id = courseDoc.id;
 
-          // fetch teacher
           const teacherRef = course.createdBy;
           if (teacherRef && teacherRef.path) {
             const teacherDoc = await getDoc(teacherRef);
@@ -93,56 +96,56 @@ export default function StudentHome() {
       ) : (
         <>
           <Group mb="sm">
-            <Title order={2}>Welcome back, {userData?.name}</Title>
-            <Text c="dimmed">{userData?.schoolId?.toUpperCase()} · Student</Text>
+            <Title order={2}>
+              {t("welcome")}, {userData?.name}
+            </Title>
+            <Text c="dimmed">{userData?.schoolId?.toUpperCase()} · {t("student")}</Text>
           </Group>
 
-          {/* Skills Overview */}
-          <Title order={3} mt="md" mb="sm">My Skills</Title>
-          {skills.length === 0 ? (
-            <Text>No skills submitted yet.</Text>
-          ) : (
-            <Stack>
-              {skills.map(skill => (
-                <Paper key={skill.id} withBorder p="md">
-                  <Group justify="space-between">
-                    <Box>
-                      <Text fw={600}>{skill.title} ({skill.level})</Text>
-                      <Text size="sm" c="dimmed">
-                        {skill.courseCode} - {skill.courseTitle}
-                      </Text>
-                      <Text size="xs" mt="xs">{skill.description}</Text>
-                      {skill.verified === "approved" ? (
-                        <Badge color="green">Approved</Badge>
-                      ) : skill.verified === "rejected" ? (
-                        <Badge color="red">Rejected</Badge>
-                      ) : (
-                        <Badge color="gray">Pending</Badge>
-                      )}
-                    </Box>
-                  </Group>
-                </Paper>
-              ))}
-            </Stack>
+          {pendingCount > 0 && (
+            <Alert
+              icon={<IconInfoCircle size={16} />}
+              title={t("student.pendingSkillsMessage", { count: pendingCount })}
+              color="blue"
+              mt="md"
+            />
           )}
 
-          {/* Courses */}
-          <Title order={3} mt="xl" mb="sm">My Courses</Title>
-          {courses.length === 0 ? (
-            <Text>No course participation detected.</Text>
+          <Title order={3} mt="md" mb="sm">{t("mySkills")}</Title>
+          {skills.length === 0 ? (
+            <Text>{t("noSkillsYet")}</Text>
           ) : (
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-              {courses.map(course => (
-                <Paper key={course.id} withBorder p="md">
-                  <Text fw={600}>{course.title}</Text>
-                  <Text size="sm" c="dimmed">{course.code}</Text>
-                  <Text size="xs" mt="xs">{course.skillTemplate?.skillDescription}</Text>
-                  <Text size="xs" mt="xs">
-                    Teacher: {teachers[course.id]?.name || "Unknown"}
-                  </Text>
+            <SimpleGrid cols={2} spacing="md">
+              {skills.map(skill => (
+                <Paper key={skill.id} withBorder p="md" radius="md">
+                  <Stack spacing="xs">
+                    <Group justify="space-between">
+                      <Text fw={500}>{skill.title}</Text>
+                      <Badge color={skill.verified === "approved" ? "green" : "gray"}>
+                        {skill.verified}
+                      </Badge>
+                    </Group>
+                    <Text size="sm" c="dimmed">{skill.courseCode} - {skill.courseTitle}</Text>
+                    <Text size="sm">{t("level")}: {skill.level}</Text>
+                  </Stack>
                 </Paper>
               ))}
             </SimpleGrid>
+          )}
+
+          <Title order={3} mt="xl" mb="sm">{t("myCourses")}</Title>
+          {courses.length === 0 ? (
+            <Text>{t("noCourses")}</Text>
+          ) : (
+            <Stack>
+              {courses.map(course => (
+                <Paper key={course.id} withBorder p="md">
+                  <Text fw={500}>{course.title}</Text>
+                  <Text size="sm" c="dimmed">{course.code}</Text>
+                  <Text size="sm">{t("teacher")}: {teachers[course.id]?.name || "Unknown"}</Text>
+                </Paper>
+              ))}
+            </Stack>
           )}
         </>
       )}

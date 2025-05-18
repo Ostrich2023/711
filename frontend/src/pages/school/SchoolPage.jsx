@@ -4,9 +4,10 @@ import {
   IconHome2,
   IconFileCheck,
   IconBook2,
-  IconSettings,
+  IconSettings
 } from "@tabler/icons-react";
 import { Navigate, Outlet } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../context/AuthContext";
 import { useFireStoreUser } from "../../hooks/useFirestoreUser";
@@ -14,17 +15,18 @@ import { useFireStoreUser } from "../../hooks/useFirestoreUser";
 import HomeNavbar from "../../components/HomeNavbar";
 
 const SchoolPage = () => {
+  const { t } = useTranslation();
   const { user, role } = useAuth();
   const { userData, isLoading } = useFireStoreUser(user);
 
   if (!user || role !== "school") return <Navigate to="/" />;
 
-  const navbarData = [
-    { link: ".", label: "Home", icon: IconHome2 },
-    { link: "verify-skill", label: "Verify Skills", icon: IconFileCheck },
-    { link: "manage-courses", label: "Manage Courses", icon: IconBook2 },
-    { link: "", label: "Settings", icon: IconSettings },
-  ];
+const navbarData = [
+  { link: "", labelKey: "navbar.home", icon: IconHome2 },
+  { link: "verify-skill", labelKey: "school.verifySkills", icon: IconFileCheck },
+  { link: "manage-courses", labelKey: "school.manageCourses", icon: IconBook2 },
+  { link: "settings", labelKey: "navbar.settings", icon: IconSettings }
+];
 
   return (
     <Container maw="1500px">

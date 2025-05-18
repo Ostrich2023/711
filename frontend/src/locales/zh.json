@@ -1,0 +1,339 @@
+{
+  "profile": {
+    "title": "学生资料",
+    "id": "学生ID",
+    "name": "姓名",
+    "email": "邮箱",
+    "major": "专业",
+    "level": "等级",
+    "skills": "已认证技能",
+    "noSkills": "你还没有任何已认证的技能。",
+    "edit": "编辑",
+    "save": "保存",
+    "cancel": "取消",
+    "changeAvatar": "更换头像",
+    "updated": "资料已成功更新。"
+  },
+  "wallet": {
+    "selectSkillTitle": "选择技能以查看评分",
+    "overallScoreSummary": "综合评分概览",
+    "softSkillScores": "软技能评分",
+    "hardSkillScores": "硬技能评分",
+    "myVerifiedSkills": "我的已认证技能",
+    "graduationReminderTitle": "毕业提醒",
+    "graduationReminderMessage": "毕业后，你的学校邮箱将被停用。请使用个人邮箱登录！",
+    "chooseSkill": "选择技能",
+    "selectPlaceholder": "请选择",
+    "skillRejected": "该技能已被拒绝。请联系你的教师：",
+    "unknown": "未知",
+    "course": "课程",
+    "verifiedBy": "审核人",
+    "score": "评分",
+    "visibleToEmployer": "向雇主公开"
+  },
+  "home": {
+    "welcome": "欢迎回来",
+    "student": "学生",
+    "schoolTag": "学校",
+    "studentTag": "学生",
+    "mySkills": "我的技能",
+    "myCourses": "我的课程",
+    "myTeachers": "我的教师",
+    "level": "等级",
+    "teacher": "教师",
+    "noSkillsYet": "你还没有提交任何技能。",
+    "noCourses": "未找到你参与的课程。"
+  },
+  "request": {
+    "submit": "提交技能",
+    "course": "选择课程",
+    "level": "技能等级",
+    "softSkills": "选择软技能",
+    "file": "上传附件（PDF/DOCX）",
+    "fileNote": "仅允许上传不超过5MB的 PDF 或 DOCX 文件",
+    "currentMajor": "当前专业",
+    "submitBtn": "提交",
+    "history": "技能提交记录",
+    "statusApproved": " 已通过",
+    "statusRejected": " 已拒绝",
+    "statusPending": " 审核中",
+    "rubricTitle": "评分细则",
+    "rubricComment": "评语",
+    "action": "操作",
+    "delete": "删除",
+    "viewFile": " 查看",
+    "selectMajorModalTitle": "请选择你的专业",
+    "selectMajorNotice": "在提交技能之前，你必须先选择专业。",
+    "chooseMajor": "选择专业",
+    "saveMajor": "保存专业"
+  },
+  "settings": {
+    "title": "设置",
+    "email": "邮箱",
+    "resetPassword": "发送密码重置邮件",
+    "exportPDF": "导出技能摘要PDF",
+    "publicSkills": "将技能公开给雇主",
+    "notifications": "启用系统通知",
+    "language": "语言偏好",
+    "theme": "主题模式",
+    "save": "保存设置",
+    "saveSuccess": "设置保存成功"
+  },
+  "navbar": {
+    "home": "主页",
+    "profile": "资料",
+    "requestSkill": "技能申请",
+    "wallet": "技能钱包",
+    "courses": "我的课程",
+    "settings": "设置"
+  },
+  "school": {
+    "welcome": "欢迎回来",
+    "skillLabel": "项技能提交",
+    "reviewPrefix": "你当前有",
+    "reviewSuffix": "等待审核和认证。",
+    "myStudents": "我的学生",
+    "verifySkills": "技能审核",
+    "manageCourses": "课程管理"
+  },
+  "employer": {
+    "jobManagement": "职位管理"
+  },
+  "admin": {
+    "title": "管理员面板",
+    "email": "邮箱",
+    "role": "角色",
+    "school": "所属学校",
+    "uid": "UID",
+    "logout": "登出",
+    "userList": "所有注册用户",
+    "loadError": "用户列表加载失败。",
+    "manageUsers": "用户管理"
+  },
+  "teacher": {
+    "verify": {
+      "title": "技能审核面板",
+      "searchPlaceholder": "按学生姓名或技能标题搜索",
+      "filterCourse": "按课程筛选",
+      "filterMajor": "按专业筛选",
+      "noMatch": "未找到符合条件的技能。",
+      "tableHeaders": {
+        "student": "学生",
+        "id": "ID",
+        "major": "专业",
+        "course": "课程",
+        "skill": "技能",
+        "action": "操作"
+      },
+      "reviewButton": "审核",
+      "backButton": " 返回",
+      "course": "课程",
+      "studentInfo": "学生信息",
+      "viewDocument": "查看文档",
+      "decision": "审核决定",
+      "approve": "通过",
+      "reject": "拒绝",
+      "hardSkills": "硬技能",
+      "softSkills": "软技能",
+      "noHardSkills": "未定义硬技能。",
+      "score": "评分（0/5）",
+      "comment": "评语",
+      "note": "总体说明",
+      "submitReview": "提交审核",
+      "requiredDecision": "请先选择通过或拒绝。",
+      "requiredRubric": "请在通过前填写硬技能和软技能评分。",
+      "success": "技能审核提交成功",
+      "error": "提交审核失败",
+      "pendingReviewsMessage": "你有 {{count}} 个技能申请等待审核。",
+      "verifySkills": "技能审核",
+      "myCourses": "我的课程",
+      "myStudents": "我的学生",
+      "settings": "设置"
+    }
+  },
+  "role": {
+    "school": "学校管理员",
+    "teacher": "教师",
+    "student": "学生"
+  },
+  "courseManager": {
+    "title": "课程管理",
+    "createTitle": "创建新课程",
+    "editTitle": "编辑课程",
+    "courseTitle": "课程名称",
+    "courseCode": "课程代码",
+    "major": "专业",
+    "skillTitle": "技能名称（模板）",
+    "skillDescription": "技能描述",
+    "addHardSkill": "添加硬技能",
+    "hardSkillPlaceholder": "例如：JavaScript",
+    "create": "创建课程",
+    "update": "更新课程",
+    "yourCourses": "你创建的课程",
+    "noCourses": "你还没有创建任何课程。",
+    "edit": "编辑",
+    "delete": "删除",
+    "confirmDelete": "你确定要删除该课程吗？",
+    "deleteSuccess": "课程删除成功。",
+    "createSuccess": "课程创建成功。",
+    "updateSuccess": "课程更新成功。",
+    "error": "处理课程时发生错误。"
+  },
+  "course": {
+    "students": "学生名单"
+  },
+  "global": {
+    "more": "更多",
+    "submit": "提交",
+    "back": "返回",
+    "view": "查看",
+    "edit": "编辑",
+    "dismiss": "关闭"
+  },
+  "chart": {
+    "noSoftSkill": "暂无软技能评分数据",
+    "noHardSkill": "暂无硬技能评分数据"
+  },
+  "header": {
+    "overview": "概览",
+    "id": "ID",
+    "name": "姓名",
+    "school": "学校",
+    "major": "专业",
+    "role": "角色",
+    "student": "学生",
+    "teacher": "教师",
+    "employer": "雇主",
+    "user": "用户"
+  },
+  "debug": {
+    "title": "调试：当前认证信息",
+    "uid": "UID",
+    "email": "邮箱",
+    "role": "角色",
+    "token": "令牌（短）",
+    "loading": "加载中...",
+    "notLoggedIn": "未登录",
+    "notLoaded": "未加载"
+  },
+  "error": {
+    "title": "页面出错了...",
+    "description": "你尝试打开的页面不存在。可能是地址拼写错误，或者页面已移动。如有疑问，请联系技术支持。",
+    "backHome": "返回主页"
+  },
+  "homepage": {
+    "badge": "一体化技能钱包",
+    "title": "一个平台连接所有角色",
+    "subtitle": "学生、教师、雇主在同一空间中记录、验证与分享技能。",
+    "student": {
+      "title": "学生钱包",
+      "desc": "申请认证、存储成果、随时展示你的个人技能档案。"
+    },
+    "teacher": {
+      "title": "教师审核",
+      "desc": "快速审核学生提交的技能，认证软/硬技能，颁发链上证书。"
+    },
+    "employer": {
+      "title": "雇主访问",
+      "desc": "查看可信技能记录，发布机会，连接符合要求的候选人。"
+    }
+  },
+  "login": {
+    "title": "欢迎回到 Kanavoogle！",
+    "email": "邮箱",
+    "password": "密码",
+    "emailPlaceholder": "请输入邮箱地址",
+    "passwordPlaceholder": "请输入密码",
+    "remember": "保持登录状态",
+    "loginBtn": "登录",
+    "noAccount": "还没有账户？",
+    "register": "注册",
+    "loginFailed": "登录失败",
+    "userNotFound": "未找到用户数据",
+    "invalidRole": "分配的角色无效"
+  },
+  "register": {
+    "title": "欢迎加入 Skivy！",
+    "subtitle": "创建新账户",
+    "username": "用户名",
+    "usernamePlaceholder": "你的姓名",
+    "email": "邮箱",
+    "emailPlaceholder": "你的邮箱",
+    "emailInvalid": "请输入有效的邮箱地址。",
+    "password": "密码",
+    "passwordRules": "密码必须至少包含6个字符，并包含字母和数字。",
+    "confirmPwd": "再次输入密码",
+    "passwordMismatch": "两次输入的密码不一致。",
+    "role": "选择角色",
+    "roles": {
+      "student": "学生",
+      "teacher": "教师 / 学校",
+      "employer": "雇主"
+    },
+    "school": "选择学校",
+    "selectSchoolPlaceholder": "请选择",
+    "agreement": "我同意注册协议",
+    "registerBtn": "注册",
+    "haveAccount": "已有账号？",
+    "login": "登录",
+    "loading": "正在加载学校列表...",
+    "success": "注册成功。",
+    "wallet": "钱包地址",
+    "mnemonic": "助记词（请妥善保管）：",
+    "fail": "注册失败。",
+    "fetchSchoolFail": "加载学校列表失败。",
+    "completeAllFields": "请完整填写所有字段。",
+    "fixErrors": "请修复所有错误后再提交。",
+    "selectSchool": "请选择学校。",
+    "agreeFirst": "请先同意注册协议。"
+  },
+  "sync": {
+    "title": "同步 Firestore 用户文档",
+    "description": "该功能可在用户文档缺失时创建或更新。",
+    "button": "同步用户文档"
+  },
+  "unauthorized": {
+    "title": "无权访问",
+    "message": "你没有权限访问该页面。",
+    "back": "返回主页"
+  },
+  "why": {
+    "titlePrefix": "为什么选择",
+    "subtitle": "一个让证书永久、可验证、可携带的技能钱包，这正是我们计划构建的目标。",
+    "problemTitle": "我们要解决的问题",
+    "problemText": "证书常常被埋在邮件附件或 LMS 下载中，链接失效、学校改名、毕业后账户失效——学生很难证明自己的能力，教师也难以展示课程成效，雇主更花大量时间去验证不确定的资历。",
+    "solutionTitle": "我们的链上解决方案",
+    "immutable": {
+      "title": "不可篡改的凭证",
+      "desc": "每条认证记录都会被哈希并锚定到公有链上，文件若被更改，哈希将不匹配，从而防止伪造。"
+    },
+    "wallet": {
+      "title": "可携带的技能钱包",
+      "desc": "学习者拥有唯一钱包地址，可携带认证技能走向实习、工作和终身学习，无平台锁定、无订阅限制。"
+    },
+    "workflow": {
+      "title": "多方协作流程",
+      "desc": "学生申请、教师审核、雇主验证——整个流程由角色面板驱动，流程明确。"
+    },
+    "integration": {
+      "title": "开放标准接入",
+      "desc": "智能合约 ABI 和 REST API 遵循 W3C 可验证凭证规范，方便其他学校或 HR 系统快速对接。"
+    },
+    "benefitTitle": "与项目目标匹配的优势",
+    "benefits": {
+      "student": "对学生来说，获得永不过期的能力凭证，有助于提升就业和奖学金竞争力。",
+      "teacher": "对教师来说，流程化认证工具与分析数据展示课程价值。",
+      "employer": "对雇主来说，即时的链上验证可降低招聘欺诈与审核成本。"
+    }
+  },
+  "softSkills": {
+    "communication": "沟通能力",
+    "creativity": "创造力",
+    "criticalThinking": "批判性思维",
+    "teamwork": "团队协作",
+    "adaptability": "适应能力"
+  },
+  "student": {
+  "pendingSkillsMessage": "你有 {{count}} 个技能申请正在审核中。"
+}
+}
