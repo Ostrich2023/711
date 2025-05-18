@@ -62,7 +62,7 @@ const AddJobPage = () => {
       await createJob(jobData, token);
       console.log('Job submitted:', jobData);
       alert('Job Added successfully');
-      navigate('/employer', { state: { reload: true } });
+      navigate('/employer/jobs-list', { state: { reload: true } });
     } catch (error) {
       console.error('Failed to create job:', error);
     }
