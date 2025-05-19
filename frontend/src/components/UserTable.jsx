@@ -30,7 +30,9 @@ export default function UserTable({ title, data = [], onClickMore }) {
               gap="sm"
             >
               <Group gap="sm">
-                <Avatar size={50} src={item.avatar} />
+                <Avatar name={item.name} color="initials" radius="xl">
+                  {item.name.slice(0, 2).toUpperCase()}
+                </Avatar>
                 <div>
                   <Text fw={600} size="sm">{item.name}</Text>
                   <Text size="xs" c="dimmed">{item.email}</Text>

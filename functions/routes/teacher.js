@@ -1,37 +1,12 @@
 import express from "express";
 import admin from "firebase-admin";
+import { verifyTeacher } from "../middlewares/verifyRole.js";
 
 const router = express.Router();
-
-// Middleware: verify token and extract teacher info
-async function verifyToken(req, res, next) {
-  const idToken = req.headers.authorization?.split("Bearer ")[1];
-  if (!idToken) return res.status(401).send("Unauthorized");
-
-  try {
-    const decoded = await admin.auth().verifyIdToken(idToken);
-    const userDoc = await admin.firestore().doc(`users/${decoded.uid}`).get();
-    if (!userDoc.exists) return res.status(403).send("User not found");
-
-    const userData = userDoc.data();
-    if (userData.role !== "school") {
-      return res.status(403).send("Access denied. Only teachers allowed.");
-    }
-
-    req.user = {
-      uid: decoded.uid,
-      role: userData.role,
-      schoolId: userData.schoolId,
-    };
-    next();
-  } catch (err) {
-    console.error("Token error:", err);
-    return res.status(403).send("Invalid token");
-  }
-}
+const FieldValue = admin.firestore.FieldValue;
 
 // 获取本校所有学生
-router.get("/students", verifyToken, async (req, res) => {
+router.get("/students", verifyTeacher, async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("users")
@@ -48,7 +23,7 @@ router.get("/students", verifyToken, async (req, res) => {
 });
 
 // 获取某个学生的技能
-router.get("/student/:id/skills", verifyToken, async (req, res) => {
+router.get("/student/:id/skills", verifyTeacher, async (req, res) => {
   const studentId = req.params.id;
 
   try {
@@ -75,7 +50,7 @@ router.get("/student/:id/skills", verifyToken, async (req, res) => {
 });
 
 // 获取本校教师
-router.get("/teachers", verifyToken, async (req, res) => {
+router.get("/teachers", verifyTeacher, async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("users")
@@ -92,17 +67,14 @@ router.get("/teachers", verifyToken, async (req, res) => {
 });
 
 // 获取本校课程
-router.get("/courses", verifyToken, async (req, res) => {
+router.get("/courses", verifyTeacher, async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("courses")
       .where("schoolId", "==", req.user.schoolId)
       .get();
 
-    const courses = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(courses);
   } catch (err) {
     console.error("Error fetching courses:", err);
@@ -110,8 +82,8 @@ router.get("/courses", verifyToken, async (req, res) => {
   }
 });
 
-//  // GET /course/:courseId/students
-router.get("/course/:courseId/students", verifyToken, async (req, res) => {
+// GET /course/:courseId/students
+router.get("/course/:courseId/students", verifyTeacher, async (req, res) => {
   const courseId = req.params.courseId;
 
   try {
@@ -148,27 +120,8 @@ router.get("/course/:courseId/students", verifyToken, async (req, res) => {
   }
 });
 
-// GET /school/:schoolId/students
-router.get("/:schoolId/students", async (req, res) => {
-  const { schoolId } = req.params;
-
-  try {
-    const snapshot = await admin.firestore()
-      .collection("users")
-      .where("role", "==", "student")
-      .where("schoolId", "==", schoolId)
-      .get();
-
-    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.json(students);
-  } catch (err) {
-    console.error("Public school-student fetch failed:", err);
-    res.status(500).send("Failed to retrieve students.");
-  }
-});
-
-// GET /school/course/:courseId/details
-router.get("/course/:courseId/details", verifyToken, async (req, res) => {
+// 获取课程详情（包含创建教师信息）
+router.get("/course/:courseId/details", verifyTeacher, async (req, res) => {
   const courseId = req.params.courseId;
 
   try {
@@ -177,7 +130,6 @@ router.get("/course/:courseId/details", verifyToken, async (req, res) => {
     if (!courseDoc.exists) return res.status(404).send("Course not found");
 
     const course = courseDoc.data();
-
     const creatorRef = course.createdBy;
     const teacherDoc = await creatorRef.get();
     const teacher = teacherDoc.exists ? teacherDoc.data() : null;
@@ -197,19 +149,15 @@ router.get("/course/:courseId/details", verifyToken, async (req, res) => {
   }
 });
 
-// GET /teacher/my-courses — 获取当前教师创建的课程
-router.get("/my-courses", verifyToken, async (req, res) => {
+// 获取当前教师创建的课程
+router.get("/my-courses", verifyTeacher, async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("courses")
       .where("createdBy", "==", admin.firestore().doc(`users/${req.user.uid}`))
       .get();
 
-    const courses = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
+    const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(courses);
   } catch (err) {
     console.error("Failed to fetch teacher courses:", err.message);
@@ -217,8 +165,8 @@ router.get("/my-courses", verifyToken, async (req, res) => {
   }
 });
 
-// GET /teacher/pending-skills — 获取当前教师所属学校的待审核技能
-router.get("/pending-skills", verifyToken, async (req, res) => {
+// 获取当前学校的待审核技能
+router.get("/pending-skills", verifyTeacher, async (req, res) => {
   try {
     const snapshot = await admin.firestore()
       .collection("skills")
@@ -229,8 +177,6 @@ router.get("/pending-skills", verifyToken, async (req, res) => {
 
     for (const doc of snapshot.docs) {
       const data = doc.data();
-
-      // 确保是本校学生
       const studentDoc = await admin.firestore().doc(`users/${data.ownerId}`).get();
       if (!studentDoc.exists) continue;
 
@@ -256,5 +202,106 @@ router.get("/pending-skills", verifyToken, async (req, res) => {
   }
 });
 
+// 公共接口：获取任意学校学生（无验证）
+router.get("/:schoolId/students", async (req, res) => {
+  const { schoolId } = req.params;
 
+  try {
+    const snapshot = await admin.firestore()
+      .collection("users")
+      .where("role", "==", "student")
+      .where("schoolId", "==", schoolId)
+      .get();
+
+    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(students);
+  } catch (err) {
+    console.error("Public school-student fetch failed:", err);
+    res.status(500).send("Failed to retrieve students.");
+  }
+});
+
+// PUT /skill/review/:id — 教师审核技能（统一版本）
+router.put("/review/:id", verifyTeacher, async (req, res) => {
+  const { uid } = req.user;
+  const skillId = req.params.id;
+  const { verified, hardSkillScores, softSkillScores, note } = req.body;
+
+  // 检查审核状态是否合法
+  if (!["approved", "rejected"].includes(verified)) {
+    return res.status(400).send("Invalid verified status.");
+  }
+
+  try {
+    const skillRef = admin.firestore().doc(`skills/${skillId}`);
+    const skillDoc = await skillRef.get();
+    if (!skillDoc.exists) return res.status(404).send("Skill not found.");
+
+    const updateData = {
+      verified,
+      note: note || "",
+      reviewedBy: uid,
+      reviewedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (verified === "approved") {
+      if (
+        typeof hardSkillScores !== "object" ||
+        typeof softSkillScores !== "object"
+      ) {
+        return res.status(400).send("Missing or invalid rubric score structure");
+      }
+
+      updateData.hardSkillScores = hardSkillScores || {};
+      updateData.softSkillScores = softSkillScores || {};
+    } else {
+      updateData.hardSkillScores = null;
+      updateData.softSkillScores = null;
+    }
+
+    await skillRef.update(updateData);
+    res.send("Skill review submitted.");
+  } catch (err) {
+    console.error("Skill review failed:", err);
+    res.status(500).send("Failed to review skill.");
+  }
+});
+
+// PUT /skill/review/:id — 教师审核技能
+router.put("/review/:id", verifyTeacher, async (req, res) => {
+  const { uid } = req.user;
+  const skillId = req.params.id;
+  const { verified, hardSkillScores, softSkillScores, note } = req.body;
+
+  if (!['approved', 'rejected'].includes(verified)) {
+    return res.status(400).send("Invalid verified status.");
+  }
+
+  try {
+    const skillRef = admin.firestore().doc(`skills/${skillId}`);
+    const skillDoc = await skillRef.get();
+    if (!skillDoc.exists) return res.status(404).send("Skill not found.");
+
+    const updateData = {
+      verified,
+      note: note || "",
+      reviewedBy: uid,
+      reviewedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (verified === "approved") {
+      updateData.hardSkillScores = hardSkillScores || {};
+      updateData.softSkillScores = softSkillScores || {};
+    } else {
+      updateData.hardSkillScores = null;
+      updateData.softSkillScores = null;
+    }
+
+    await skillRef.update(updateData);
+    res.send("Review submitted.");
+  } catch (err) {
+    console.error("Skill review failed:", err);
+    res.status(500).send("Failed to review skill.");
+  }
+});
 export default router;

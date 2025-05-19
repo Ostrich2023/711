@@ -147,4 +147,159 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
   }
 });
 
+// PATCH /employer/applications/:applicationId — 更新状态（通过 / 拒绝 / 面试）
+router.patch("/applications/:applicationId", verifyEmployer, async (req, res) => {
+  const { applicationId } = req.params;
+  const { status, note } = req.body;
+
+  if (!["pending", "accepted", "rejected", "interview"].includes(status)) {
+    return res.status(400).send("Invalid status value");
+  }
+
+  try {
+    const appRef = admin.firestore().collection("applications").doc(applicationId);
+    const appDoc = await appRef.get();
+
+    if (!appDoc.exists) {
+      return res.status(404).send("Application not found");
+    }
+
+    const application = appDoc.data();
+
+    // 检查是否是该雇主的岗位
+    const jobRef = admin.firestore().collection("jobs").doc(application.jobId);
+    const jobDoc = await jobRef.get();
+
+    if (!jobDoc.exists || jobDoc.data().employerId !== req.user.uid) {
+      return res.status(403).send("You are not authorized to modify this application");
+    }
+
+    await appRef.update({
+      status,
+      note: note || "",
+    });
+
+    res.send("Application status updated");
+  } catch (error) {
+    console.error("Error updating application:", error.message);
+    res.status(500).send("Failed to update application");
+  }
+});
+
+
+// GET /employer/recent-applications
+router.get("/recent-applications", verifyEmployer, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("applications")
+      .where("employerId", "==", req.user.uid)
+      .orderBy("appliedAt", "desc")
+      .limit(10)
+      .get();
+
+    const applications = [];
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const studentDoc = await admin.firestore().doc(`users/${data.studentId}`).get();
+      const studentName = studentDoc.exists ? studentDoc.data().name : "Unknown";
+
+      applications.push({
+        id: doc.id,
+        jobId: data.jobId,
+        studentId: data.studentId,
+        studentName,
+        message: data.message || "",
+        appliedAt: data.appliedAt,
+      });
+    }
+
+    res.json(applications);
+  } catch (error) {
+    console.error("Error fetching recent applications:", error);
+    res.status(500).send("Failed to retrieve recent applications");
+  }
+});
+
+// GET /employer/application-summary
+router.get("/application-summary", verifyEmployer, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("applications")
+      .where("employerId", "==", req.user.uid)
+      .get();
+
+    let total = 0;
+    let viewed = 0;
+    let unread = 0;
+
+    snapshot.forEach(doc => {
+      total += 1;
+      const data = doc.data();
+      if (data.viewed) viewed += 1;
+      else unread += 1;
+    });
+
+    res.json({ total, viewed, unread });
+  } catch (error) {
+    console.error("Error fetching application summary:", error);
+    res.status(500).send("Failed to fetch summary");
+  }
+});
+
+// GET /employer/approved-students
+router.get("/approved-students", verifyEmployer, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("skills")
+      .where("verified", "==", "approved")
+      .get();
+
+    const studentMap = new Map();
+
+    for (const doc of snapshot.docs) {
+      const skill = doc.data();
+      const studentId = skill.ownerId;
+
+      if (!studentId) continue;
+
+      if (!studentMap.has(studentId)) {
+        studentMap.set(studentId, []);
+      }
+
+      const currentSkills = studentMap.get(studentId);
+      if (Array.isArray(currentSkills)) {
+        currentSkills.push({ id: doc.id, ...skill });
+      } else {
+        studentMap.set(studentId, [{ id: doc.id, ...skill }]);
+      }
+    }
+
+    const results = [];
+
+    for (const [studentId, skills] of studentMap.entries()) {
+      const studentDoc = await admin.firestore().doc(`users/${studentId}`).get();
+      if (!studentDoc.exists) continue;
+
+      const student = studentDoc.data();
+
+      results.push({
+        studentId,
+        studentName: student.name || "Unknown",
+        email: student.email || "",
+        customUid: student.customUid || "",
+        schoolId: student.schoolId || "",
+        major: student.major || "",
+        skills: Array.isArray(skills) ? skills : [], // 确保为数组
+      });
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error loading approved students:", error);
+    res.status(500).send("Failed to load approved students");
+  }
+});
+
+
 export default router;

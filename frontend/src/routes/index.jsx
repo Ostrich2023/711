@@ -9,7 +9,9 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import UnauthorizedPage from '../pages/Unauthorized';
 import WhyKanavoogle from '../pages/WhyKanavoogle';
+import Services from '../pages/Services'
 import ErrorPage from '../pages/ErrorPage';
+
 
 // Student
 import StudentPage from "../pages/student/StudentPage";
@@ -18,6 +20,8 @@ import StudentRequestSkill from '../pages/student/StudentRequestSkill';
 import StudentSettings from '../pages/student/StudentSettings';
 import DigitalSkillWallet from '../pages/student/DigitalSkillWallet';
 import StudentProfile from '../pages/student/StudentProfile';
+import JobDetail from '../pages/student/JobDetail'; 
+import MyJobApplications from '../pages/student/MyJobApplications'; 
 
 // School
 import SchoolPage from "../pages/school/SchoolPage";
@@ -30,8 +34,8 @@ import SchoolSettings from '../pages/school/SchoolSettings';
 import EmployerPage from "../pages/employer/EmployerPage";
 import EmployerHome from '../pages/employer/EmployerHome';
 import JobManagement from '../pages/employer/JobManagement';
-import AddJobPage from "../pages/employer/AddJobPage"
-import EditJobPage from "../pages/employer/EditJobPage"
+import AddJobPage from "../pages/employer/AddJobPage";
+import EditJobPage from "../pages/employer/EditJobPage";
 
 // Admin
 import AdminPage from "../pages/AdminPage";
@@ -48,19 +52,23 @@ const AppRouter = createBrowserRouter([
       { path: "login", element: <Login /> },
       { path: "unauthorized", element: <UnauthorizedPage /> },
       { path: "why-kanavoogle", element: <WhyKanavoogle /> },
+      { path: "services", element: <Services /> },
 
       // Student routes
-      {
-        path: "student",
-        element: <StudentPage />,
-        children: [
-          { index: true, element: <StudentHome /> },
-          { path: "profile", element: <StudentProfile /> },
-          { path: "request-skill", element: <StudentRequestSkill /> },
-          { path: "settings", element: <StudentSettings /> },
-          { path: "wallet", element: <DigitalSkillWallet /> },
-        ]
-      },
+    {
+      path: "student",
+      element: <StudentPage />,
+      children: [
+        { index: true, element: <StudentHome /> },
+        { path: "profile", element: <StudentProfile /> },
+        { path: "request-skill", element: <StudentRequestSkill /> },
+        { path: "settings", element: <StudentSettings /> },
+        { path: "wallet", element: <DigitalSkillWallet /> },
+        { path: "job/:jobId", element: <JobDetail /> },
+        { path: "job", element: <JobDetail /> }, 
+        { path: "applications", element: <MyJobApplications /> },   // 加入
+      ]
+    },
 
       // School routes
   {
@@ -70,11 +78,11 @@ const AppRouter = createBrowserRouter([
       { index: true, element: <SchoolHome /> },
       { path: "verify-skill", element: <SchoolVerifySkill /> },
       { path: "manage-courses", element: <SchoolCourseManager /> }, 
-      { path: "settings", element: <SchoolSettings /> }, // ✅ 现在不会跳 ErrorPage 了
+      { path: "settings", element: <SchoolSettings /> }, // 现在不会跳 ErrorPage 了
     ]
   },  
 
-      // Employer routes
+
       {
         path: "employer",
         element: <EmployerPage />,
@@ -85,6 +93,7 @@ const AppRouter = createBrowserRouter([
             { path: "edit-job/:jobId", element: <EditJobPage /> }
         ]
       },
+
 
       // Admin & Utility
       { path: "admin", element: <AdminPage /> },

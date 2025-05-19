@@ -9,9 +9,6 @@ export default function Layout() {
     <div className={classes.wrapper}>
       <div className={classes.headerBar}>
         <Header />
-        <div className={classes.langSwitch}>
-          <LanguageSwitcher />
-        </div>
       </div>
 
       <main className={classes.content}>

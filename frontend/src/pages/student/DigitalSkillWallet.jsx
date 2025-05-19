@@ -12,6 +12,7 @@ import {
   Select,
   Anchor,
   RingProgress,
+  Button
 } from "@mantine/core";
 
 import AlertBox from "../../components/digitalskillwallet/AlertBox";
@@ -26,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import { getApp } from "firebase/app";
+import { Link } from "react-router-dom";
 
 const theme = createTheme({
   components: {
@@ -303,6 +305,28 @@ const DigitalSkillWallet = () => {
                 {t("wallet.graduationReminderMessage")}
               </AlertBox>
             )}
+          </Grid.Col>
+          <Grid.Col span={10}>
+            <Flex justify="space-around" mt="lg">
+              <Button
+                fullWidth
+                variant="light"
+                component={Link}
+                to="/student/applications"
+                style={{ flex: 1, marginRight: "0.5rem" }}
+              >
+                My Applications
+              </Button>
+              <Button
+                fullWidth
+                variant="light"
+                component={Link}
+                to="/student/job"
+                style={{ flex: 1, marginLeft: "0.5rem" }}
+              >
+                Job Board
+              </Button>
+            </Flex>
           </Grid.Col>
         </Grid>
       </Box>

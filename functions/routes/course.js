@@ -1,31 +1,9 @@
 import express from "express";
 import admin from "firebase-admin";
+import { verifyTeacher, verifyRole } from "../middlewares/verifyRole.js";
 
 const router = express.Router();
 const FieldValue = admin.firestore.FieldValue;
-
-// 通用身份验证
-async function verifyUser(req, res, next) {
-  const idToken = req.headers.authorization?.split("Bearer ")[1];
-  if (!idToken) return res.status(401).send("Unauthorized");
-
-  try {
-    const decoded = await admin.auth().verifyIdToken(idToken);
-    const userDoc = await admin.firestore().doc(`users/${decoded.uid}`).get();
-    if (!userDoc.exists) return res.status(403).send("User not found");
-    req.user = { uid: decoded.uid, ...userDoc.data() };
-    next();
-  } catch (err) {
-    console.error("Token verification failed:", err);
-    return res.status(403).send("Invalid token");
-  }
-}
-
-// 教师验证中间件
-function isTeacher(req, res, next) {
-  if (req.user.role !== "school") return res.status(403).send("Only teachers allowed");
-  next();
-}
 
 // 解析专业名称
 async function resolveMajorName(majorRef) {
@@ -39,7 +17,7 @@ async function resolveMajorName(majorRef) {
 }
 
 // POST /course/create
-router.post("/create", verifyUser, isTeacher, async (req, res) => {
+router.post("/create", verifyTeacher, async (req, res) => {
   const { title, code, major, skillTemplate, hardSkills } = req.body;
 
   if (!title || !code || !major || !skillTemplate?.skillTitle || !Array.isArray(hardSkills)) {
@@ -71,7 +49,7 @@ router.post("/create", verifyUser, isTeacher, async (req, res) => {
 });
 
 // PUT /course/update/:id
-router.put("/update/:id", verifyUser, isTeacher, async (req, res) => {
+router.put("/update/:id", verifyTeacher, async (req, res) => {
   const { title, code, major, skillTemplate, hardSkills } = req.body;
   const courseId = req.params.id;
 
@@ -103,7 +81,7 @@ router.put("/update/:id", verifyUser, isTeacher, async (req, res) => {
 });
 
 // DELETE /course/delete/:id
-router.delete("/delete/:id", verifyUser, isTeacher, async (req, res) => {
+router.delete("/delete/:id", verifyTeacher, async (req, res) => {
   const courseId = req.params.id;
 
   try {
@@ -123,37 +101,30 @@ router.delete("/delete/:id", verifyUser, isTeacher, async (req, res) => {
 });
 
 // GET /course/list-by-school
-router.get("/list-by-school", verifyUser, async (req, res) => {
+router.get("/list-by-school", verifyRole(["school", "student"]), async (req, res) => {
   const { role, schoolId, major } = req.user;
   if (!schoolId) return res.status(400).send("Missing schoolId");
 
   try {
     let query = admin.firestore().collection("courses").where("schoolId", "==", schoolId);
-
     if (role === "student") {
       const majorRef = admin.firestore().doc(`majors/${major}`);
       query = query.where("major", "==", majorRef);
     }
 
-    if (!["student", "school"].includes(role)) {
-      return res.status(403).send("Access denied");
-    }
-
     const snapshot = await query.get();
-    const results = await Promise.all(
-      snapshot.docs.map(async (doc) => {
-        const data = doc.data();
-        const majorName = await resolveMajorName(data.major);
-        return {
-          id: doc.id,
-          title: data.title,
-          code: data.code,
-          majorName,
-          skillTemplate: data.skillTemplate,
-          studentCount: data.studentCount || 0,
-        };
-      })
-    );
+    const results = await Promise.all(snapshot.docs.map(async (doc) => {
+      const data = doc.data();
+      const majorName = await resolveMajorName(data.major);
+      return {
+        id: doc.id,
+        title: data.title,
+        code: data.code,
+        majorName,
+        skillTemplate: data.skillTemplate,
+        studentCount: data.studentCount || 0,
+      };
+    }));
 
     res.json(results);
   } catch (err) {
@@ -163,9 +134,7 @@ router.get("/list-by-school", verifyUser, async (req, res) => {
 });
 
 // GET /course/majors
-router.get("/majors", verifyUser, async (req, res) => {
-  if (!["school", "student"].includes(req.user.role)) return res.status(403).send("Access denied");
-
+router.get("/majors", verifyRole(["school", "student"]), async (req, res) => {
   try {
     const snapshot = await admin.firestore().collection("majors").get();
     const majors = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -177,9 +146,7 @@ router.get("/majors", verifyUser, async (req, res) => {
 });
 
 // GET /course/soft-skills
-router.get("/soft-skills", verifyUser, async (req, res) => {
-  if (!["school", "student"].includes(req.user.role)) return res.status(403).send("Access denied");
-
+router.get("/soft-skills", verifyRole(["school", "student"]), async (req, res) => {
   try {
     const snapshot = await admin.firestore().collection("soft-skills").get();
     const skills = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -191,7 +158,7 @@ router.get("/soft-skills", verifyUser, async (req, res) => {
 });
 
 // GET /course/:courseId/details
-router.get("/details/:courseId", verifyUser, async (req, res) => {
+router.get("/details/:courseId", verifyRole(["school", "student"]), async (req, res) => {
   const { courseId } = req.params;
 
   try {

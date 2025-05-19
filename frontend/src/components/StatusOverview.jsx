@@ -8,100 +8,96 @@ import {
   Title,
   Select,
   Stack,
-  ThemeIcon,
+  Badge,
 } from "@mantine/core";
-import {
-  IconCheck,
-  IconX,
-  IconClock,
-  IconBrandPython,
-  IconBrandJavascript,
-  IconBrandHtml5,
-  IconBrandCss3,
-  IconBrandReact,
-  IconBrandNodejs,
-} from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 
-const allSkills = [
-  { name: "HTML", course: "Rapid Web Development", status: "Verified", icon: <IconBrandHtml5 size={22} />, iconColor: "red" },
-  { name: "CSS", course: "Rapid Web Development", status: "Verified", icon: <IconBrandCss3 size={22} />, iconColor: "blue" },
-  { name: "JavaScript", course: "Rapid Web Development", status: "In Progress", icon: <IconBrandJavascript size={22} />, iconColor: "blue" },
-  { name: "Python", course: "Rapid Web Development", status: "Verified", icon: <IconBrandPython size={22} />, iconColor: "green" },
-  { name: "React", course: "Frontend Frameworks", status: "Rejected", icon: <IconBrandReact size={22} />, iconColor: "cyan" },
-  { name: "Node.js", course: "Backend Development", status: "In Progress", icon: <IconBrandNodejs size={22} />, iconColor: "teal" },
-];
-
-function getStatus(status) {
-  switch (status) {
-    case "Verified":
-      return (
-        <Group gap={4}>
-          <IconCheck size={14} color="green" />
-          <Text size="xs" c="green" fw={500}>Verified</Text>
-        </Group>
-      );
-    case "In Progress":
-      return (
-        <Group gap={4}>
-          <IconClock size={14} />
-          <Text size="xs" c="gray" fw={500}>In Progress</Text>
-        </Group>
-      );
-    case "Rejected":
-      return (
-        <Group gap={4}>
-          <IconX size={14} color="red" />
-          <Text size="xs" c="red" fw={500}>Rejected</Text>
-        </Group>
-      );
-    default:
-      return null;
+function getSkillStatus(status) {
+  if(status == "approved"){
+    return(
+      <Badge
+        color="green"
+        variant="filled"
+        radius="xl"
+        size="sm"
+        style={{ fontWeight: 600 }}
+      >
+        APPROVED
+      </Badge>
+    )
+  }
+  else if(status == "in progress"){
+    return(
+      <Badge
+        color="gray"
+        variant="filled"
+        radius="xl"
+        size="sm"
+        style={{ fontWeight: 600 }}
+      >
+        IN PROGRESS
+      </Badge>
+    )
+  }else if(status == "reject"){
+      return(
+        <Badge
+          color="red"
+          variant="filled"
+          radius="xl"
+          size="sm"
+          style={{ fontWeight: 600 }}
+        >
+          REJECTED
+        </Badge>
+      )  
   }
 }
 
-export default function StatusOverview() {
+export default function StatusOverview(props) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState("All");
 
   const filteredSkills =
-    filter === "All" ? allSkills : allSkills.filter((s) => s.status === filter);
+    filter === "All" ? props.skills : props.skills.filter((s) => s.verified === filter);
 
   return (
     <Box my="xl">
       <Group justify="space-between" align="center" mb="md">
-        <Title order={3}>Skill Overview</Title>
+        <Title order={3}>{t("home.skillOverview")}</Title>
         <Select
-          data={["All", "Verified", "In Progress", "Rejected"]}
+          data={[
+            { value: "All", label: "All" },
+            { value: "approved", label: "Approved" },
+            { value: "in progress", label: "In Progress" },
+            { value: "reject", label: "Rejected" },
+          ]}
           value={filter}
           onChange={setFilter}
           size="xs"
-          w={180}
+          w={160}
         />
       </Group>
 
-      <SimpleGrid cols={{ base: 1, sm: 2, md: 5 }} spacing="md">
+      {filteredSkills.length===0? <><Text>{t("noSkillsYet")}</Text></>:(
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
         {filteredSkills.map((skill, index) => (
           <Card
             key={index}
-            padding="xs"
+            padding="16px"
             radius="md"
             withBorder
-            style={{ backgroundColor: "#f9fafb", minHeight: 100 }}
+            style={{ backgroundColor: "#f9fafb", minHeight: 80 }}
           >
             <Stack spacing={4}>
-              <Group gap={6}>
-                <ThemeIcon variant="subtle" color={skill.iconColor} size="sm" radius="xl">
-                  {skill.icon}
-                </ThemeIcon>
-                <Text fw={600} size="sm">{skill.name}</Text>
-              </Group>
-
-              <Text size="xs" c="dimmed">{skill.course}</Text>
-
-              {getStatus(skill.status)}
+              <Text fw={600} size="16px">{skill.title}</Text>
+              <Text size="13px" c="dimmed">{skill.courseTitle} · {skill.level}</Text>
+              {getSkillStatus(skill.verified)}
             </Stack>
           </Card>
         ))}
-      </SimpleGrid>
+      </SimpleGrid>        
+      )}
+
     </Box>
   );
 }

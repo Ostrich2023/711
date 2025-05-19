@@ -42,7 +42,8 @@
     "level": "等级",
     "teacher": "教师",
     "noSkillsYet": "你还没有提交任何技能。",
-    "noCourses": "未找到你参与的课程。"
+    "noCourses": "未找到你参与的课程。",
+    "skillOverview": "技能概览"
   },
   "request": {
     "submit": "提交技能",
@@ -85,7 +86,10 @@
     "requestSkill": "技能申请",
     "wallet": "技能钱包",
     "courses": "我的课程",
-    "settings": "设置"
+    "settings": "设置",
+    "postJobs": "发布工作",
+    "applications": "申请",
+    "myApplications": "我的申请"
   },
   "school": {
     "welcome": "欢迎回来",
@@ -149,6 +153,12 @@
       "myCourses": "我的课程",
       "myStudents": "我的学生",
       "settings": "设置"
+    },
+    "review": {
+      "search": "搜索学生或技能",
+      "courseFilter": "按课程筛选",
+      "majorFilter": "按专业筛选",
+      "title": "技能审核"
     }
   },
   "role": {
@@ -180,7 +190,16 @@
     "error": "处理课程时发生错误。"
   },
   "course": {
-    "students": "学生名单"
+    "students": "学生名单",
+    "title": "课程名称",
+    "code":"课程代码",
+    "skill": "技能",
+    "skillTitle":"技能名称",
+    "skillDescription": "课程概述",
+    "addHardSkill": "添加硬技能",
+    "create": "创建课程",
+    "manage":"管理课程",
+    "noCourses":"你目前没有创建任何课程"
   },
   "global": {
     "more": "更多",
@@ -334,6 +353,9 @@
     "adaptability": "适应能力"
   },
   "student": {
-  "pendingSkillsMessage": "你有 {{count}} 个技能申请正在审核中。"
-}
+    "skillLabel": "技能申请",
+    "reviewPrefix": "你有",
+    "reviewSuffix": "项技能正在等待审核",
+    "pendingSkillsMessage": "你有 {{count}} 项技能正在审核中"
+  }
 }

@@ -1,206 +1,224 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
-    Box, TextInput, Textarea, NumberInput, Button,
-    MultiSelect, Notification, Table, Group, Loader, Modal, Text
+  Box, TextInput, Textarea, Button, Table, Text, Group, Center,
+  Loader, Modal, Pagination, MultiSelect, NumberInput
 } from "@mantine/core";
-import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const PAGE_SIZE = 5;
 
-// 创建岗位
-export default function JobCreateForm() {
-    const { user } = useAuth();
-    const [form, setForm] = useState({
-        title: "", description: "", price: 0, location: "", skills: [], positions: 1,
+export default function JobForms() {
+  const { user } = useAuth();
+
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState(0);
+  const [location, setLocation] = useState("");
+  const [skills, setSkills] = useState([]);
+  const [positions, setPositions] = useState(1);
+  const [editingJob, setEditingJob] = useState(null);
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [previewJob, setPreviewJob] = useState(null);
+
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchJobs = async () => {
+    setLoading(true);
+    const token = await user.getIdToken();
+    const res = await axios.get(`${BASE_URL}/job/list?uid=${user.uid}`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
-    const [loading, setLoading] = useState(false);
-    const [successMsg, setSuccessMsg] = useState("");
-    const [errorMsg, setErrorMsg] = useState("");
+    setJobs(res.data);
+    setLoading(false);
+  };
 
-    const skillOptions = [
-        { label: "Web Design", value: "web-design" },
-        { label: "JavaScript", value: "javascript" },
-        { label: "Communication", value: "communication" },
-    ];
+  const handleSubmit = async () => {
+    if (!title.trim()) return;
+    setSubmitting(true);
+    const token = await user.getIdToken();
 
-    const handleSubmit = async () => {
-        if (!user?.uid) {
-            setErrorMsg("User not authenticated.");
-            return;
-        }
-        setLoading(true);
-        try {
-            await axios.post(`${BASE_URL}/job/create`, { ...form, uid: user.uid });
-            setSuccessMsg("Job posted successfully!");
-            setForm({ title: "", description: "", price: 0, location: "", skills: [], positions: 1 });
-        } catch (err) {
-            setErrorMsg(err.response?.data || "Failed to post job");
-        } finally {
-            setLoading(false);
-        }
+    const payload = {
+      uid: user.uid,
+      title,
+      description,
+      price,
+      location,
+      skills,
+      positions,
     };
 
-    return (
-        <Box maw={600} mx="auto">
-            <h2>Create a Job</h2>
-            <TextInput label="Job Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-            <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required mt="md" />
-            <NumberInput label="Price" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required mt="md" />
-            <TextInput label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required mt="md" />
-            <MultiSelect label="Required Skills" data={skillOptions} value={form.skills} onChange={(value) => setForm({ ...form, skills: value })} searchable mt="md" />
-            <NumberInput label="Number of Positions" value={form.positions} onChange={(value) => setForm({ ...form, positions: value })} required mt="md" />
-            <Button onClick={handleSubmit} mt="xl" fullWidth loading={loading} disabled={!user?.uid}>Post Job</Button>
-            {successMsg && <Notification color="green" mt="md">{successMsg}</Notification>}
-            {errorMsg && <Notification color="red" mt="md">{errorMsg}</Notification>}
-        </Box>
-    );
-}
+    try {
+      if (editingJob) {
+        await axios.put(`${BASE_URL}/job/update/${editingJob}`, { ...payload }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        await axios.post(`${BASE_URL}/job/create`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
 
-// 编辑岗位
-export function EditJobForm({ job, onUpdate, onClose }) {
-    const [form, setForm] = useState(job);
-    const [loading, setLoading] = useState(false);
+      resetForm();
+      fetchJobs();
+    } catch (error) {
+      console.error("Submit failed:", error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    const handleUpdate = async () => {
-        setLoading(true);
-        try {
-            await axios.put(`${BASE_URL}/job/update/${job.id}`, { ...form, uid: job.employerId });
-            onUpdate();
-            onClose();
-        } catch (err) {
-            console.error("Update error:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const handleEdit = (job) => {
+    setTitle(job.title);
+    setDescription(job.description);
+    setPrice(job.price || 0);
+    setLocation(job.location || "");
+    setSkills(job.skills || []);
+    setPositions(job.positions || 1);
+    setEditingJob(job.id);
+  };
 
-    return (
-        <Box>
-            <TextInput label="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} mt="md" />
-            <NumberInput label="Price" value={form.price} onChange={(v) => setForm({ ...form, price: v })} mt="md" />
-            <TextInput label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} mt="md" />
-            <NumberInput label="Number of Positions" value={form.positions || 1} onChange={(v) => setForm({ ...form, positions: v })} mt="md" />
-            <Button onClick={handleUpdate} loading={loading} mt="md">Update</Button>
-        </Box>
-    );
-}
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setPrice(0);
+    setLocation("");
+    setSkills([]);
+    setPositions(1);
+    setEditingJob(null);
+  };
 
-// get列表/删除确认
-export function MyJobs({ setTab }) {
-    const { user } = useAuth();
-    const [jobs, setJobs] = useState([]);
-    const [editJob, setEditJob] = useState(null);
-    const [errorMsg, setErrorMsg] = useState("");
-    const [successMsg, setSuccessMsg] = useState("");
+  const confirmDelete = (id) => {
+    setConfirmDeleteId(id);
+    setShowDeleteModal(true);
+  };
 
-    const fetchJobs = async () => {
-        try {
-            const res = await axios.get(`${BASE_URL}/job/list`, {
-                params: { uid: user.uid },
-            });
-            setJobs(res.data);
-        } catch (err) {
-            setErrorMsg("Failed to load jobs.");
-        }
-    };
+  const handleDelete = async () => {
+    const token = await user.getIdToken();
+    await axios.delete(`${BASE_URL}/job/delete/${confirmDeleteId}?uid=${user.uid}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setShowDeleteModal(false);
+    fetchJobs();
+  };
 
-    const handleDelete = async (id) => {
-        try {
-            await axios.delete(`${BASE_URL}/job/delete/${id}`, {
-                params: { uid: user.uid },
-            });
-            setJobs((prev) => prev.filter((j) => j.id !== id));
-            setSuccessMsg("Job deleted.");
-        } catch (err) {
-            setErrorMsg("Failed to delete job.");
-        }
-    };
+  useEffect(() => {
+    if (user) fetchJobs();
+  }, [user]);
 
-    useEffect(() => {
-        if (user?.uid) fetchJobs();
-    }, [user]);
+  const filteredJobs = jobs.filter(
+    (job) =>
+      job.title.toLowerCase().includes(search.toLowerCase()) ||
+      job.description.toLowerCase().includes(search.toLowerCase())
+  );
 
-    return (
-        <Box>
-            <Text fw={700} size="xl" mb="md">My Jobs</Text>
-            {successMsg && <Notification color="green" mt="sm">{successMsg}</Notification>}
-            {errorMsg && <Notification color="red" mt="sm">{errorMsg}</Notification>}
+  const paginatedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-            <Table highlightOnHover>
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Status</th>
-                        <th>Positions</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {jobs.map((job) => (
-                        <tr key={job.id}>
-                            <td>{job.title}</td>
-                            <td>{job.status}</td>
-                            <td>{job.positions || 1}</td>
-                            <td>
-                                <Group spacing="xs">
-                                    <Button size="xs" onClick={() => setEditJob(job)}>Edit</Button>
-                                    <Button
-                                        size="xs"
-                                        color="red"
-                                        onClick={() =>
-                                            window.confirm("Are you sure you want to delete this job?") &&
-                                            handleDelete(job.id)
-                                        }
-                                    >
-                                        Delete
-                                    </Button>
-                                </Group>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
+  return (
+    <Box>
+      <Text fw={600} mb="xs">{editingJob ? "Edit Job" : "Post a Job"}</Text>
+
+      <TextInput label="Job Title" value={title} onChange={(e) => setTitle(e.currentTarget.value)} mb="sm" />
+      <Textarea label="Job Description" value={description} onChange={(e) => setDescription(e.currentTarget.value)} mb="sm" />
+      <NumberInput label="Hourly Rate ($)" value={price} onChange={setPrice} min={0} mb="sm" />
+      <TextInput label="Location" value={location} onChange={(e) => setLocation(e.currentTarget.value)} mb="sm" />
+      <MultiSelect
+        label="Required Skills"
+        placeholder="Enter or select"
+        searchable
+        creatable
+        value={skills}
+        onChange={setSkills}
+        data={skills}
+        getCreateLabel={(query) => `+ Add "${query}"`}
+        onCreate={(query) => setSkills((prev) => [...prev, query])}
+        mb="sm"
+      />
+      <NumberInput label="Open Positions" value={positions} onChange={setPositions} min={1} mb="md" />
+
+      <Group>
+        <Button onClick={handleSubmit} loading={submitting}>
+          {editingJob ? "Update Job" : "Create Job"}
+        </Button>
+        {editingJob && (
+          <Button variant="outline" color="gray" onClick={resetForm}>
+            Cancel
+          </Button>
+        )}
+      </Group>
+
+      <Box mt="xl">
+        <Text fw={600} mb="xs">My Jobs</Text>
+        <TextInput placeholder="Search..." value={search} onChange={(e) => setSearch(e.currentTarget.value)} mb="sm" />
+
+        {loading ? (
+          <Center><Loader /></Center>
+        ) : paginatedJobs.length === 0 ? (
+          <Text c="dimmed">No matching jobs found.</Text>
+        ) : (
+          <>
+            <Table withBorder>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Location</th>
+                  <th>Rate ($)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedJobs.map((job) => (
+                  <tr key={job.id}>
+                    <td>{job.title}</td>
+                    <td>{job.location}</td>
+                    <td>{job.price}</td>
+                    <td>
+                      <Group gap="xs">
+                        <Button size="xs" onClick={() => setPreviewJob(job)}>Preview</Button>
+                        <Button size="xs" onClick={() => handleEdit(job)}>Edit</Button>
+                        <Button size="xs" color="red" variant="outline" onClick={() => confirmDelete(job.id)}>Delete</Button>
+                      </Group>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </Table>
+            <Pagination
+              value={page}
+              onChange={setPage}
+              total={Math.ceil(filteredJobs.length / PAGE_SIZE)}
+              mt="md"
+            />
+          </>
+        )}
+      </Box>
 
-            <Modal opened={!!editJob} onClose={() => setEditJob(null)} title="Edit Job">
-                {editJob && (
-                    <EditJobForm
-                        job={editJob}
-                        onUpdate={fetchJobs}
-                        onClose={() => setEditJob(null)}
-                    />
-                )}
-            </Modal>
-        </Box>
-    );
-}
+      {/* Delete Modal */}
+      <Modal opened={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Confirm Delete" centered>
+        <Text>Are you sure you want to delete this job?</Text>
+        <Group mt="md">
+          <Button color="red" onClick={handleDelete}>Yes, Delete</Button>
+          <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+        </Group>
+      </Modal>
 
-// 查看岗位详情
-export function JobDetail({ jobId }) {
-    const { user } = useAuth();
-    const [job, setJob] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (!jobId || !user?.uid) return;
-        axios.get(`${BASE_URL}/job/${jobId}`, { params: { uid: user.uid } })
-            .then(res => setJob(res.data))
-            .catch(err => console.error(err))
-            .finally(() => setLoading(false));
-    }, [jobId, user]);
-
-    if (loading) return <Loader mt="md" />;
-    if (!job) return <Text color="dimmed">Job not found or unauthorized.</Text>;
-
-    return (
-        <Box mt="md">
-            <Text size="lg" fw={700}>{job.title}</Text>
-            <Text mt="sm">Description: {job.description}</Text>
-            <Text mt="sm">Location: {job.location}</Text>
-            <Text mt="sm">Price: {job.price}</Text>
-            <Text mt="sm">Status: {job.status}</Text>
-            <Text mt="sm">Positions: {job.positions || 1}</Text>
-        </Box>
-    );
+      {/* Preview Modal */}
+      <Modal opened={!!previewJob} onClose={() => setPreviewJob(null)} title={previewJob?.title || "Preview"} centered>
+        <Text fw={600} mb="sm">Description</Text>
+        <Text mb="sm">{previewJob?.description}</Text>
+        <Text>Rate: ${previewJob?.price}</Text>
+        <Text>Location: {previewJob?.location}</Text>
+        <Text>Skills: {previewJob?.skills?.join(", ")}</Text>
+        <Text>Open Positions: {previewJob?.positions}</Text>
+      </Modal>
+    </Box>
+  );
 }

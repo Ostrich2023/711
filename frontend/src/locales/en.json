@@ -42,7 +42,8 @@
     "level": "Level",
     "teacher": "Teacher",
     "noSkillsYet": "No skills submitted yet.",
-    "noCourses": "No enrolled courses found."
+    "noCourses": "No enrolled courses found.",
+    "skillOverview": "Skill Overview"
   },
   "request": {
     "submit": "Submit Skill",
@@ -65,7 +66,8 @@
     "selectMajorModalTitle": "Select Your Major",
     "selectMajorNotice": "You must select your major before submitting skills.",
     "chooseMajor": "Choose your major",
-    "saveMajor": "Save Major"
+    "saveMajor": "Save Major",
+    "create":"Request Skill"
   },
   "settings": {
     "title": "Settings",
@@ -84,8 +86,11 @@
     "profile": "Profile",
     "requestSkill": "Request Skill",
     "wallet": "Digital Skill Wallet",
-    "courses": "My Courses",
-    "settings": "Settings"
+    "courses": "Course Management",
+    "settings": "Settings",
+    "postJobs": "Post Jobs",
+    "applications": "Applications",
+    "myApplications": "My Applications"
   },
   "school": {
     "welcome": "Welcome back",
@@ -149,7 +154,13 @@
       "myCourses": "My Courses",
       "myStudents": "My Students",
       "settings": "Settings"
-    }
+    },
+    "review": {
+      "search": "Search student or skill",
+      "courseFilter": "Filter by course",
+      "majorFilter": "Filter by major",
+      "title": "Skill Review"
+   }
   },
   "role": {
     "school": "School Admin",
@@ -180,7 +191,16 @@
     "error": "An error occurred while processing the course."
   },
   "course": {
-    "students": "Students"
+    "students": "Students",
+    "title": "Title",
+    "code":"Code",
+    "skill": "skill",
+    "skillTitle":"Skill Title",
+    "skillDescription": "Skill Description",
+    "addHardSkill": "Add Hard Skill",
+    "create": "Create Course",
+    "manage":"Manage Course",
+    "noCourses":"You haven’t createded any courses."
   },
   "global": {
     "more": "More",
@@ -334,6 +354,9 @@
     "adaptability": "Adaptability"
   },
   "student": {
-  "pendingSkillsMessage": "You have {{count}} skill application(s) under review."
-}
+    "skillLabel": "skill request(s)",
+    "reviewPrefix": "You have",
+    "reviewSuffix": "waiting for review",
+    "pendingSkillsMessage": "You have {{count}} skill(s) pending"
+  }
 }

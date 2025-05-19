@@ -1,36 +1,16 @@
 import express from "express";
 import admin from "firebase-admin";
 
+import { verifyStudent, verifyEmployer, verifyTeacher } from "../middlewares/verifyRole.js"; 
+
 const router = express.Router();
 const FieldValue = admin.firestore?.FieldValue ?? null;
 
-// Middleware: Verify token and attach user info
-async function verifyToken(req, res, next) {
-  const idToken = req.headers.authorization?.split("Bearer ")[1];
-  if (!idToken) return res.status(401).send("Unauthorized");
-
-  try {
-    const decoded = await admin.auth().verifyIdToken(idToken);
-    const userDoc = await admin.firestore().doc(`users/${decoded.uid}`).get();
-    if (!userDoc.exists) return res.status(403).send("User not found");
-
-    req.user = {
-      uid: decoded.uid,
-      role: userDoc.data().role,
-    };
-    next();
-  } catch (error) {
-    console.error("Token verification error:", error.message);
-    return res.status(403).send("Invalid token");
-  }
-}
-
 // POST /skill/add
-router.post("/add", verifyToken, async (req, res) => {
+router.post("/add", verifyStudent, async (req, res) => {
   const { role, uid } = req.user;
   const { courseId, attachmentCid, level, softSkills } = req.body;
 
-  if (role !== "student") return res.status(403).send("Only students can add skills");
   if (!courseId) return res.status(400).send("Missing courseId");
 
   if (!Array.isArray(softSkills) || softSkills.length === 0 || softSkills.length > 5) {
@@ -63,7 +43,7 @@ router.post("/add", verifyToken, async (req, res) => {
       description: skillTemplate.skillDescription || "",
       level: level || "Beginner",
       attachmentCid: attachmentCid || "",
-      softSkills, // array of soft-skill ID
+      softSkills,
       hardSkillScores: null,
       softSkillScores: null,
       verified: "pending",
@@ -87,10 +67,9 @@ router.post("/add", verifyToken, async (req, res) => {
   }
 });
 
-// GET /skill/list — enhanced: resolve softSkill names and major
-router.get("/list", verifyToken, async (req, res) => {
-  const { uid, role } = req.user;
-  if (role !== "student") return res.status(403).send("Only students can view their skills");
+// GET /skill/list
+router.get("/list", verifyStudent, async (req, res) => {
+  const { uid } = req.user;
 
   try {
     const db = admin.firestore();
@@ -130,43 +109,59 @@ router.get("/list", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /skill/review/:id — 教师评分技能
-router.put("/review/:id", verifyToken, async (req, res) => {
-  const { role, uid } = req.user;
+
+// GET /skill/approved
+router.get("/approved", verifyEmployer, async (req, res) => {
+  try {
+    const snapshot = await admin.firestore()
+      .collection("skills")
+      .where("verified", "==", "approved")
+      .get();
+
+    const studentMap = new Map();
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (!studentMap.has(data.ownerId)) {
+        const userDoc = await admin.firestore().doc(`users/${data.ownerId}`).get();
+        studentMap.set(data.ownerId, {
+          studentId: data.ownerId,
+          name: userDoc.exists ? userDoc.data().name : "Unknown",
+          skills: [],
+        });
+      }
+      studentMap.get(data.ownerId).skills.push({
+        title: data.title,
+        courseTitle: data.courseTitle,
+      });
+    }
+
+    res.json(Array.from(studentMap.values()));
+  } catch (error) {
+    console.error("Error fetching approved students:", error.message);
+    res.status(500).send("Failed to load approved students");
+  }
+});
+
+// DELETE /skill/delete/:id
+router.delete("/delete/:id", verifyStudent, async (req, res) => {
+  const { uid } = req.user;
   const skillId = req.params.id;
-  const { hardSkillScores, softSkillScores, note } = req.body;
-
-  if (role !== "school") {
-    return res.status(403).send("Only teachers can review skills");
-  }
-
-  if (
-    typeof hardSkillScores !== "object" ||
-    typeof softSkillScores !== "object"
-  ) {
-    return res.status(400).send("Missing or invalid rubric score structure");
-  }
 
   try {
     const skillRef = admin.firestore().doc(`skills/${skillId}`);
     const skillDoc = await skillRef.get();
 
     if (!skillDoc.exists) return res.status(404).send("Skill not found");
+    if (skillDoc.data().ownerId !== uid) return res.status(403).send("Unauthorized");
 
-    await skillRef.update({
-      hardSkillScores,
-      softSkillScores,
-      note: note || "",
-      verified: "approved",
-      reviewedBy: uid,
-      reviewedAt: FieldValue.serverTimestamp(),
-    });
-
-    res.send("Skill reviewed successfully");
-  } catch (error) {
-    console.error("Skill review failed:", error.message);
-    res.status(500).send("Failed to review skill");
+    await skillRef.delete();
+    res.send("Skill deleted successfully");
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).send("Failed to delete skill");
   }
 });
+
 
 export default router;

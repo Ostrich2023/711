@@ -1,253 +1,205 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "../../firebase";
+import {
+  Box, Grid, Loader, Center, Text, Flex, RingProgress,
+  Paper, Stack, TextInput, Button, Modal, Pagination
+} from "@mantine/core";
 import axios from "axios";
-import { Navigate } from "react-router-dom";
 
-// Frontend-Amir
-import { MantineProvider, Container, Group, Text, Grid, Box, createTheme, Paper, Flex, Button} from "@mantine/core";
-import { useMantineTheme } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
-import cx from "clsx";
-import dayjs from "dayjs";
-
-import classes from "./EmployerPage.module.css";
-import HeaderCard from "../../components/employer/HeaderCard"
+import HeaderCard from "../../components/employer/HeaderCard";
 import ImagePaper from "../../components/employer/ImagePaper";
 import ChartPaper from "../../components/employer/ChartPaper";
-import CardScroll from "../../components/employer/CardScroll";
-import StudentCarousel from "../../components/employer/StudentCarousel";
-import PostJob_img from "../../../public/favicon.ico" //
-import { Link } from "react-router-dom";
+import StudentWalletMini from "../../components/employer/StudentWalletMini";
+import postJobImage from "../../assets/postjob.png";
 
-const theme = createTheme({
-  components: {
-    Container: Container.extend({
-      classNames: (_, { size }) => ({
-        root: cx({ [classes.responsiveContainer]: size === "responsive" })
-      })
-    })
-  }
-});
-// Frontend-Amir
+import { useAuth } from "../../context/AuthContext";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const PAGE_SIZE = 5;
 
-export default function EmployerHome(){
-  const { user, role } = useAuth();
-  const [schools, setSchools] = useState([]);
-  const [selectedSchool, setSelectedSchool] = useState("");
+export default function EmployerHome() {
+  const { user } = useAuth();
+  const [userData, setUserData] = useState(null);
+  const [applications, setApplications] = useState([]);
   const [students, setStudents] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [skills, setSkills] = useState([]);
+  const [summary, setSummary] = useState({ total: 0, viewed: 0, shortlisted: 0 });
 
-  // ❗ Block unauthorized access
-  if (!user || role !== "employer") {
-    return <Navigate to="/" />;
-  }
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [opened, setOpened] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+
+  const [page, setPage] = useState(1);
+
+  const SHOW_RECENT = false;
 
   useEffect(() => {
-    fetchSchoolList();
-  }, []);
-
-  const fetchSchoolList = async () => {
-    try {
-      const token = await user.getIdToken();
-      const res = await axios.get(`${BASE_URL}/employer/schools`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSchools(res.data);
-    } catch (error) {
-      console.error("Failed to fetch schools:", error);
-      alert("Could not load school list");
+    if (user) {
+      loadUserData();
+      fetchApplications();
+      fetchApprovedStudents();
     }
+  }, [user]);
+
+  const loadUserData = async () => {
+    const token = await user.getIdToken();
+    const res = await axios.get(`${BASE_URL}/user/${user.uid}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setUserData(res.data);
   };
 
-  const fetchStudents = async (schoolId) => {
-    try {
-      const token = await user.getIdToken();
-      const res = await axios.get(`${BASE_URL}/employer/school/${schoolId}/students`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSelectedSchool(schoolId);
-      setStudents(res.data);
-      setSelectedStudent(null);
-      setSkills([]);
-    } catch (error) {
-      console.error("Failed to fetch students:", error);
-      alert("Could not load students from this school");
-    }
+  const fetchApplications = async () => {
+    const token = await user.getIdToken();
+    const res = await axios.get(`${BASE_URL}/employer/recent-applications`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setApplications(Array.isArray(res.data) ? res.data : []);
+    const summaryRes = await axios.get(`${BASE_URL}/employer/application-summary`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setSummary(summaryRes.data || {});
+    setLoading(false);
   };
 
-  const fetchSkills = async (studentId) => {
-    try {
-      const token = await user.getIdToken();
-      const res = await axios.get(`${BASE_URL}/employer/student/${studentId}/skills`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const studentInfo = students.find((s) => s.id === studentId);
-      setSelectedStudent(studentInfo);
-      setSkills(res.data);
-    } catch (error) {
-      console.error("Failed to fetch student skills:", error);
-      alert("Could not load skills");
-    }
+  const fetchApprovedStudents = async () => {
+    const token = await user.getIdToken();
+    const res = await axios.get(`${BASE_URL}/employer/approved-students`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const result = Array.isArray(res.data) ? res.data : [];
+    setStudents(result);
+    setFilteredStudents(result);
   };
 
-  // Frontend-Amir
-  const theme = useMantineTheme()
-  const mobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`)
+  const handleSearch = () => {
+    if (!search.trim()) {
+      setFilteredStudents(students);
+      return;
+    }
+    const keyword = search.toLowerCase();
+    const filtered = students.filter((stu) =>
+      Array.isArray(stu.skills) &&
+      stu.skills.some((s) =>
+        s.title?.toLowerCase().includes(keyword) || s.courseTitle?.toLowerCase().includes(keyword)
+      )
+    );
+    setFilteredStudents(filtered);
+    setPage(1);
+  };
 
+  const handleView = (id) => {
+    setSelectedStudentId(id);
+    setOpened(true);
+  };
 
-  // Employer data for Header
-  const employerData = {
-    id: user?.email || "EM123456",
-    name: user?.username || "Alice Smith",
-    company: "Mindstormers",
-    role: role,
-    image: user?.ImageUrl ||
-      "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-4.png"
+  const paginatedStudents = Array.isArray(filteredStudents)
+    ? filteredStudents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : [];
+
+  if (loading || !userData) {
+    return <Center mt="lg"><Loader /></Center>;
   }
 
-  // Messages data
-  const messages = [
-    {
-      id: 1,
-      studentName: "Alice Johnson",
-      school: "QUT",
-      jobTitle: "Software Developer Intern",
-      dateSent: "2025-04-25"
-    },
-    {
-      id: 2,
-      studentName: "Bob Smith",
-      school: "UQ",
-      jobTitle: "Data Analyst Intern",
-      dateSent: "2025-04-26"
-    },
-    {
-      id: 3,
-      studentName: "Clara Lee",
-      school: "Griffith University",
-      jobTitle: "Frontend Developer",
-      dateSent: "2025-04-2"
-    },
-    {
-      id: 4,
-      studentName: "Clara Lee",
-      school: "Griffith University",
-      jobTitle: "Frontend Developer",
-      dateSent: "2025-04-7"
-    },
-    {
-      id: 5,
-      studentName: "Clara Lee",
-      school: "Griffith University",
-      jobTitle: "Frontend Developer",
-      dateSent: "2025-04-17"
-    },
-    {
-      id: 6,
-      studentName: "Clara Lee",
-      school: "Griffith University",
-      jobTitle: "Frontend Developer",
-      dateSent: "2025-04-21"
-    },
-    {
-      id: 7,
-      studentName: "Clara Lee",
-      school: "Griffith University",
-      jobTitle: "Frontend Developer",
-      dateSent: "2025-04-27"
-    }
-  ]
-
-  const ApplicationData = [
-    { status: "New", count: 10, color: "#9CD3E8" },
-    { status: "Viewed", count: 20, color: "#F39393" },
-    { status: "Shortlisted", count: 2, color: "#FBD889" }
-  ]
-  // Frontend-Amir
   return (
-    // Frontend-Amir
-    <Box flex={1} mt="30px">
-      <MantineProvider theme={theme}>
-        <Container bg="var(--mantine-color-white)">
-          <Grid justify="center" gutter="lg">
-            
-            {/* Heading component (Profile)*/}
-            <Grid.Col span={12}>
-            <HeaderCard userType="employer" userData={employerData}/>
-            </Grid.Col>
+    <Box mt="md">
+      <HeaderCard userData={userData} userType="employer" />
 
-            {/* Features like posting job and a dashboard of the summary of application*/}
-            <Grid.Col span={12} className={classes.heading}>
-              Features
-            </Grid.Col>
+      <Grid mt="md">
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <ImagePaper
+            title="Post Your Job"
+            description="Attract talented students by creating a new job opportunity."
+            buttonText="Post Now"
+            buttonLink="/employer/request-skill"
+            imageUrl={postJobImage}
+          />
+        </Grid.Col>
 
-            {/* Post a job */}
-            <Grid.Col span={12}>
-              <ImagePaper 
-              title="Need a helping hand?"
-              description="Post your job and connect with talented students eager to grow."
-              buttonText="Post a Job"
-              buttonLink="/post-job"
-              imageUrl={PostJob_img}
-              />
-            </Grid.Col>
+{/* <Grid.Col span={{ base: 12, md: 6 }}>
+  <ChartPaper title="Application Summary">
+    <Center>
+      <RingProgress
+        size={180}
+        thickness={16}
+        roundCaps
+        sections={[
+          { value: summary.total || 0, color: "blue", tooltip: "Total" },
+          { value: summary.viewed || 0, color: "teal", tooltip: "Viewed" },
+          { value: summary.shortlisted || 0, color: "orange", tooltip: "Shortlisted" },
+        ]}
+        label={<Text fw={700} ta="center">{summary.total || 0} Total</Text>}
+      />
+    </Center>
+  </ChartPaper>
+</Grid.Col> */}
 
-            {/* Application Summary with Chart */}
-            <Grid.Col span={12}>
-              <ChartPaper data={ApplicationData} />
-            </Grid.Col>
+      </Grid>
 
-            {/* Messages List */}
-            <Grid.Col span={12}>
-              <CardScroll
-          title="Messages"
-          data={messages}
-          sortBy="dateSent"
-          showAllLink="/messages"
-          renderItem={(msg) => (
-            <Group position="apart">
-              <Text>
-                The student <strong>{msg.studentName}</strong> from{" "}
-                <strong>{msg.school}</strong> applied for the role{" "}
-                <strong>{msg.jobTitle}</strong>.
-              </Text>
-              <Text size="sm" c="dimmed">
-                {dayjs(msg.dateSent).format("MMM DD, YYYY")}
-              </Text>
-            </Group>
-          )}
-        />
-            </Grid.Col>
+      {/* Browse Students */}
+      <Paper mt="xl" p="md" radius="md" shadow="xs" withBorder>
+        <Flex align="flex-end" gap="sm">
+          <TextInput
+            label="Search students by skill"
+            placeholder="Enter keyword..."
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+          />
+          <Button onClick={handleSearch}>Search</Button>
+        </Flex>
 
-            {/* Students List */}
-            <Grid.Col span={12}>
-              <Paper p="lg" radius="md" shadow="sm" withBorder>
-                <Flex justify="space-between" align="center" mb="lg">
-                  <div className={classes.heading}>Students</div>
-                  <Button
-                    component={Link}
-                    // to be implemented later
-                    to="/students"
-                    mr="sm"
-                    className={classes.actionButton}
-                  >
-                    Show all
+        <Stack mt="md">
+          {Array.isArray(paginatedStudents) && paginatedStudents.length > 0 ? (
+            paginatedStudents.map((stu) => (
+              <Paper key={stu.id} withBorder p="md">
+                <Flex justify="space-between" align="center">
+                  <Box>
+                    <Text fw={600}>{stu.name} ({stu.customUid})</Text>
+                    <Text size="sm" c="dimmed">{stu.email}</Text>
+                  </Box>
+                  <Button variant="light" size="xs" onClick={() => handleView(stu.id)}>
+                    View Skills
                   </Button>
                 </Flex>
-                <StudentCarousel />
               </Paper>
-            </Grid.Col>
-          </Grid>
-        </Container>
-      </MantineProvider>
+            ))
+          ) : (
+            <Text c="dimmed">No students found.</Text>
+          )}
+        </Stack>
+
+        {SHOW_RECENT && (
+          <Paper mt="xl" p="md" radius="md" shadow="xs" withBorder>
+            <Text fw={500} size="lg" mb="sm">Recent Applicants</Text>
+            {Array.isArray(applications) && applications.length > 0 ? (
+              <Stack>
+                {applications.slice(0, 3).map((app) => (
+                  <StudentWalletMini key={app.studentId} studentId={app.studentId} />
+                ))}
+              </Stack>
+            ) : (
+              <Text c="dimmed">No applications found.</Text>
+            )}
+          </Paper>
+        )}
+
+        <Pagination
+          value={page}
+          onChange={setPage}
+          total={Math.ceil(filteredStudents.length / PAGE_SIZE)}
+          mt="md"
+          size="sm"
+        />
+      </Paper>
+
+      <Modal
+        opened={opened}
+        onClose={() => setOpened(false)}
+        title="Student Skills"
+        size="xl"
+      >
+        {selectedStudentId && <StudentWalletMini studentId={selectedStudentId} />}
+      </Modal>
     </Box>
-
-    // Frontend-Amir
-
   );
-};
+}

@@ -48,15 +48,23 @@ export default function SchoolVerifySkill() {
     setSoftSkillMap(map);
   };
 
-  const fetchMajors = async () => {
-    const snapshot = await axios.get(`${BASE_URL}/school/majors`);
-    const map = {};
-    snapshot.data.forEach((doc) => {
-      map[doc.id] = doc.name;
-    });
-    setMajorMap(map);
-  };
-
+    const fetchMajors = async () => {
+      try {
+        const token = await user.getIdToken();
+        const snapshot = await axios.get(`${BASE_URL}/school/majors`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const map = {};
+        snapshot.data.forEach((doc) => {
+          map[doc.id] = doc.name;
+        });
+        setMajorMap(map);
+      } catch (err) {
+        console.error("Failed to fetch majors:", err);
+      }
+    };
   const fetchPendingSkills = async () => {
     setLoading(true);
     try {
@@ -133,7 +141,7 @@ export default function SchoolVerifySkill() {
 
     try {
       const token = await user.getIdToken();
-      await axios.put(`${BASE_URL}/skill/review/${skillId}`, {
+      await axios.put(`${BASE_URL}/teacher/review/${skillId}`, {
         verified: decision,
         hardSkillScores: decision === "approved" ? hardSkillScores : null,
         softSkillScores: decision === "approved" ? softSkillScores : null,
@@ -192,34 +200,34 @@ export default function SchoolVerifySkill() {
           {filteredSkills.length === 0 ? (
             <Text>{t("teacher.review.noMatches")}</Text>
           ) : (
-            <Table withBorder striped>
-              <thead>
-                <tr>
-                  <th>{t("profile.name")}</th>
-                  <th>{t("profile.id")}</th>
-                  <th>{t("profile.major")}</th>
-                  <th>{t("request.course")}</th>
-                  <th>{t("request.level")}</th>
-                  <th>{t("request.action")}</th>
+          <Table withBorder striped highlightOnHover>
+            <thead>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t("profile.name")}</th>
+                <th style={{ textAlign: "left" }}>{t("profile.id")}</th>
+                <th style={{ textAlign: "left" }}>{t("profile.major")}</th>
+                <th style={{ textAlign: "left" }}>{t("request.course")}</th>
+                <th style={{ textAlign: "left" }}>{t("request.level")}</th>
+                <th style={{ textAlign: "left" }}>{t("request.action")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSkills.map(skill => (
+                <tr key={skill.id}>
+                  <td style={{ textAlign: "left" }}>{skill.student?.name || "Unknown"}</td>
+                  <td style={{ textAlign: "left", wordBreak: "break-word" }}>{skill.student?.id}</td>
+                  <td style={{ textAlign: "left" }}>{majorMap[skill.student?.major] || skill.student?.major}</td>
+                  <td style={{ textAlign: "left" }}>{skill.courseCode}</td>
+                  <td style={{ textAlign: "left" }}>{skill.level}</td>
+                  <td style={{ textAlign: "left" }}>
+                    <Button size="xs" onClick={() => setSelectedSkillId(skill.id)}>
+                      {t("request.rubricTitle")}
+                    </Button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredSkills.map(skill => (
-                  <tr key={skill.id}>
-                    <td>{skill.student?.name || "Unknown"}</td>
-                    <td>{skill.student?.id}</td>
-                    <td>{majorMap[skill.student?.major] || skill.student?.major}</td>
-                    <td>{skill.courseCode}</td>
-                    <td>{skill.level}</td>
-                    <td>
-                      <Button size="xs" onClick={() => setSelectedSkillId(skill.id)}>
-                        {t("request.rubricTitle")}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+              ))}
+            </tbody>
+          </Table>
           )}
         </>
       ) :  (
