@@ -86,7 +86,10 @@
     "requestSkill": "技能申请",
     "wallet": "技能钱包",
     "courses": "我的课程",
-    "settings": "设置"
+    "settings": "设置",
+    "postJobs": "发布工作",
+    "applications": "申请",
+    "myApplications": "我的申请"
   },
   "school": {
     "welcome": "欢迎回来",

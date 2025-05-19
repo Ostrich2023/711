@@ -121,24 +121,45 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
   }
 });
 
-// GET /employer/applications/:jobId
-router.get("/applications/:jobId", verifyEmployer, async (req, res) => {
-  const { jobId } = req.params;
+// PATCH /employer/applications/:applicationId — 更新状态（通过 / 拒绝 / 面试）
+router.patch("/applications/:applicationId", verifyEmployer, async (req, res) => {
+  const { applicationId } = req.params;
+  const { status, note } = req.body;
+
+  if (!["pending", "accepted", "rejected", "interview"].includes(status)) {
+    return res.status(400).send("Invalid status value");
+  }
 
   try {
-    const snapshot = await admin.firestore()
-      .collection("applications")
-      .where("jobId", "==", jobId)
-      .orderBy("appliedAt", "desc")
-      .get();
+    const appRef = admin.firestore().collection("applications").doc(applicationId);
+    const appDoc = await appRef.get();
 
-    const applications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.json(applications);
+    if (!appDoc.exists) {
+      return res.status(404).send("Application not found");
+    }
+
+    const application = appDoc.data();
+
+    // 检查是否是该雇主的岗位
+    const jobRef = admin.firestore().collection("jobs").doc(application.jobId);
+    const jobDoc = await jobRef.get();
+
+    if (!jobDoc.exists || jobDoc.data().employerId !== req.user.uid) {
+      return res.status(403).send("You are not authorized to modify this application");
+    }
+
+    await appRef.update({
+      status,
+      note: note || "",
+    });
+
+    res.send("Application status updated");
   } catch (error) {
-    console.error("Error fetching job applications:", error.message);
-    res.status(500).send("Failed to retrieve applications");
+    console.error("Error updating application:", error.message);
+    res.status(500).send("Failed to update application");
   }
 });
+
 
 // GET /employer/recent-applications
 router.get("/recent-applications", verifyEmployer, async (req, res) => {
@@ -214,10 +235,18 @@ router.get("/approved-students", verifyEmployer, async (req, res) => {
       const skill = doc.data();
       const studentId = skill.ownerId;
 
+      if (!studentId) continue;
+
       if (!studentMap.has(studentId)) {
         studentMap.set(studentId, []);
       }
-      studentMap.get(studentId).push({ id: doc.id, ...skill });
+
+      const currentSkills = studentMap.get(studentId);
+      if (Array.isArray(currentSkills)) {
+        currentSkills.push({ id: doc.id, ...skill });
+      } else {
+        studentMap.set(studentId, [{ id: doc.id, ...skill }]);
+      }
     }
 
     const results = [];
@@ -225,15 +254,17 @@ router.get("/approved-students", verifyEmployer, async (req, res) => {
     for (const [studentId, skills] of studentMap.entries()) {
       const studentDoc = await admin.firestore().doc(`users/${studentId}`).get();
       if (!studentDoc.exists) continue;
+
       const student = studentDoc.data();
+
       results.push({
         studentId,
         studentName: student.name || "Unknown",
-        email: student.email,
-        customUid: student.customUid,
-        schoolId: student.schoolId,
-        major: student.major,
-        skills,
+        email: student.email || "",
+        customUid: student.customUid || "",
+        schoolId: student.schoolId || "",
+        major: student.major || "",
+        skills: Array.isArray(skills) ? skills : [], // 确保为数组
       });
     }
 
@@ -243,5 +274,6 @@ router.get("/approved-students", verifyEmployer, async (req, res) => {
     res.status(500).send("Failed to load approved students");
   }
 });
+
 
 export default router;

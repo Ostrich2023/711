@@ -104,7 +104,7 @@ export default function StudentHome() {
               {t("welcome")}, {userData?.name}
             </Title>
 
-            {/* ✅ 修复后的 Notification */}
+            {/*  修复后的 Notification */}
             <Notification
               count={pendingCount}
               label="student.skillLabel"

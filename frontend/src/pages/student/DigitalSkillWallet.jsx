@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import { getApp } from "firebase/app";
+import { Link } from "react-router-dom";
 
 const theme = createTheme({
   components: {
@@ -310,8 +311,8 @@ const DigitalSkillWallet = () => {
               <Button
                 fullWidth
                 variant="light"
-                component="a"
-                href="/student/applications"
+                component={Link}
+                to="/student/applications"
                 style={{ flex: 1, marginRight: "0.5rem" }}
               >
                 My Applications
@@ -319,8 +320,8 @@ const DigitalSkillWallet = () => {
               <Button
                 fullWidth
                 variant="light"
-                component="a"
-                href="/student/jobs"
+                component={Link}
+                to="/student/job"
                 style={{ flex: 1, marginLeft: "0.5rem" }}
               >
                 Job Board

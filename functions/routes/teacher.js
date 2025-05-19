@@ -3,6 +3,7 @@ import admin from "firebase-admin";
 import { verifyTeacher } from "../middlewares/verifyRole.js";
 
 const router = express.Router();
+const FieldValue = admin.firestore.FieldValue;
 
 // 获取本校所有学生
 router.get("/students", verifyTeacher, async (req, res) => {
@@ -220,4 +221,87 @@ router.get("/:schoolId/students", async (req, res) => {
   }
 });
 
+// PUT /skill/review/:id — 教师审核技能（统一版本）
+router.put("/review/:id", verifyTeacher, async (req, res) => {
+  const { uid } = req.user;
+  const skillId = req.params.id;
+  const { verified, hardSkillScores, softSkillScores, note } = req.body;
+
+  // 检查审核状态是否合法
+  if (!["approved", "rejected"].includes(verified)) {
+    return res.status(400).send("Invalid verified status.");
+  }
+
+  try {
+    const skillRef = admin.firestore().doc(`skills/${skillId}`);
+    const skillDoc = await skillRef.get();
+    if (!skillDoc.exists) return res.status(404).send("Skill not found.");
+
+    const updateData = {
+      verified,
+      note: note || "",
+      reviewedBy: uid,
+      reviewedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (verified === "approved") {
+      if (
+        typeof hardSkillScores !== "object" ||
+        typeof softSkillScores !== "object"
+      ) {
+        return res.status(400).send("Missing or invalid rubric score structure");
+      }
+
+      updateData.hardSkillScores = hardSkillScores || {};
+      updateData.softSkillScores = softSkillScores || {};
+    } else {
+      updateData.hardSkillScores = null;
+      updateData.softSkillScores = null;
+    }
+
+    await skillRef.update(updateData);
+    res.send("Skill review submitted.");
+  } catch (err) {
+    console.error("Skill review failed:", err);
+    res.status(500).send("Failed to review skill.");
+  }
+});
+
+// PUT /skill/review/:id — 教师审核技能
+router.put("/review/:id", verifyTeacher, async (req, res) => {
+  const { uid } = req.user;
+  const skillId = req.params.id;
+  const { verified, hardSkillScores, softSkillScores, note } = req.body;
+
+  if (!['approved', 'rejected'].includes(verified)) {
+    return res.status(400).send("Invalid verified status.");
+  }
+
+  try {
+    const skillRef = admin.firestore().doc(`skills/${skillId}`);
+    const skillDoc = await skillRef.get();
+    if (!skillDoc.exists) return res.status(404).send("Skill not found.");
+
+    const updateData = {
+      verified,
+      note: note || "",
+      reviewedBy: uid,
+      reviewedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (verified === "approved") {
+      updateData.hardSkillScores = hardSkillScores || {};
+      updateData.softSkillScores = softSkillScores || {};
+    } else {
+      updateData.hardSkillScores = null;
+      updateData.softSkillScores = null;
+    }
+
+    await skillRef.update(updateData);
+    res.send("Review submitted.");
+  } catch (err) {
+    console.error("Skill review failed:", err);
+    res.status(500).send("Failed to review skill.");
+  }
+});
 export default router;

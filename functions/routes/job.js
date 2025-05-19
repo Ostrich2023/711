@@ -38,53 +38,50 @@ router.post("/create", async (req, res) => {
     }
 });
 
-// 获取岗位列表 - GET /job/list?uid=xxx
-router.get("/list", async (req, res) => {
-    const { uid } = req.query;
+        router.get("/list", async (req, res) => {
+        const { uid } = req.query;
 
-    try {
-        if (!uid) return res.status(400).send("Missing uid");
+        try {
+            if (!uid) return res.status(400).send("Missing uid");
 
-        const role = await getUserRole(uid);
-        if (!role) return res.status(403).send("Unauthorized");
+            const role = await getUserRole(uid);
+            if (!role) return res.status(403).send("Unauthorized");
 
-        let query = admin.firestore().collection("jobs");
+            let query = admin.firestore().collection("jobs");
 
-        if (role === "employer") {
+            if (role === "employer") {
             query = query.where("employerId", "==", uid);
-        } else if (role === "student") {
-            query = query.where("studentId", "==", uid);
-        } else {
+            } else if (role === "student") {
+            query = query.where("status", "==", "pending");
+            } else {
             return res.status(403).send("Role not supported");
+            }
+
+            const snapshot = await query.orderBy("createdAt", "desc").get();
+            const jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            res.json(jobs);
+        } catch (error) {
+            console.error("Error in /job/list:", error.message);
+            res.status(500).send("Failed to fetch jobs");
         }
+        });
 
-        const snapshot = await query.orderBy("createdAt", "desc").get();
-        const jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.json(jobs);
-    } catch (error) {
-        res.status(500).send("Failed to fetch jobs");
-    }
-});
-
-// 获取单个岗位 - GET /job/:id?uid=xxx
+// 获取单个岗位 - GET /job/:id
 router.get("/:id", async (req, res) => {
-    const { id } = req.params;
-    const { uid } = req.query;
+  const { id } = req.params;
 
-    try {
-        const jobDoc = await admin.firestore().doc(`jobs/${id}`).get();
-        if (!jobDoc.exists) return res.status(404).send("Job not found");
+  try {
+    const jobDoc = await admin.firestore().doc(`jobs/${id}`).get();
+    if (!jobDoc.exists) return res.status(404).send("Job not found");
 
-        const job = jobDoc.data();
-        if (job.employerId !== uid && job.studentId !== uid) {
-            return res.status(403).send("Access denied");
-        }
+    const job = jobDoc.data();
 
-        res.status(200).json({ id: jobDoc.id, ...job });
-    } catch (err) {
-        console.error("Fetch job error:", err.message);
-        res.status(500).send("Failed to fetch job");
-    }
+    // 删除不必要的访问权限校验，让所有人都能访问
+    res.status(200).json({ id: jobDoc.id, ...job });
+  } catch (err) {
+    console.error("Fetch job error:", err.message);
+    res.status(500).send("Failed to fetch job");
+  }
 });
 
 // 更新岗位 - PUT /job/update/:id

@@ -87,7 +87,10 @@
     "requestSkill": "Request Skill",
     "wallet": "Digital Skill Wallet",
     "courses": "Course Management",
-    "settings": "Settings"
+    "settings": "Settings",
+    "postJobs": "Post Jobs",
+    "applications": "Applications",
+    "myApplications": "My Applications"
   },
   "school": {
     "welcome": "Welcome back",

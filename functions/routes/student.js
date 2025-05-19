@@ -185,11 +185,19 @@ router.post("/apply", verifyStudent, async (req, res) => {
   }
 
   try {
+    const jobDoc = await admin.firestore().doc(`jobs/${jobId}`).get();
+    if (!jobDoc.exists) return res.status(404).send("Job not found");
+
+    const jobData = jobDoc.data();
+
     await admin.firestore().collection("applications").add({
       jobId,
       studentId: req.user.uid,
+      employerId: jobData.employerId, // 添加这一行
       skillsSnapshot,
       appliedAt: FieldValue.serverTimestamp(),
+      status: "pending",
+      note: "",
     });
 
     res.send("Application submitted");
@@ -214,11 +222,15 @@ router.get("/my-applications", verifyStudent, async (req, res) => {
       const data = doc.data();
       const jobDoc = await admin.firestore().doc(`jobs/${data.jobId}`).get();
       const job = jobDoc.exists ? jobDoc.data() : {};
+
       results.push({
         id: doc.id,
-        appliedAt: data.appliedAt,
+        jobId: data.jobId,
+        appliedAt: data.appliedAt?.toDate?.() ?? null,
         jobTitle: job.title || "Unknown",
         company: job.company || "Unknown",
+        status: data.status || "pending",   // 添加状态
+        note: data.note || "",              // 添加雇主备注
       });
     }
 
@@ -226,6 +238,33 @@ router.get("/my-applications", verifyStudent, async (req, res) => {
   } catch (err) {
     console.error("Error fetching applications:", err);
     res.status(500).send("Failed to fetch applications");
+  }
+});
+
+
+// DELETE /student/skill/delete/:id — 删除技能
+router.delete("/skill/delete/:id", verifyStudent, async (req, res) => {
+  const { uid } = req.user;
+  const skillId = req.params.id;
+
+  try {
+    const skillRef = admin.firestore().doc(`skills/${skillId}`);
+    const skillDoc = await skillRef.get();
+
+    if (!skillDoc.exists) {
+      return res.status(404).send("Skill not found");
+    }
+
+    const skillData = skillDoc.data();
+    if (!skillData || skillData.ownerId !== uid) {
+      return res.status(403).send("Unauthorized");
+    }
+
+    await skillRef.delete();
+    res.send("Skill deleted successfully");
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).send("Failed to delete skill");
   }
 });
 

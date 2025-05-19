@@ -151,11 +151,17 @@ export default function StudentRequestSkill() {
     }
   };
 
-  const handleDelete = async (id) => {
-    const token = await user.getIdToken();
-    await deleteSkill(id, token);
-    fetchSkills();
-  };
+const handleDelete = async (id) => {
+  try {
+    const token = await user.getIdToken(); // 获取用户 token
+    await axios.delete(`${BASE_URL}/student/skill/delete/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    fetchSkills(); // 删除后刷新列表
+  } catch (err) {
+    console.error("Delete failed:", err);
+  }
+};
 
   const updateMajor = async () => {
     const token = await user.getIdToken();

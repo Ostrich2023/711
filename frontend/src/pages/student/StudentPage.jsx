@@ -2,11 +2,11 @@ import React from "react";
 import { Container, Group, Box, Loader, Center } from "@mantine/core";
 import {
   IconHome2,
+  IconWallet,
   IconClipboardList,
-  IconSettings,
-  IconBook2,
   IconUser,
-  IconCertificate,
+  IconSettings,
+  IconBriefcase,
 } from "@tabler/icons-react";
 import { Navigate, Outlet } from "react-router-dom";
 
@@ -25,6 +25,7 @@ const StudentPage = () => {
 const navbarData = [
   { link: "", labelKey: "navbar.home", icon: IconHome2 },
   { link: "request-skill", labelKey: "navbar.requestSkill", icon: IconClipboardList },
+  { link: "profile", labelKey: "navbar.profile", icon: IconUser },
   { link: "settings", labelKey: "navbar.settings", icon: IconSettings },
 ];
   return (

@@ -64,8 +64,9 @@ const AppRouter = createBrowserRouter([
         { path: "request-skill", element: <StudentRequestSkill /> },
         { path: "settings", element: <StudentSettings /> },
         { path: "wallet", element: <DigitalSkillWallet /> },
-        { path: "jobs/:jobId", element: <JobDetail /> },           // 新增职位详情页
-        { path: "my-applications", element: <MyJobApplications /> } // 新增我的申请页
+        { path: "job/:jobId", element: <JobDetail /> },
+        { path: "job", element: <JobDetail /> }, 
+        { path: "applications", element: <MyJobApplications /> },   // 加入
       ]
     },
 
@@ -82,16 +83,16 @@ const AppRouter = createBrowserRouter([
   },  
 
       // Employer routes
-      {
-        path: "employer",
-        element: <EmployerPage />,
-        children: [
-          { index: true, element: <EmployerHome /> },
-          { path: "request-skill", element: <JobManagement /> },
-          { path: "applications", element: <EmployerApplications /> },
-          { path: "settings", element: <EmployerSettings /> } // 添加 settings 页面
-        ]
-      },
+  {
+    path: "employer",
+    element: <EmployerPage />,
+    children: [
+      { index: true, element: <EmployerHome /> },
+      { path: "jobs", element: <JobManagement /> },
+      { path: "applications", element: <EmployerApplications /> },
+      { path: "settings", element: <EmployerSettings /> }
+    ]
+  },
 
       // Admin & Utility
       { path: "admin", element: <AdminPage /> },

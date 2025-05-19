@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
-import {Group, Drawer, Avatar, Text, UnstyledButton} from '@mantine/core';
-import { IconBaselineDensityMedium, IconCertificate,  IconArrowRight} from '@tabler/icons-react';
+import {
+  Group,
+  Drawer,
+  Avatar,
+  Text,
+  UnstyledButton,
+} from '@mantine/core';
+import {
+  IconBaselineDensityMedium,
+  IconCertificate,
+  IconArrowRight,
+} from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,21 +18,18 @@ import { useTranslation } from "react-i18next";
 import classes from '../style/HomeNavbar.module.css';
 import ActionButton from './common/ActionButton';
 
-export default function HomeNavbar( props ) {
+export default function HomeNavbar(props) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
 
-  // 当前嵌套路由前缀（如 "student" / "school"）
   const basePath = location.pathname.split("/")[1] || "";
-
   const [active, setActive] = useState(props.navbarData[0]?.labelKey);
   const [opened, setOpened] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const handleActionButton = () => setOpened(true);
 
   useEffect(() => {
-    const currentPath = location.pathname.split("/")[2]; // 获取最后一级路径
+    const currentPath = location.pathname.split("/")[2];
     const matchedItem = props.navbarData.find((item) => item.link === currentPath);
     if (matchedItem) {
       setActive(matchedItem.labelKey);
@@ -53,7 +60,7 @@ export default function HomeNavbar( props ) {
   const userSection = (
     <UnstyledButton className={classes.user}>
       <Group>
-        <Avatar name={props.userData?.name} color="indigo" radius="xl">
+        <Avatar color="indigo" radius="xl">
           {props.userData?.name?.slice(0, 2).toUpperCase()}
         </Avatar>
         <div style={{ flex: 1 }}>
@@ -75,7 +82,7 @@ export default function HomeNavbar( props ) {
           <div className={classes.actionNavbar}>
             <ActionButton
               icon={<IconBaselineDensityMedium size={20} stroke={1.5} />}
-              onActionButton={handleActionButton}
+              onActionButton={() => setOpened(true)}
             />
           </div>
 
@@ -96,25 +103,27 @@ export default function HomeNavbar( props ) {
       ) : (
         <nav className={classes.navbar}>
           {userSection}
-                  <div className={classes.navbarMain}>
-          {props.userData?.role==="student" &&
-          (<a 
-            className={classes.link} 
-            href={'profile'} 
-            onClick={(event) => {
-              event.preventDefault();
-              navigate('/digital-skill-wallet');
-            }}>
-            <Group justify="space-between" align="center" w="100%">
-              <Group gap="xs" align="center">
-                <IconCertificate stroke={1.5} />
-                <span>Digital Skill Wallet</span>
-              </Group>
-              <IconArrowRight stroke={1.5} />
-            </Group>
-          </a>)}
-          {links}
-        </div>
+          <div className={classes.navbarMain}>
+            {props.userData?.role === "student" && (
+              <a
+                className={classes.link}
+                href={'profile'}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigate('/digital-skill-wallet');
+                }}
+              >
+                <Group justify="space-between" align="center" w="100%">
+                  <Group gap="xs" align="center">
+                    <IconCertificate stroke={1.5} />
+                    <span>Digital Skill Wallet</span>
+                  </Group>
+                  <IconArrowRight stroke={1.5} />
+                </Group>
+              </a>
+            )}
+            {links}
+          </div>
         </nav>
       )}
     </>

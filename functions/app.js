@@ -2,8 +2,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import cors from "cors";
+import fileUpload from "express-fileupload";
 
-// Debug wrap — 捕捉非法路径注册
+//  Debug wrap — 捕捉非法路径注册
 const wrapMethods = ["get", "post", "put", "delete", "use"];
 wrapMethods.forEach((method) => {
   const original = express.Router.prototype[method];
@@ -15,10 +17,7 @@ wrapMethods.forEach((method) => {
   };
 });
 
-import cors from "cors";
-import fileUpload from "express-fileupload";
-
-// 路由模块
+//  路由模块
 import userRoutes from "./routes/user.js";
 import skillRoutes from "./routes/skill.js";
 import studentRoutes from "./routes/student.js";
@@ -31,33 +30,28 @@ import teacherRoutes from "./routes/teacher.js";
 
 const app = express();
 
-// 处理所有 OPTIONS 请求，解决 CORS 预检失败
-app.options("*", cors());
-
-// 跨域中间件
+//  跨域配置（支持 Firebase Token）
 const corsOptions = {
   origin: [
-    "https://digital-skill-wallet.web.app", // Firebase Hosting
-    "http://localhost:5173",                // 本地前端
+    "https://digital-skill-wallet.web.app", //  正式前端域名
+    "http://localhost:5173",                //  本地前端开发
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Authorization", "Content-Type"],
   credentials: true,
 };
 
-
-// 处理所有 OPTIONS 预检请求
+//  应用跨域中间件 + 预检支持
+app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
-// 应用到所有 API 路径
-app.use(cors(corsOptions));
-
-// JSON 解析中间件
+//  JSON 请求体解析
 app.use(express.json());
 
-// 文件上传支持
+//  文件上传中间件
 app.use(fileUpload());
 
-// 注册各模块路由
+//  路由注册
 app.use("/user", userRoutes);
 app.use("/skill", skillRoutes);
 app.use("/student", studentRoutes);
@@ -68,7 +62,7 @@ app.use("/admin", adminRoutes);
 app.use("/course", courseRoutes);
 app.use("/teacher", teacherRoutes);
 
-// 健康检查
+//  健康检查接口
 app.get("/", (_, res) => res.send("Functions API running."));
 
 export default app;

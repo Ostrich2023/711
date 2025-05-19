@@ -1,6 +1,7 @@
-// src/pages/student/MyJobApplications.jsx
-import { useEffect, useState } from "react";
-import { Box, Title, Loader, Stack, Paper, Text } from "@mantine/core";
+import React, { useEffect, useState } from "react";
+import {
+  Box, Text, Loader, Center, Paper, Stack, Group, Button
+} from "@mantine/core";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 
@@ -12,37 +13,52 @@ export default function MyJobApplications() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMyApplications();
-  }, []);
+    if (!user) return;
 
-  const fetchMyApplications = async () => {
-    try {
+    const fetchApplications = async () => {
       const token = await user.getIdToken();
-      const res = await axios.get(`${BASE_URL}/student/my-applications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setApplications(res.data);
-    } catch (err) {
-      console.error("Failed to load applications:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const res = await axios.get(`${BASE_URL}/student/my-applications`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setApplications(res.data);
+      } catch (err) {
+        console.error("Failed to load applications:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (loading) return <Loader mt="md" />;
+    fetchApplications();
+  }, [user]);
+
+  if (loading) return <Center mt="lg"><Loader /></Center>;
 
   return (
-    <Box mt="md">
-      <Title order={3} mb="md">My Applications</Title>
+    <Box>
+      <Text fw={700} size="xl" mb="md">My Job Applications</Text>
       {applications.length === 0 ? (
-        <Text>No applications submitted yet.</Text>
+        <Text c="dimmed">You haven't applied for any jobs yet.</Text>
       ) : (
         <Stack>
           {applications.map((app) => (
             <Paper key={app.id} withBorder p="md">
-              <Text fw={600}>{app.jobTitle}</Text>
-              <Text c="dimmed">Company: {app.company}</Text>
-              <Text c="dimmed">Submitted At: {new Date(app.appliedAt.seconds * 1000).toLocaleString()}</Text>
+              <Group position="apart" align="flex-start">
+                <Box>
+                  <Text fw={600}>{app.jobTitle || "Untitled Job"}</Text>
+                  <Text size="sm" c="dimmed">Applied on: {new Date(app.appliedAt).toLocaleDateString()}</Text>
+                  <Text size="sm" c="dimmed">Status: <b>{app.status || "pending"}</b></Text>
+
+                  {app.note && (
+                    <Text size="sm" mt="xs" c="blue.7">
+                      Employer note: {app.note}
+                    </Text>
+                  )}
+                </Box>
+                <Button size="xs" component="a" href={`/student/job/${app.jobId}`}>
+                  View Job
+                </Button>
+              </Group>
             </Paper>
           ))}
         </Stack>

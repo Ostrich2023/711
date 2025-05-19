@@ -1,31 +1,19 @@
-import React, { useState } from "react";
-import { Tabs, Box } from "@mantine/core";
-import JobForms, { MyJobs, JobDetail } from "./JobForms";
+import React from "react";
+import { Box, Tabs } from "@mantine/core";
+import JobForms from "./JobForms"; // 默认导出组件，已包含所有功能
 
 export default function JobManagement() {
-    const [activeTab, setActiveTab] = useState("create");
+  return (
+    <Box maw={800} mx="auto" mt="xl">
+      <Tabs defaultValue="manage">
+        <Tabs.List>
+          <Tabs.Tab value="manage">Manage Jobs</Tabs.Tab>
+        </Tabs.List>
 
-    return (
-        <Box maw={800} mx="auto" mt="xl">
-            <Tabs value={activeTab} onChange={setActiveTab}>
-                <Tabs.List>
-                    <Tabs.Tab value="create">Create Job</Tabs.Tab>
-                    <Tabs.Tab value="my-jobs">My Jobs</Tabs.Tab>
-                    <Tabs.Tab value="job-detail">Job Detail</Tabs.Tab>
-                </Tabs.List>
-
-                <Tabs.Panel value="create" pt="md">
-                    <JobForms />
-                </Tabs.Panel>
-
-                <Tabs.Panel value="my-jobs" pt="md">
-                    <MyJobs />
-                </Tabs.Panel>
-
-                <Tabs.Panel value="job-detail" pt="md">
-                    <JobDetail jobId={"some-job-id"} />
-                </Tabs.Panel>
-            </Tabs>
-        </Box>
-    );
+        <Tabs.Panel value="manage" pt="md">
+          <JobForms />
+        </Tabs.Panel>
+      </Tabs>
+    </Box>
+  );
 }

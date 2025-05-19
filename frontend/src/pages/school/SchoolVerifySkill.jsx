@@ -48,15 +48,23 @@ export default function SchoolVerifySkill() {
     setSoftSkillMap(map);
   };
 
-  const fetchMajors = async () => {
-    const snapshot = await axios.get(`${BASE_URL}/school/majors`);
-    const map = {};
-    snapshot.data.forEach((doc) => {
-      map[doc.id] = doc.name;
-    });
-    setMajorMap(map);
-  };
-
+    const fetchMajors = async () => {
+      try {
+        const token = await user.getIdToken();
+        const snapshot = await axios.get(`${BASE_URL}/school/majors`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const map = {};
+        snapshot.data.forEach((doc) => {
+          map[doc.id] = doc.name;
+        });
+        setMajorMap(map);
+      } catch (err) {
+        console.error("Failed to fetch majors:", err);
+      }
+    };
   const fetchPendingSkills = async () => {
     setLoading(true);
     try {
@@ -133,7 +141,7 @@ export default function SchoolVerifySkill() {
 
     try {
       const token = await user.getIdToken();
-      await axios.put(`${BASE_URL}/skill/review/${skillId}`, {
+      await axios.put(`${BASE_URL}/teacher/review/${skillId}`, {
         verified: decision,
         hardSkillScores: decision === "approved" ? hardSkillScores : null,
         softSkillScores: decision === "approved" ? softSkillScores : null,

@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: "/", // 关键点：告诉 Vite 所有资源路径从根路径加载
+  base: "./", // 关键点：告诉 Vite 所有资源路径从根路径加载
   plugins: [react()],
   build: {
     outDir: 'dist',

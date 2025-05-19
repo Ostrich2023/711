@@ -9,6 +9,7 @@ import HeaderCard from "../../components/employer/HeaderCard";
 import ImagePaper from "../../components/employer/ImagePaper";
 import ChartPaper from "../../components/employer/ChartPaper";
 import StudentWalletMini from "../../components/employer/StudentWalletMini";
+import postJobImage from "../../assets/postjob.png";
 
 import { useAuth } from "../../context/AuthContext";
 
@@ -29,6 +30,8 @@ export default function EmployerHome() {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
   const [page, setPage] = useState(1);
+
+  const SHOW_RECENT = false;
 
   useEffect(() => {
     if (user) {
@@ -51,21 +54,22 @@ export default function EmployerHome() {
     const res = await axios.get(`${BASE_URL}/employer/recent-applications`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setApplications(res.data);
+    setApplications(Array.isArray(res.data) ? res.data : []);
     const summaryRes = await axios.get(`${BASE_URL}/employer/application-summary`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setSummary(summaryRes.data);
+    setSummary(summaryRes.data || {});
     setLoading(false);
   };
 
   const fetchApprovedStudents = async () => {
     const token = await user.getIdToken();
-    const res = await axios.get(`${BASE_URL}/admin/approved-students`, {
+    const res = await axios.get(`${BASE_URL}/employer/approved-students`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setStudents(res.data);
-    setFilteredStudents(res.data);
+    const result = Array.isArray(res.data) ? res.data : [];
+    setStudents(result);
+    setFilteredStudents(result);
   };
 
   const handleSearch = () => {
@@ -75,6 +79,7 @@ export default function EmployerHome() {
     }
     const keyword = search.toLowerCase();
     const filtered = students.filter((stu) =>
+      Array.isArray(stu.skills) &&
       stu.skills.some((s) =>
         s.title?.toLowerCase().includes(keyword) || s.courseTitle?.toLowerCase().includes(keyword)
       )
@@ -88,7 +93,9 @@ export default function EmployerHome() {
     setOpened(true);
   };
 
-  const paginatedStudents = filteredStudents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginatedStudents = Array.isArray(filteredStudents)
+    ? filteredStudents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : [];
 
   if (loading || !userData) {
     return <Center mt="lg"><Loader /></Center>;
@@ -105,42 +112,29 @@ export default function EmployerHome() {
             description="Attract talented students by creating a new job opportunity."
             buttonText="Post Now"
             buttonLink="/employer/request-skill"
-            imageUrl="https://cdn.pixabay.com/photo/2017/06/28/00/39/job-2443637_960_720.jpg"
+            imageUrl={postJobImage}
           />
         </Grid.Col>
 
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <ChartPaper title="Application Summary">
-            <Center>
-              <RingProgress
-                size={180}
-                thickness={16}
-                roundCaps
-                sections={[
-                  { value: summary.total || 0, color: "blue", tooltip: "Total" },
-                  { value: summary.viewed || 0, color: "teal", tooltip: "Viewed" },
-                  { value: summary.shortlisted || 0, color: "orange", tooltip: "Shortlisted" },
-                ]}
-                label={<Text fw={700} ta="center">{summary.total || 0} Total</Text>}
-              />
-            </Center>
-          </ChartPaper>
-        </Grid.Col>
-      </Grid>
+{/* <Grid.Col span={{ base: 12, md: 6 }}>
+  <ChartPaper title="Application Summary">
+    <Center>
+      <RingProgress
+        size={180}
+        thickness={16}
+        roundCaps
+        sections={[
+          { value: summary.total || 0, color: "blue", tooltip: "Total" },
+          { value: summary.viewed || 0, color: "teal", tooltip: "Viewed" },
+          { value: summary.shortlisted || 0, color: "orange", tooltip: "Shortlisted" },
+        ]}
+        label={<Text fw={700} ta="center">{summary.total || 0} Total</Text>}
+      />
+    </Center>
+  </ChartPaper>
+</Grid.Col> */}
 
-      {/* Recent Applicants */}
-      <Paper mt="xl" p="md" radius="md" shadow="xs" withBorder>
-        <Text fw={500} size="lg" mb="sm">Recent Applicants</Text>
-        {applications.length === 0 ? (
-          <Text c="dimmed">No applications found.</Text>
-        ) : (
-          <Stack>
-            {applications.slice(0, 3).map((app) => (
-              <StudentWalletMini key={app.studentId} studentId={app.studentId} />
-            ))}
-          </Stack>
-        )}
-      </Paper>
+      </Grid>
 
       {/* Browse Students */}
       <Paper mt="xl" p="md" radius="md" shadow="xs" withBorder>
@@ -155,20 +149,39 @@ export default function EmployerHome() {
         </Flex>
 
         <Stack mt="md">
-          {paginatedStudents.map((stu) => (
-            <Paper key={stu.id} withBorder p="md">
-              <Flex justify="space-between" align="center">
-                <Box>
-                  <Text fw={600}>{stu.name} ({stu.customUid})</Text>
-                  <Text size="sm" c="dimmed">{stu.email}</Text>
-                </Box>
-                <Button variant="light" size="xs" onClick={() => handleView(stu.id)}>
-                  View Skills
-                </Button>
-              </Flex>
-            </Paper>
-          ))}
+          {Array.isArray(paginatedStudents) && paginatedStudents.length > 0 ? (
+            paginatedStudents.map((stu) => (
+              <Paper key={stu.id} withBorder p="md">
+                <Flex justify="space-between" align="center">
+                  <Box>
+                    <Text fw={600}>{stu.name} ({stu.customUid})</Text>
+                    <Text size="sm" c="dimmed">{stu.email}</Text>
+                  </Box>
+                  <Button variant="light" size="xs" onClick={() => handleView(stu.id)}>
+                    View Skills
+                  </Button>
+                </Flex>
+              </Paper>
+            ))
+          ) : (
+            <Text c="dimmed">No students found.</Text>
+          )}
         </Stack>
+
+        {SHOW_RECENT && (
+          <Paper mt="xl" p="md" radius="md" shadow="xs" withBorder>
+            <Text fw={500} size="lg" mb="sm">Recent Applicants</Text>
+            {Array.isArray(applications) && applications.length > 0 ? (
+              <Stack>
+                {applications.slice(0, 3).map((app) => (
+                  <StudentWalletMini key={app.studentId} studentId={app.studentId} />
+                ))}
+              </Stack>
+            ) : (
+              <Text c="dimmed">No applications found.</Text>
+            )}
+          </Paper>
+        )}
 
         <Pagination
           value={page}
