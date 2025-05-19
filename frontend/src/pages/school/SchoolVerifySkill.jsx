@@ -1,42 +1,60 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { useAuth } from "../../context/AuthContext";
 import {
-  Box, Paper, Title, Text, Group, Button,
-  NumberInput, Textarea, Loader, Stack, Divider, Select, Collapse, Progress
+  Box, Paper, Title, Text, Group, Button, TextInput,
+  NumberInput, Textarea, Loader, Stack, Divider, Select, Collapse, Progress, Table
 } from "@mantine/core";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function SchoolVerifySkill() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [skills, setSkills] = useState([]);
+  const [filteredSkills, setFilteredSkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formState, setFormState] = useState({});
   const [softSkillMap, setSoftSkillMap] = useState({});
+  const [majorMap, setMajorMap] = useState({});
+  const [selectedSkillId, setSelectedSkillId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCourse, setFilterCourse] = useState("");
+  const [filterMajor, setFilterMajor] = useState("");
   const skillRefs = useRef({});
 
   useEffect(() => {
     if (user) {
       fetchSoftSkills();
+      fetchMajors();
       fetchPendingSkills();
     }
   }, [user]);
 
+  useEffect(() => {
+    filterSkillList();
+  }, [skills, searchQuery, filterCourse, filterMajor]);
+
   const fetchSoftSkills = async () => {
-    try {
-      const token = await user.getIdToken();
-      const res = await axios.get(`${BASE_URL}/course/soft-skills`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const map = {};
-      res.data.forEach((s) => {
-        map[s.id] = s.name;
-      });
-      setSoftSkillMap(map);
-    } catch (err) {
-      console.error("Failed to load soft skills:", err);
-    }
+    const token = await user.getIdToken();
+    const res = await axios.get(`${BASE_URL}/course/soft-skills`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const map = {};
+    res.data.forEach((s) => {
+      map[s.id] = s.name;
+    });
+    setSoftSkillMap(map);
+  };
+
+  const fetchMajors = async () => {
+    const snapshot = await axios.get(`${BASE_URL}/school/majors`);
+    const map = {};
+    snapshot.data.forEach((doc) => {
+      map[doc.id] = doc.name;
+    });
+    setMajorMap(map);
   };
 
   const fetchPendingSkills = async () => {
@@ -51,13 +69,11 @@ export default function SchoolVerifySkill() {
         res.data.map(async (skill) => {
           let hardSkills = [];
           try {
-             const courseRes = await axios.get(`${BASE_URL}/course/details/${skill.courseId}`, {
+            const courseRes = await axios.get(`${BASE_URL}/course/details/${skill.courseId}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             hardSkills = courseRes.data.hardSkills || [];
-          } catch (err) {
-            console.warn(`Failed to fetch course ${skill.courseId}:`, err);
-          }
+          } catch {}
           return { ...skill, hardSkills };
         })
       );
@@ -68,6 +84,17 @@ export default function SchoolVerifySkill() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filterSkillList = () => {
+    const filtered = skills.filter(skill => {
+      const nameMatch = skill.student?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        skill.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      const courseMatch = !filterCourse || skill.courseCode === filterCourse;
+      const majorMatch = !filterMajor || skill.student?.major === filterMajor;
+      return nameMatch && courseMatch && majorMatch;
+    });
+    setFilteredSkills(filtered);
   };
 
   const handleScoreChange = (skillId, type, skillName, field, value) => {
@@ -95,13 +122,12 @@ export default function SchoolVerifySkill() {
     const { decision, hardSkillScores, softSkillScores, note } = state;
 
     if (!decision) {
-      alert("Please select approve or reject.");
+      alert(t("teacher.review.alertDecision"));
       return;
     }
 
-    if (decision === "approved" &&
-      (!hardSkillScores || !softSkillScores)) {
-      alert("Please complete both hard and soft skill scores before approving.");
+    if (decision === "approved" && (!hardSkillScores || !softSkillScores)) {
+      alert(t("teacher.review.alertCompleteScores"));
       return;
     }
 
@@ -116,63 +142,100 @@ export default function SchoolVerifySkill() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      alert("Skill reviewed.");
-
-      // 自动收起评分区域
+      alert(t("teacher.review.success"));
       setFormState((prev) => {
         const updated = { ...prev };
         delete updated[skillId];
         return updated;
       });
-
-      // 自动跳转到下一个技能
-      const skillIndex = skills.findIndex((s) => s.id === skillId);
-      const nextSkill = skills[skillIndex + 1];
-      if (nextSkill && skillRefs.current[nextSkill.id]) {
-        setTimeout(() => {
-          skillRefs.current[nextSkill.id].scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }, 300);
-      }
-
-      // 刷新技能列表
+      setSelectedSkillId(null);
       fetchPendingSkills();
     } catch (err) {
       console.error("Failed to submit review:", err);
-      alert("Error submitting review.");
+      alert(t("teacher.review.error"));
     }
   };
 
+  if (loading) return <Loader mt="md" />;
+
   return (
     <Box mt="30px">
-      <Title order={2} mb="lg">Rubric-Based Skill Review</Title>
+      <Title order={2} mb="lg">{t("teacher.review.title")}</Title>
 
-      {skills.length > 0 && (
-        <Box mb="lg">
-          <Text mb={4}>
-            Skill Review Progress: {skills.length - Object.keys(formState).length} / {skills.length}
-          </Text>
-          <Progress value={(skills.length - Object.keys(formState).length) / skills.length * 100} color="teal" />
-        </Box>
-      )}
+      {!selectedSkillId ? (
+        <>
+          <Group mb="md" grow>
+            <TextInput
+              placeholder={t("teacher.review.search")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Select
+              placeholder={t("teacher.review.courseFilter")}
+              data={[...new Set(skills.map(s => s.courseCode))].map(code => ({ value: code, label: code }))}
+              value={filterCourse}
+              onChange={setFilterCourse}
+              clearable
+            />
+            <Select
+              placeholder={t("teacher.review.majorFilter")}
+              data={[...new Set(skills.map(s => s.student?.major))].map(id => ({
+                value: id,
+                label: majorMap[id] || id
+              }))}
+              value={filterMajor}
+              onChange={setFilterMajor}
+              clearable
+            />
+          </Group>
 
-      {loading ? (
-        <Loader />
-      ) : skills.length === 0 ? (
-        <Text>No pending skills.</Text>
-      ) : (
-        skills.map((skill) => {
+          {filteredSkills.length === 0 ? (
+            <Text>{t("teacher.review.noMatches")}</Text>
+          ) : (
+            <Table withBorder striped>
+              <thead>
+                <tr>
+                  <th>{t("profile.name")}</th>
+                  <th>{t("profile.id")}</th>
+                  <th>{t("profile.major")}</th>
+                  <th>{t("request.course")}</th>
+                  <th>{t("request.level")}</th>
+                  <th>{t("request.action")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSkills.map(skill => (
+                  <tr key={skill.id}>
+                    <td>{skill.student?.name || "Unknown"}</td>
+                    <td>{skill.student?.id}</td>
+                    <td>{majorMap[skill.student?.major] || skill.student?.major}</td>
+                    <td>{skill.courseCode}</td>
+                    <td>{skill.level}</td>
+                    <td>
+                      <Button size="xs" onClick={() => setSelectedSkillId(skill.id)}>
+                        {t("request.rubricTitle")}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </>
+      ) :  (
+        skills.filter(s => s.id === selectedSkillId).map(skill => {
           const state = formState[skill.id] || {};
           const decision = state.decision;
 
           return (
-            <div key={skill.id} ref={(el) => (skillRefs.current[skill.id] = el)}>
+            <Box key={skill.id} ref={(el) => (skillRefs.current[skill.id] = el)}>
               <Paper p="md" radius="md" shadow="xs" withBorder mb="lg">
-                <Title order={4}>{skill.title} ({skill.level})</Title>
+                <Group position="apart">
+                  <Title order={4}>{skill.title} ({skill.level})</Title>
+                  <Button variant="light" onClick={() => setSelectedSkillId(null)}>← Back</Button>
+                </Group>
                 <Text size="sm" c="dimmed">Course: {skill.courseTitle} ({skill.courseCode})</Text>
-                <Text size="sm" mt="xs">{skill.description}</Text>
+                <Text size="sm">Student: {skill.student?.name} ({skill.student?.id}) - {majorMap[skill.student?.major] || skill.student?.major}</Text>
                 {skill.attachmentCid && (
                   <Text mt="xs" size="sm">
                     <a href={`https://ipfs.io/ipfs/${skill.attachmentCid}`} target="_blank" rel="noreferrer">View Document</a>
@@ -184,34 +247,19 @@ export default function SchoolVerifySkill() {
                 <Stack>
                   <Select
                     label="Approval Decision"
-                    placeholder="Select decision"
+                    placeholder="Select"
                     value={state?.decision || ""}
-                    onChange={(val) => {
+                    onChange={(val) =>
                       setFormState((prev) => ({
                         ...prev,
                         [skill.id]: { ...prev[skill.id], decision: val },
-                      }));
-
-                      if (val === "approved" && skillRefs.current[skill.id]) {
-                        setTimeout(() => {
-                          skillRefs.current[skill.id].scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          });
-                        }, 200);
-                      }
-                    }}
+                      }))
+                    }
                     data={[
-                      { value: "approved", label: " Approve" },
-                      { value: "rejected", label: " Reject" },
+                      { value: "approved", label: "Approve" },
+                      { value: "rejected", label: "Reject" },
                     ]}
                   />
-
-                  {!decision && (
-                    <Text size="sm" c="red">
-                       Please select Approve or Reject to continue.
-                    </Text>
-                  )}
 
                   <Collapse in={decision === "approved"}>
                     <div>
@@ -271,6 +319,7 @@ export default function SchoolVerifySkill() {
                     </div>
                   </Collapse>
 
+
                   <Textarea
                     label="Overall Note"
                     placeholder="General feedback..."
@@ -288,12 +337,12 @@ export default function SchoolVerifySkill() {
 
                   <Group mt="xs">
                     <Button color="green" onClick={() => handleReview(skill.id)}>
-                      Submit Rubric
+                      Submit Review
                     </Button>
                   </Group>
                 </Stack>
               </Paper>
-            </div>
+            </Box>
           );
         })
       )}

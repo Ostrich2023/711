@@ -1,35 +1,19 @@
 ﻿import React, { useEffect, useState } from "react";
 import {
-  Box,
-  TextInput,
-  Textarea,
-  Button,
-  Paper,
-  Title,
-  Stack,
-  Group,
-  Text,
-  Loader,
-  Select,
-  Modal,
+  Box, TextInput, Textarea, Button, Paper, Title, Stack,
+  Group, Text, Loader, Select, Modal
 } from "@mantine/core";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../context/AuthContext";
-import { useFireStoreUser } from "../../hooks/useFirestoreUser";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-import ActivityList from "../../components/ActivityList";
-
 export default function SchoolCourseManager() {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const [form, setForm] = useState({
-    title: "",
-    code: "",
-    skillTitle: "",
-    skillDescription: "",
-  });
+  const [form, setForm] = useState({ title: "", code: "", skillTitle: "", skillDescription: "" });
   const [selectedMajor, setSelectedMajor] = useState("");
   const [courses, setCourses] = useState([]);
   const [majors, setMajors] = useState([]);
@@ -80,30 +64,22 @@ export default function SchoolCourseManager() {
   const handleCreate = async () => {
     const { title, code, skillTitle, skillDescription } = form;
     if (!title || !code || !skillTitle || !skillDescription || !selectedMajor) {
-      alert("All fields (including major) are required.");
+      alert(t("request.noMajor"));
       return;
     }
 
     try {
       setCreating(true);
       const token = await user.getIdToken();
-      await axios.post(
-        `${BASE_URL}/course/create`,
-        {
-          title,
-          code,
-          major: selectedMajor,
-          skillTemplate: {
-            skillTitle,
-            skillDescription,
-          },
-          hardSkills,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      alert("Course created successfully.");
+      await axios.post(`${BASE_URL}/course/create`, {
+        title,
+        code,
+        major: selectedMajor,
+        skillTemplate: { skillTitle, skillDescription },
+        hardSkills,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      alert(t("settings.saveSuccess"));
       setForm({ title: "", code: "", skillTitle: "", skillDescription: "" });
       setSelectedMajor("");
       setHardSkills([]);
@@ -118,18 +94,18 @@ export default function SchoolCourseManager() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this course?")) return;
+    if (!confirm(t("deleteConfirm") || "Are you sure you want to delete?")) return;
 
     try {
       const token = await user.getIdToken();
       await axios.delete(`${BASE_URL}/course/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert("Course deleted.");
+      alert("Deleted.");
       loadCourses();
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete course.");
+      alert("Failed to delete.");
     }
   };
 
@@ -139,7 +115,7 @@ export default function SchoolCourseManager() {
       title: course.title,
       code: course.code,
       skillTitle: course.skillTemplate?.skillTitle || "",
-      skillDescription: course.skillTemplate?.skillDescription || ""
+      skillDescription: course.skillTemplate?.skillDescription || "",
     });
     setSelectedMajor(course.major?.id || "");
     setHardSkills(course.hardSkills || []);
@@ -149,51 +125,43 @@ export default function SchoolCourseManager() {
   const handleUpdate = async () => {
     const { title, code, skillTitle, skillDescription } = form;
     if (!title || !code || !skillTitle || !skillDescription || !selectedMajor) {
-      alert("All fields (including major) are required.");
+      alert(t("request.noMajor"));
       return;
     }
 
     try {
       const token = await user.getIdToken();
-      await axios.put(
-        `${BASE_URL}/course/update/${editingCourse.id}`,
-        {
-          title,
-          code,
-          major: selectedMajor,
-          skillTemplate: {
-            skillTitle,
-            skillDescription,
-          },
-          hardSkills,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      alert("Course updated successfully.");
+      await axios.put(`${BASE_URL}/course/update/${editingCourse.id}`, {
+        title,
+        code,
+        major: selectedMajor,
+        skillTemplate: { skillTitle, skillDescription },
+        hardSkills,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      alert(t("settings.saveSuccess"));
       setEditModalOpen(false);
       setEditingCourse(null);
       loadCourses();
     } catch (err) {
       console.error("Update failed:", err);
-      alert("Failed to update course.");
+      alert("Failed to update.");
     }
   };
 
   return (
     <Box mt="30px">
-      <Title order={2} mb="lg">Course Management</Title>
+      <Title order={2}>{t("navbar.courses")}</Title>
 
       <Paper shadow="xs" p="md" withBorder mb="xl">
         <Stack>
-          <TextInput label="Course Title" value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
-          <TextInput label="Course Code" value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
-          <Select label="Major" data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
-          <TextInput label="Skill Title (Template)" value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
-          <Textarea label="Skill Description" value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
+          <TextInput label={t("course.title")} value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
+          <TextInput label={t("course.code")} value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
+          <Select label={t("profile.major")} data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
+          <TextInput label={t("course.skillTitle")} value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
+          <Textarea label={t("course.skillDescription")} value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
           <Group>
-            <TextInput label="Add Hard Skill" placeholder="e.g., JavaScript" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
+            <TextInput placeholder="e.g. React, Python" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
             <Button onClick={() => {
               if (hardSkillInput.trim()) {
                 setHardSkills(prev => [...prev, hardSkillInput.trim()]);
@@ -208,15 +176,15 @@ export default function SchoolCourseManager() {
               }}>{skill} ❌</Button>
             ))}
           </Group>
-          <Button onClick={handleCreate} loading={creating}>Create Course</Button>
+          <Button onClick={handleCreate} loading={creating}>{t("course.create")}</Button>
         </Stack>
       </Paper>
 
-      <Title order={3} mb="md">Your Courses</Title>
+      <Title order={3}>{t("course.existingCourses")}</Title>
       {loading ? (
         <Loader />
       ) : courses.length === 0 ? (
-        <Text>No courses created yet.</Text>
+        <Text>{t("course.noCourses")}</Text>
       ) : (
         courses.map((course) => (
           <Paper key={course.id} p="md" radius="md" withBorder mb="md">
@@ -224,27 +192,27 @@ export default function SchoolCourseManager() {
               <Box>
                 <Text fw={500}>{course.title}</Text>
                 <Text size="sm" c="gray">{course.code}</Text>
-                <Text size="sm" mt="xs">Skill: {course.skillTemplate?.skillTitle}</Text>
+                <Text size="sm" mt="xs">{t("course.skill")}: {course.skillTemplate?.skillTitle}</Text>
                 <Text size="sm" c="dimmed">{course.skillTemplate?.skillDescription}</Text>
               </Box>
               <Group>
-                <Button variant="light" onClick={() => openEditModal(course)}>Edit</Button>
-                <Button color="red" variant="light" onClick={() => handleDelete(course.id)}>Delete</Button>
+                <Button variant="light" onClick={() => openEditModal(course)}>{t("edit")}</Button>
+                <Button color="red" variant="light" onClick={() => handleDelete(course.id)}>{t("delete")}</Button>
               </Group>
             </Group>
           </Paper>
         ))
       )}
 
-      <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Course" centered>
+      <Modal opened={editModalOpen} onClose={() => setEditModalOpen(false)} title={t("course.edit")} centered>
         <Stack>
-          <TextInput label="Course Title" value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
-          <TextInput label="Course Code" value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
-          <Select label="Major" data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
-          <TextInput label="Skill Title (Template)" value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
-          <Textarea label="Skill Description" value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
+          <TextInput label={t("course.title")} value={form.title} onChange={(e) => handleChange("title", e.target.value)} />
+          <TextInput label={t("course.code")} value={form.code} onChange={(e) => handleChange("code", e.target.value)} />
+          <Select label={t("profile.major")} data={majors.map((m) => ({ value: m.id, label: m.name }))} value={selectedMajor} onChange={setSelectedMajor} />
+          <TextInput label={t("course.skillTitle")} value={form.skillTitle} onChange={(e) => handleChange("skillTitle", e.target.value)} />
+          <Textarea label={t("course.skillDescription")} value={form.skillDescription} onChange={(e) => handleChange("skillDescription", e.target.value)} />
           <Group>
-            <TextInput label="Add Hard Skill" placeholder="e.g., React" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
+            <TextInput placeholder="e.g. React" value={hardSkillInput} onChange={(e) => setHardSkillInput(e.target.value)} />
             <Button onClick={() => {
               if (hardSkillInput.trim()) {
                 setHardSkills(prev => [...prev, hardSkillInput.trim()]);
@@ -259,7 +227,7 @@ export default function SchoolCourseManager() {
               }}>{skill} ❌</Button>
             ))}
           </Group>
-          <Button onClick={handleUpdate}>Update Course</Button>
+          <Button onClick={handleUpdate}>{t("update")}</Button>
         </Stack>
       </Modal>
     </Box>

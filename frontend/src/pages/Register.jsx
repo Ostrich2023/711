@@ -13,23 +13,23 @@ import {
   Title,
   Select,
 } from "@mantine/core";
+import { useTranslation } from "react-i18next";
 
-// Firebase
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
-// Third-party
 import { ethers } from "ethers";
 import axios from "axios";
-
-// Context
 import { useAuth } from "../context/AuthContext";
 
-// API base
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Register() {
+  const { t } = useTranslation();
+  const { setUser, setRole: setGlobalRole } = useAuth();
+  const navigate = useNavigate();
+
   const [schoolOptions, setSchoolOptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,8 +47,13 @@ export default function Register() {
   const [schoolId, setSchoolId] = useState("");
   const [isAgreed, setIsAgreed] = useState(false);
 
-  const navigate = useNavigate();
-  const { setUser, setRole: setGlobalRole } = useAuth();
+  useEffect(() => {
+    fetchSchoolList();
+  }, []);
+
+  useEffect(() => {
+    setConfirmPwdWarning(confirmPwd !== "" && confirmPwd !== password);
+  }, [password, confirmPwd]);
 
   const fetchSchoolList = async () => {
     try {
@@ -56,23 +61,12 @@ export default function Register() {
       setSchoolOptions(res.data);
     } catch (error) {
       console.error("Failed to fetch school list:", error);
-      alert("Failed to load school list.");
+      alert(t("register.fetchSchoolFail"));
     } finally {
       setLoading(false);
     }
   };
 
-  // fetch school list on mount
-  useEffect(() => {
-    fetchSchoolList();
-  }, []);
-
-  // validate confirm password
-  useEffect(() => {
-    setConfirmPwdWarning(confirmPwd !== "" && confirmPwd !== password);
-  }, [password, confirmPwd]);
-
-  // validation handlers
   const handleEmail = (val) => {
     setEmail(val);
     const valid = /^[\w.-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/.test(val);
@@ -81,24 +75,24 @@ export default function Register() {
 
   const handlePassword = (val) => {
     setPassword(val);
-    const isTooShort = val.length < 6;
+    const tooShort = val.length < 6;
     const hasLetter = /[a-zA-Z]/.test(val);
     const hasNumber = /[0-9]/.test(val);
-    setPasswordWarning(val !== "" && (isTooShort || !hasLetter || !hasNumber));
+    setPasswordWarning(val !== "" && (tooShort || !hasLetter || !hasNumber));
   };
 
   const handleRegister = async () => {
     if (!username || !email || !password || !confirmPwd) {
-      return alert("Please complete all fields.");
+      return alert(t("register.completeAllFields"));
     }
     if (emailWarning || passwordWarning || confirmPwdWarning) {
-      return alert("Please fix the errors before submitting.");
+      return alert(t("register.fixErrors"));
     }
     if ((role === "student" || role === "school") && !schoolId) {
-      return alert("Please select a school.");
+      return alert(t("register.selectSchool"));
     }
     if (!isAgreed) {
-      return alert("Please agree to the registration agreement.");
+      return alert(t("register.agreeFirst"));
     }
 
     try {
@@ -132,93 +126,111 @@ export default function Register() {
       else navigate("/employer");
 
       alert(
-        ` Registration successful.\n\nWallet Address: ${wallet.address}\n\nMnemonic (keep this safe!):\n${wallet.mnemonic.phrase}`
+        `${t("register.success")}\n\n${t("register.wallet")}: ${wallet.address}\n\n${t("register.mnemonic")}\n${wallet.mnemonic.phrase}`
       );
     } catch (err) {
-      alert(err.message || "Registration failed.");
+      alert(err.message || t("register.fail"));
     }
   };
 
-  if (loading) return <p>Loading school list...</p>;
+  if (loading) return <p>{t("register.loading")}</p>;
 
   return (
     <Container size={420} my={40}>
-      <Title ta="center">Welcome to Skivy!</Title>
-      <Text size="lg" ta="center" mt={18}>Create a new account</Text>
+      <Title ta="center">{t("register.title")}</Title>
+      <Text size="lg" ta="center" mt={18}>
+        {t("register.subtitle")}
+      </Text>
 
       <Paper withBorder shadow="md" p={30} mt={20} radius="md">
         <TextInput
-          label="Username"
-          placeholder="Your name"
+          label={t("register.username")}
+          placeholder={t("register.usernamePlaceholder")}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
         />
 
         <TextInput
-          label="Email"
-          placeholder="Your email"
+          label={t("register.email")}
+          placeholder={t("register.emailPlaceholder")}
           value={email}
           onChange={(e) => handleEmail(e.target.value)}
           required
           mt="md"
         />
-        {emailWarning && <Text c="red" size="sm">Please enter a valid email address.</Text>}
+        {emailWarning && (
+          <Text c="red" size="sm">
+            {t("register.emailInvalid")}
+          </Text>
+        )}
 
         <PasswordInput
-          label="Password"
-          placeholder="Password"
+          label={t("register.password")}
+          placeholder="******"
           value={password}
           onChange={(e) => handlePassword(e.target.value)}
-          required mt="md"
+          required
+          mt="md"
         />
-        {passwordWarning && <Text c="red" size="sm">Password must be at least 6 characters, including letters and numbers.</Text>}
+        {passwordWarning && (
+          <Text c="red" size="sm">
+            {t("register.passwordRules")}
+          </Text>
+        )}
 
         <PasswordInput
-          label="Re-enter Password"
-          placeholder="Confirm password"
+          label={t("register.confirmPwd")}
+          placeholder="******"
           value={confirmPwd}
           onChange={(e) => setConfirmPwd(e.target.value)}
-          required mt="md"
+          required
+          mt="md"
         />
-        {confirmPwdWarning && <Text c="red" size="sm">Passwords do not match.</Text>}
+        {confirmPwdWarning && (
+          <Text c="red" size="sm">
+            {t("register.passwordMismatch")}
+          </Text>
+        )}
 
         <Select
-          label="Select your role"
+          label={t("register.role")}
           value={role}
           onChange={setRole}
           mt="md"
           data={[
-            { value: "student", label: "Student" },
-            { value: "school", label: "Teacher / School" },
-            { value: "employer", label: "Employer" }
+            { value: "student", label: t("register.roles.student") },
+            { value: "school", label: t("register.roles.teacher") },
+            { value: "employer", label: t("register.roles.employer") },
           ]}
         />
 
         {(role === "student" || role === "school") && (
           <Select
-            label="Select your school"
-            placeholder="Pick one"
+            label={t("register.school")}
+            placeholder={t("register.selectSchoolPlaceholder")}
             value={schoolId}
             onChange={setSchoolId}
-            data={schoolOptions.map(s => ({ value: s.code, label: s.name }))}
+            data={schoolOptions.map((s) => ({ value: s.code, label: s.name }))}
             mt="md"
           />
         )}
 
         <Group justify="space-between" mt="lg">
           <Checkbox
-            label="I agree to the registration agreement"
+            label={t("register.agreement")}
             onChange={(e) => setIsAgreed(e.target.checked)}
           />
         </Group>
 
-        <Button fullWidth mt="lg" onClick={handleRegister}>Register</Button>
+        <Button fullWidth mt="lg" onClick={handleRegister}>
+          {t("register.registerBtn")}
+        </Button>
 
         <Group mt="md" justify="center">
-          <Text size="sm">Already have an account?</Text>
+          <Text size="sm">{t("register.haveAccount")}</Text>
           <Anchor fw={700} component="button" size="sm" onClick={() => navigate("/login")}>
-            Login
+            {t("register.login")}
           </Anchor>
         </Group>
       </Paper>

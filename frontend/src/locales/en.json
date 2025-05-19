@@ -1,0 +1,339 @@
+{
+  "profile": {
+    "title": "Student Profile",
+    "id": "Student ID",
+    "name": "Name",
+    "email": "Email",
+    "major": "Major",
+    "level": "Level",
+    "skills": "Approved Skills",
+    "noSkills": "You don't have any approved skills yet.",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "changeAvatar": "Change Avatar",
+    "updated": "Profile updated successfully."
+  },
+  "wallet": {
+    "selectSkillTitle": "Select a Skill to View Scores",
+    "overallScoreSummary": "Overall Score Summary",
+    "softSkillScores": "Soft Skill Scores",
+    "hardSkillScores": "Hard Skill Scores",
+    "myVerifiedSkills": "My Verified Skills",
+    "graduationReminderTitle": "Graduation Reminder",
+    "graduationReminderMessage": "After graduation, your school email will be deactivated. Please use your personal email to log in!",
+    "chooseSkill": "Choose a Skill",
+    "selectPlaceholder": "Select",
+    "skillRejected": "This skill was rejected. Please contact your teacher:",
+    "unknown": "Unknown",
+    "course": "Course",
+    "verifiedBy": "Verified by",
+    "score": "Score",
+    "visibleToEmployer": "Visible to Employers"
+  },
+  "home": {
+    "welcome": "Welcome back",
+    "student": "Student",
+    "schoolTag": "School",
+    "studentTag": "Student",
+    "mySkills": "My Skills",
+    "myCourses": "My Courses",
+    "myTeachers": "My Teachers",
+    "level": "Level",
+    "teacher": "Teacher",
+    "noSkillsYet": "No skills submitted yet.",
+    "noCourses": "No enrolled courses found."
+  },
+  "request": {
+    "submit": "Submit Skill",
+    "course": "Select Course",
+    "level": "Skill Level",
+    "softSkills": "Select Soft Skills",
+    "file": "Upload Attachment (PDF/DOCX)",
+    "fileNote": "Only PDF or DOCX files up to 5MB are allowed",
+    "currentMajor": "Current Major",
+    "submitBtn": "Submit",
+    "history": "Skill Submission History",
+    "statusApproved": " Approved",
+    "statusRejected": " Rejected",
+    "statusPending": " Pending",
+    "rubricTitle": "Rubric",
+    "rubricComment": "Comment",
+    "action": "Action",
+    "delete": "Delete",
+    "viewFile": " View",
+    "selectMajorModalTitle": "Select Your Major",
+    "selectMajorNotice": "You must select your major before submitting skills.",
+    "chooseMajor": "Choose your major",
+    "saveMajor": "Save Major"
+  },
+  "settings": {
+    "title": "Settings",
+    "email": "Email",
+    "resetPassword": "Send Password Reset Email",
+    "exportPDF": "Export Skill Summary PDF",
+    "publicSkills": "Make Skills Visible to Employers",
+    "notifications": "Enable System Notifications",
+    "language": "Language Preference",
+    "theme": "Theme Mode",
+    "save": "Save Settings",
+    "saveSuccess": "Settings saved successfully"
+  },
+  "navbar": {
+    "home": "Home",
+    "profile": "Profile",
+    "requestSkill": "Request Skill",
+    "wallet": "Digital Skill Wallet",
+    "courses": "My Courses",
+    "settings": "Settings"
+  },
+  "school": {
+    "welcome": "Welcome back",
+    "skillLabel": "skill submissions",
+    "reviewPrefix": "You currently have",
+    "reviewSuffix": "ready for review and certification.",
+    "myStudents": "My Students",
+    "verifySkills": "Verify Skills",
+    "manageCourses": "Course Management"
+  },
+  "employer": {
+    "jobManagement": "Job Management"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "email": "Email",
+    "role": "Role",
+    "school": "School",
+    "uid": "UID",
+    "logout": "Logout",
+    "userList": "All Registered Users",
+    "loadError": "Failed to load user list.",
+    "manageUsers": "Manage Users"
+  },
+  "teacher": {
+    "verify": {
+      "title": "Skill Review Panel",
+      "searchPlaceholder": "Search by student name or skill title",
+      "filterCourse": "Filter by course",
+      "filterMajor": "Filter by major",
+      "noMatch": "No matching skills found.",
+      "tableHeaders": {
+        "student": "Student",
+        "id": "ID",
+        "major": "Major",
+        "course": "Course",
+        "skill": "Skill",
+        "action": "Action"
+      },
+      "reviewButton": "Review",
+      "backButton": " Back",
+      "course": "Course",
+      "studentInfo": "Student",
+      "viewDocument": "View Document",
+      "decision": "Approval Decision",
+      "approve": "Approve",
+      "reject": "Reject",
+      "hardSkills": "Hard Skills",
+      "softSkills": "Soft Skills",
+      "noHardSkills": "No hard skills defined.",
+      "score": "Score (0/5)",
+      "comment": "Comment",
+      "note": "Overall Note",
+      "submitReview": "Submit Review",
+      "requiredDecision": "Please select approve or reject.",
+      "requiredRubric": "Please complete both hard and soft skill scores before approving.",
+      "success": "Skill reviewed successfully",
+      "error": "Failed to submit review",
+      "pendingReviewsMessage": "You have {{count}} skill request(s) pending review.",
+      "verifySkills": "Verify Skills",
+      "myCourses": "My Courses",
+      "myStudents": "My Students",
+      "settings": "Settings"
+    }
+  },
+  "role": {
+    "school": "School Admin",
+    "teacher": "Teacher",
+    "student": "Student"
+  },
+  "courseManager": {
+    "title": "Course Management",
+    "createTitle": "Create New Course",
+    "editTitle": "Edit Course",
+    "courseTitle": "Course Title",
+    "courseCode": "Course Code",
+    "major": "Major",
+    "skillTitle": "Skill Title (Template)",
+    "skillDescription": "Skill Description",
+    "addHardSkill": "Add Hard Skill",
+    "hardSkillPlaceholder": "e.g., JavaScript",
+    "create": "Create Course",
+    "update": "Update Course",
+    "yourCourses": "Your Courses",
+    "noCourses": "No courses created yet.",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Are you sure you want to delete this course?",
+    "deleteSuccess": "Course deleted.",
+    "createSuccess": "Course created successfully.",
+    "updateSuccess": "Course updated successfully.",
+    "error": "An error occurred while processing the course."
+  },
+  "course": {
+    "students": "Students"
+  },
+  "global": {
+    "more": "More",
+    "submit": "Submit",
+    "back": "Back",
+    "view": "View",
+    "edit": "Edit",
+    "dismiss": "Dismiss"
+  },
+  "chart": {
+    "noSoftSkill": "No soft skill score data available",
+    "noHardSkill": "No hard skill score data available"
+  },
+  "header": {
+    "overview": "Overview",
+    "id": "ID",
+    "name": "Name",
+    "school": "School",
+    "major": "Major",
+    "role": "Role",
+    "student": "Student",
+    "teacher": "Teacher",
+    "employer": "Employer",
+    "user": "User"
+  },
+  "debug": {
+    "title": "Debug: Current Auth Info",
+    "uid": "UID",
+    "email": "Email",
+    "role": "Role",
+    "token": "Token (short)",
+    "loading": "Loading...",
+    "notLoggedIn": "Not logged in",
+    "notLoaded": "Not loaded"
+  },
+  "error": {
+    "title": "Something is not right...",
+    "description": "The page you are trying to open does not exist. You may have mistyped the address, or the page has been moved to another URL. If you think this is an error, please contact support.",
+    "backHome": "Get back to home page"
+  },
+  "homepage": {
+    "badge": "All in one Skill Wallet",
+    "title": "One platform to connect all roles",
+    "subtitle": "Students, teachers, and employers collaborate in a single workspace to record, verify, and share skills.",
+    "student": {
+      "title": "Student Wallet",
+      "desc": "Request endorsements, store verified achievements, and showcase your personal skill profile anywhere."
+    },
+    "teacher": {
+      "title": "Teacher Verification",
+      "desc": "Quickly review student submissions, approve soft / hard skills, and issue blockchain backed certificates."
+    },
+    "employer": {
+      "title": "Employer Access",
+      "desc": "Browse trusted skill records, post opportunities, and connect with candidates who meet your criteria."
+    }
+  },
+  "login": {
+    "title": "Welcome back to Kanavoogle!",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "Your email address",
+    "passwordPlaceholder": "Your password",
+    "remember": "Keep me logged in",
+    "loginBtn": "Login",
+    "noAccount": "Don't have an account?",
+    "register": "Register",
+    "loginFailed": "Login failed",
+    "userNotFound": "User data not found",
+    "invalidRole": "Invalid role assigned"
+  },
+  "register": {
+    "title": "Welcome to Skivy!",
+    "subtitle": "Create a new account",
+    "username": "Username",
+    "usernamePlaceholder": "Your name",
+    "email": "Email",
+    "emailPlaceholder": "Your email",
+    "emailInvalid": "Please enter a valid email address.",
+    "password": "Password",
+    "passwordRules": "Password must be at least 6 characters and include letters and numbers.",
+    "confirmPwd": "Re-enter Password",
+    "passwordMismatch": "Passwords do not match.",
+    "role": "Select your role",
+    "roles": {
+      "student": "Student",
+      "teacher": "Teacher / School",
+      "employer": "Employer"
+    },
+    "school": "Select your school",
+    "selectSchoolPlaceholder": "Pick one",
+    "agreement": "I agree to the registration agreement",
+    "registerBtn": "Register",
+    "haveAccount": "Already have an account?",
+    "login": "Login",
+    "loading": "Loading school list...",
+    "success": "Registration successful.",
+    "wallet": "Wallet Address",
+    "mnemonic": "Mnemonic (keep this safe!):",
+    "fail": "Registration failed.",
+    "fetchSchoolFail": "Failed to load school list.",
+    "completeAllFields": "Please complete all fields.",
+    "fixErrors": "Please fix the errors before submitting.",
+    "selectSchool": "Please select a school.",
+    "agreeFirst": "Please agree to the registration agreement."
+  },
+  "sync": {
+    "title": "Sync Firestore User Document",
+    "description": "This function creates or updates your user document in Firestore if it's missing.",
+    "button": "Sync User Doc"
+  },
+  "unauthorized": {
+    "title": "Access Denied",
+    "message": "You do not have permission to view this page.",
+    "back": "Go Back Home"
+  },
+  "why": {
+    "titlePrefix": "Why",
+    "subtitle": "A Digital Skill Wallet that makes credentials permanent, verifiable and portable  exactly what our plan sets out to build.",
+    "problemTitle": "The problem we tackle",
+    "problemText": "Certificates too often end up buried in email attachments or one off LMS downloads; links rot, institutions rebrand, and graduates lose access as soon as they leave campus. Without a reliable, shareable record of learning, students struggle to turn their skills into opportunities, teachers find it hard to prove the impact of their courses, and employers waste time manually verifying credentials they\u2019re not sure they can trust.",
+    "solutionTitle": "Our on chain solution",
+    "immutable": {
+      "title": "Immutable credentials",
+      "desc": "Every endorsement is hashed and anchored on a public blockchain. If the file ever changes, the hash doesnt match making tampering impossible."
+    },
+    "wallet": {
+      "title": "Portable skill wallet",
+      "desc": "Learners own a single wallet address. They carry verified skills from school job lifelong learning no platform lockin, no subscription fees."
+    },
+    "workflow": {
+      "title": "Multistakeholder workflow",
+      "desc": "Students request, teachers approve, employers verify all through rolebased dashboards defined in the project scope."
+    },
+    "integration": {
+      "title": "Openstandard integration",
+      "desc": "Smart-contract ABIs and REST APIs follow W3C Verifiable Credential patterns, allowing other universities or HR systems to plug in with minimal effort."
+    },
+    "benefitTitle": "Benefits mapped to our project objectives",
+    "benefits": {
+      "student": "For students proof of competence that never expires, boosting employability and scholarship prospects.",
+      "teacher": "For educators streamlined endorsement workflow and analytics demonstrating course impact.",
+      "employer": "For employers instant cryptographic verification reduces hiring fraud and vetting costs."
+    }
+  },
+  "softSkills": {
+    "communication": "Communication",
+    "creativity": "Creativity",
+    "criticalThinking": "Critical Thinking",
+    "teamwork": "Teamwork",
+    "adaptability": "Adaptability"
+  },
+  "student": {
+  "pendingSkillsMessage": "You have {{count}} skill application(s) under review."
+}
+}

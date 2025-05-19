@@ -4,10 +4,12 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AdminPage = () => {
+  const { t } = useTranslation();
   const { user, role } = useAuth();
   const [users, setUsers] = useState([]);
 
@@ -29,25 +31,25 @@ const AdminPage = () => {
       setUsers(res.data);
     } catch (error) {
       console.error("Failed to fetch users:", error);
-      alert("Failed to load user list.");
+      alert(t("admin.loadError"));
     }
   };
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Admin Dashboard</h2>
-      <p>Email: {user?.email}</p>
-      <p>Role: {role}</p>
-      <button onClick={() => signOut(auth)}>Logout</button>
+      <h2>{t("admin.title")}</h2>
+      <p>{t("admin.email")}: {user?.email}</p>
+      <p>{t("admin.role")}: {role}</p>
+      <button onClick={() => signOut(auth)}>{t("admin.logout")}</button>
 
-      <h3>All Registered Users</h3>
+      <h3>{t("admin.userList")}</h3>
       <table border="1" cellPadding="5">
         <thead>
           <tr>
-            <th>Email</th>
-            <th>Role</th>
-            <th>School</th>
-            <th>UID</th>
+            <th>{t("admin.email")}</th>
+            <th>{t("admin.role")}</th>
+            <th>{t("admin.school")}</th>
+            <th>{t("admin.uid")}</th>
           </tr>
         </thead>
         <tbody>

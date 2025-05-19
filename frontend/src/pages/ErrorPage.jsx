@@ -1,27 +1,34 @@
 import { useNavigate } from "react-router-dom";
-import { Button, Container, Image, SimpleGrid, Text, Title } from '@mantine/core';
-import image from '../assets/notFound.png';
-import classes from '../style/NotFound.module.css';
+import { Button, Container, Image, SimpleGrid, Text, Title } from "@mantine/core";
+import { useTranslation } from "react-i18next";
+import image from "../assets/notFound.png";
+import classes from "../style/NotFound.module.css";
 
 export default function Error() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <Container className={classes.root}>
-        <SimpleGrid spacing={{ base: 40, sm: 80 }} cols={{ base: 1, sm: 2 }}>
-          <Image src={image} className={classes.mobileImage}/>
-          <div>
-            <Title className={classes.title}>Something is not right...</Title>
-            <Text c="dimmed" size="lg">
-              Page you are trying to open does not exist. You may have mistyped the address, or the
-              page has been moved to another URL. If you think this is an error contact support.
-            </Text>
-            <Button variant="outline" size="md" mt="xl" className={classes.control} onClick={() => navigate('/')}>
-              Get back to home page
-            </Button>
-          </div>
-          <Image src={image} className={classes.desktopImage}/>
-        </SimpleGrid>
+      <SimpleGrid spacing={{ base: 40, sm: 80 }} cols={{ base: 1, sm: 2 }}>
+        <Image src={image} className={classes.mobileImage} />
+        <div>
+          <Title className={classes.title}>{t("error.title")}</Title>
+          <Text c="dimmed" size="lg">
+            {t("error.description")}
+          </Text>
+          <Button
+            variant="outline"
+            size="md"
+            mt="xl"
+            className={classes.control}
+            onClick={() => navigate("/")}
+          >
+            {t("error.backHome")}
+          </Button>
+        </div>
+        <Image src={image} className={classes.desktopImage} />
+      </SimpleGrid>
     </Container>
   );
 }

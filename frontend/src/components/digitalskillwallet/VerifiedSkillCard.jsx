@@ -1,8 +1,11 @@
 import React from "react";
 import { Card, Group, Text, Box, Rating, Checkbox } from "@mantine/core";
+import { useTranslation } from "react-i18next";
 import classes from "../../style/DigitalSkillWallet.module.css";
 
 const VerifiedSkillCard = ({ skill, checked, onChange }) => {
+  const { t } = useTranslation();
+
   return (
     <Card shadow="sm" radius="md" withBorder>
       <Group align="center">
@@ -17,7 +20,7 @@ const VerifiedSkillCard = ({ skill, checked, onChange }) => {
       <Box mt="sm" ml="49px">
         <Group gap="xs">
           <Text size="sm" c="dimmed">
-            Course:
+            {t("wallet.course")}:
           </Text>
           <Text size="sm" fw={400}>
             {skill.course}
@@ -25,7 +28,7 @@ const VerifiedSkillCard = ({ skill, checked, onChange }) => {
         </Group>
         <Group gap="xs" mt={4}>
           <Text size="sm" c="dimmed">
-            Verified by:
+            {t("wallet.verifiedBy")}:
           </Text>
           <Text size="sm" fw={400}>
             {skill.verifiedBy}
@@ -33,7 +36,7 @@ const VerifiedSkillCard = ({ skill, checked, onChange }) => {
         </Group>
         <Group gap="xs" mt={4}>
           <Text size="sm" c="dimmed">
-            Score:
+            {t("wallet.score")}:
           </Text>
           <Rating value={skill.score} fractions={2} readOnly />
           <Text size="sm" fw={400}>
@@ -45,7 +48,7 @@ const VerifiedSkillCard = ({ skill, checked, onChange }) => {
           classNames={{ label: classes.checkboxLabel }}
           mt={4}
           size="xs"
-          label="Visible to Employers"
+          label={t("wallet.visibleToEmployer")}
           checked={checked}
           onChange={onChange}
         />

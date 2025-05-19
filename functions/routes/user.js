@@ -38,4 +38,15 @@ router.get("/protected", verifyToken, (req, res) => {
   res.json({ message: "You are authorized", user: req.user });
 });
 
+// GET /user/:id — 获取任意用户信息（用于展示教师信息）
+router.get("/:id", async (req, res) => {
+  try {
+    const doc = await admin.firestore().doc(`users/${req.params.id}`).get();
+    if (!doc.exists) return res.status(404).send("User not found");
+    return res.json({ id: doc.id, ...doc.data() });
+  } catch (err) {
+    console.error("Failed to fetch user:", err.message);
+    res.status(500).send("Failed to fetch user");
+  }
+});
 export default router;
