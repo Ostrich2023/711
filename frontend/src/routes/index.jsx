@@ -27,6 +27,8 @@ import SchoolCourseManager from '../pages/school/SchoolCourseManager';
 import EmployerPage from "../pages/employer/EmployerPage";
 import EmployerHome from '../pages/employer/EmployerHome';
 import JobManagement from '../pages/employer/JobManagement';
+import EmployerMessagesPage from '../pages/employer/EmployerMessagesPage';
+import EmployerStudentsList from '../pages/employer/EmployerStudentsList';
 
 // Admin
 import AdminPage from "../pages/AdminPage";
@@ -74,6 +76,8 @@ const AppRouter = createBrowserRouter([
         children: [
             { index: true, element: <EmployerHome /> },
             { path: "request-skill", element: <JobManagement /> },
+            { path: "messages", element: <EmployerMessagesPage /> },
+            { path: "students-list", element: <EmployerStudentsList /> },
         ]
       },
 

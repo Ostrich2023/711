@@ -24,6 +24,7 @@ const EmployerPage = () => {
     { link: '.', label: 'Home', icon: IconHome2 },
     { link: 'request-skill', label: 'Post Jobs', icon: IconClipboardList },
     { link: '', label: 'Settings', icon: IconSettings },
+    { link: 'messages', label: 'Messages', icon: IconCertificate },
   ];
 
   return (

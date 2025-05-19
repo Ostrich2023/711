@@ -1,5 +1,5 @@
 import { Paper, ScrollArea, Flex, Button, Card } from "@mantine/core";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import classes from "../../pages/employer/EmployerPage.module.css";
 
 export default function CardScroll({
@@ -10,6 +10,7 @@ export default function CardScroll({
   showAllLink = "/",
   showButton = true,
 }) {
+  const navigate = useNavigate();
   const sortedData = [...data].sort((a, b) =>
     new Date(b[sortBy]).getTime() - new Date(a[sortBy]).getTime()
   );
@@ -20,8 +21,7 @@ export default function CardScroll({
         <div className={classes.heading}>{title}</div>
         {showButton && (
           <Button
-            component={Link}
-            to={showAllLink}
+            onClick={() => navigate("students-list")}
             mr="sm"
             className={classes.actionButton}
           >
