@@ -30,6 +30,8 @@ import SchoolSettings from '../pages/school/SchoolSettings';
 import EmployerPage from "../pages/employer/EmployerPage";
 import EmployerHome from '../pages/employer/EmployerHome';
 import JobManagement from '../pages/employer/JobManagement';
+import AddJobPage from "../pages/employer/AddJobPage"
+import EditJobPage from "../pages/employer/EditJobPage"
 
 // Admin
 import AdminPage from "../pages/AdminPage";
@@ -78,7 +80,9 @@ const AppRouter = createBrowserRouter([
         element: <EmployerPage />,
         children: [
             { index: true, element: <EmployerHome /> },
-            { path: "request-skill", element: <JobManagement /> },
+            { path: "jobs-list", element: <JobManagement /> },
+            { path: "add-job", element: <AddJobPage /> },
+            { path: "edit-job/:jobId", element: <EditJobPage /> }
         ]
       },
 

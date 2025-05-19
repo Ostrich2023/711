@@ -15,7 +15,7 @@ Functions
 Frontend
 #1. npm init -y  
 #2. npm install react react-dom firebase axios ethers react-router-dom dayjs echarts-for-react prop-types  
-#3. npm install @mantine/core@8.0.0 @mantine/hooks@8.0.0 @mantine/carousel@8.0.0 @tabler/icons-react  
+#3. npm install @mantine/core@8.0.0 @mantine/hooks@8.0.0 @mantine/carousel@8.0.0 @mantine/form@8.0.0 @tabler/icons-react  
 #4. npm install -D vite@6.2.6 @vitejs/plugin-react
 
 how to run：

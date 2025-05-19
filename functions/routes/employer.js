@@ -107,13 +107,39 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
   const { skill } = req.params;
 
   try {
-    const snapshot = await admin.firestore()
-      .collection("users")
-      .where("role", "==", "student")
-      .where("skills", "array-contains", skill)
-      .get();
+    // Step 1: Get all skills
+    const skillSnapshot = await admin.firestore().collection("skills").get();
 
-    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Step 2: Filter those matching the search term
+    const matchedSkills = skillSnapshot.docs.filter(doc =>
+      doc.data().title.toLowerCase().includes(skill.toLowerCase())
+    );
+
+    // Step 3: Get unique ownerIds (student UIDs)
+    const ownerIds = [...new Set(matchedSkills.map(doc => doc.data().ownerId))];
+
+    // Step 4: Build a map of studentId -> skill titles
+    const studentSkillsMap = {};
+    matchedSkills.forEach(doc => {
+      const { ownerId, title } = doc.data();
+      if (!studentSkillsMap[ownerId]) studentSkillsMap[ownerId] = [];
+      studentSkillsMap[ownerId].push(title);
+    });
+
+    // Step 5: Fetch student user documents
+    const students = [];
+    for (const id of ownerIds) {
+      const userDoc = await admin.firestore().collection("users").doc(id).get();
+      if (userDoc.exists && userDoc.data().role === 'student') {
+        const userData = userDoc.data();
+        students.push({
+          id: userDoc.id,
+          ...userData,
+          skills: studentSkillsMap[userDoc.id] || [] // attach actual skill titles
+        });
+      }
+    }
+
     res.json(students);
   } catch (error) {
     console.error("Error searching students by skill:", error.message);

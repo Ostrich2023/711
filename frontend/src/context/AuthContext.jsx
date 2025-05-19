@@ -10,17 +10,19 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-
+        const token = await currentUser.getIdToken();
+        setToken(token);
         try {
           const snap = await getDoc(doc(db, "users", currentUser.uid));
           if (snap.exists()) {
             const data = snap.data();
-
+            
             setRole(data.role || null);
 
             // 主题设置（同步到 localStorage 供 Mantine 使用）
@@ -39,6 +41,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(null);
         setRole(null);
+        setToken(null);
       }
 
       setLoading(false);
@@ -48,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, setUser, setRole }}>
+    <AuthContext.Provider value={{ user, role,token , loading, setUser, setRole }}>
       {children}
     </AuthContext.Provider>
   );

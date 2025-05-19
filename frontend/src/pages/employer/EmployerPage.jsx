@@ -22,21 +22,22 @@ const EmployerPage = () => {
 
   const navbarData = [
     { link: '.', label: 'Home', icon: IconHome2 },
-    { link: 'request-skill', label: 'Post Jobs', icon: IconClipboardList },
+    { link: 'jobs-list', label: 'Jobs List', icon: IconClipboardList },
     { link: '', label: 'Settings', icon: IconSettings },
   ];
 
   return (
     <Container size="xl" maw="1400px">
-      <Group align="flex-start">
-        {/* left */}
-        <Box>
-          <HomeNavbar 
-          userData={userData}
-          navbarData={navbarData}/>
+      <Group align="flex-start" noWrap>
+        {/* Left: Navbar */}
+        <Box w={250}>
+          <HomeNavbar userData={userData} navbarData={navbarData} />
         </Box>
-        {/* right */}
-        <Outlet/>
+
+        {/* Right: Main content area */}
+        <Box style={{ flex: 1, minHeight: "100vh", padding: "20px" }}>
+          <Outlet />
+        </Box>
       </Group>
     </Container>
 
