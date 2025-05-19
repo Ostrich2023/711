@@ -34,8 +34,8 @@ import SchoolSettings from '../pages/school/SchoolSettings';
 import EmployerPage from "../pages/employer/EmployerPage";
 import EmployerHome from '../pages/employer/EmployerHome';
 import JobManagement from '../pages/employer/JobManagement';
-import EmployerApplications from '../pages/employer/EmployerApplications'
-import EmployerSettings from '../pages/employer/EmployerSettings';
+import AddJobPage from "../pages/employer/AddJobPage";
+import EditJobPage from "../pages/employer/EditJobPage";
 
 // Admin
 import AdminPage from "../pages/AdminPage";
@@ -82,17 +82,18 @@ const AppRouter = createBrowserRouter([
     ]
   },  
 
-      // Employer routes
-  {
-    path: "employer",
-    element: <EmployerPage />,
-    children: [
-      { index: true, element: <EmployerHome /> },
-      { path: "jobs", element: <JobManagement /> },
-      { path: "applications", element: <EmployerApplications /> },
-      { path: "settings", element: <EmployerSettings /> }
-    ]
-  },
+
+      {
+        path: "employer",
+        element: <EmployerPage />,
+        children: [
+            { index: true, element: <EmployerHome /> },
+            { path: "jobs-list", element: <JobManagement /> },
+            { path: "add-job", element: <AddJobPage /> },
+            { path: "edit-job/:jobId", element: <EditJobPage /> }
+        ]
+      },
+
 
       // Admin & Utility
       { path: "admin", element: <AdminPage /> },
