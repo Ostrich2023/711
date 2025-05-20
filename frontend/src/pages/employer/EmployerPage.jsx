@@ -24,23 +24,35 @@ const EmployerPage = () => {
     { link: '.', label: 'Home', icon: IconHome2 },
     { link: 'jobs-list', label: 'Jobs List', icon: IconClipboardList },
     { link: '', label: 'Settings', icon: IconSettings },
+    { link: 'messages', label: 'Messages', icon: IconCertificate },
   ];
 
   return (
-    <Container size="xl" maw="1400px">
-      <Group align="flex-start" noWrap>
-        {/* Left: Navbar */}
-        <Box w={250}>
+    <Container size="xl" maw={1400} px="md">
+      <Box
+      style={{ display: "flex", minHeight: "100vh", overflowX: "hidden", gap: "20px" }}
+        sx={(theme) => ({
+          display: "flex",
+          flexDirection: "column",
+          gap: theme.spacing.md,
+
+          [theme.fn.largerThan("md")]: {
+            flexDirection: "row",
+            alignItems: "flex-start",
+          },
+        })}
+      >
+        {/* Navbar */}
+        <Box>
           <HomeNavbar userData={userData} navbarData={navbarData} />
         </Box>
 
-        {/* Right: Main content area */}
-        <Box style={{ flex: 1, minHeight: "100vh", padding: "20px" }}>
+        {/* Main content */}
+        <Box style={{padding: "20px", maxWidth: "100%", overflowX: "auto" }}>
           <Outlet />
         </Box>
-      </Group>
+      </Box>
     </Container>
-
   );
 };
 
