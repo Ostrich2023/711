@@ -26,7 +26,7 @@ function getSkillStatus(status) {
       </Badge>
     )
   }
-  else if(status == "in progress"){
+  else if(status == "pending"){
     return(
       <Badge
         color="gray"
@@ -35,10 +35,10 @@ function getSkillStatus(status) {
         size="sm"
         style={{ fontWeight: 600 }}
       >
-        IN PROGRESS
+        PENDING
       </Badge>
     )
-  }else if(status == "reject"){
+  }else if(status == "rejected"){
       return(
         <Badge
           color="red"
@@ -68,8 +68,8 @@ export default function StatusOverview(props) {
           data={[
             { value: "All", label: "All" },
             { value: "approved", label: "Approved" },
-            { value: "in progress", label: "In Progress" },
-            { value: "reject", label: "Rejected" },
+            { value: "pending", label: "Pending" },
+            { value: "rejected", label: "Rejected" },
           ]}
           value={filter}
           onChange={setFilter}

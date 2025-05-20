@@ -19,7 +19,7 @@ import StudentHome from '../pages/student/StudentHome';
 import StudentRequestSkill from '../pages/student/StudentRequestSkill';
 import StudentSettings from '../pages/student/StudentSettings';
 import DigitalSkillWallet from '../pages/student/DigitalSkillWallet';
-import StudentProfile from '../pages/student/StudentProfile';
+
 import JobDetail from '../pages/student/JobDetail'; 
 import MyJobApplications from '../pages/student/MyJobApplications'; 
 
@@ -60,15 +60,14 @@ const AppRouter = createBrowserRouter([
       element: <StudentPage />,
       children: [
         { index: true, element: <StudentHome /> },
-        { path: "profile", element: <StudentProfile /> },
         { path: "request-skill", element: <StudentRequestSkill /> },
-        { path: "settings", element: <StudentSettings /> },
-        { path: "wallet", element: <DigitalSkillWallet /> },
+        { path: "settings", element: <StudentSettings /> },       
         { path: "job/:jobId", element: <JobDetail /> },
         { path: "job", element: <JobDetail /> }, 
         { path: "applications", element: <MyJobApplications /> },   // 加入
       ]
     },
+    { path: "digital-skill-wallet", element: <DigitalSkillWallet /> },
 
       // School routes
   {

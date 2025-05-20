@@ -1,9 +1,10 @@
 {
   "profile": {
-    "title": "Student Profile",
-    "id": "Student ID",
+    "title": "Profile",
+    "id": "ID",
     "name": "Name",
     "email": "Email",
+    "school": "School",
     "major": "Major",
     "level": "Level",
     "skills": "Approved Skills",
@@ -46,7 +47,7 @@
     "skillOverview": "Skill Overview"
   },
   "request": {
-    "submit": "Submit Skill",
+    "title": "Request Skill",
     "course": "Select Course",
     "level": "Skill Level",
     "softSkills": "Select Soft Skills",
@@ -54,7 +55,7 @@
     "fileNote": "Only PDF or DOCX files up to 5MB are allowed",
     "currentMajor": "Current Major",
     "submitBtn": "Submit",
-    "history": "Skill Submission History",
+    "history": "Request history",
     "statusApproved": " Approved",
     "statusRejected": " Rejected",
     "statusPending": " Pending",
@@ -67,19 +68,32 @@
     "selectMajorNotice": "You must select your major before submitting skills.",
     "chooseMajor": "Choose your major",
     "saveMajor": "Save Major",
-    "create":"Request Skill"
+    "create":"Request a new skill",
+    "viewFile": "View attachment"
   },
   "settings": {
     "title": "Settings",
+    "account": "Account",
+    "preference": "Preference",
+    "security": "Security",
     "email": "Email",
-    "resetPassword": "Send Password Reset Email",
-    "exportPDF": "Export Skill Summary PDF",
+    "resetPassword": "Reset Password",
+    "exportPDF": "Export Digital Skill Wallet PDF",
     "publicSkills": "Make Skills Visible to Employers",
     "notifications": "Enable System Notifications",
-    "language": "Language Preference",
-    "theme": "Theme Mode",
+    "language": "Language",
+    "theme": "Theme",
     "save": "Save Settings",
-    "saveSuccess": "Settings saved successfully"
+    "saveSuccess": "Settings saved successfully",
+    "light":"Light",
+    "dark":"Dark",
+    "other":"Other",
+
+    "deleteAccount": "Delete Account",
+    "deleteConfirm": "Confirm Deletion",
+    "deletePrompt": "Deleting your account will permanently remove all data. This action cannot be undone. Do you wish to continue?",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
   },
   "navbar": {
     "home": "Home",
@@ -356,7 +370,10 @@
   "student": {
     "skillLabel": "skill request(s)",
     "reviewPrefix": "You have",
-    "reviewSuffix": "waiting for review",
+    "reviewSuffix": "waiting for review.",
     "pendingSkillsMessage": "You have {{count}} skill(s) pending"
+  },
+  "notification":{
+    "check": "Check my request history."
   }
 }

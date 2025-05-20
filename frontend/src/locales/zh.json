@@ -1,9 +1,10 @@
 {
   "profile": {
-    "title": "学生资料",
-    "id": "学生ID",
+    "title": "资料",
+    "id": "ID",
     "name": "姓名",
     "email": "邮箱",
+    "school": "学校",
     "major": "专业",
     "level": "等级",
     "skills": "已认证技能",
@@ -46,7 +47,7 @@
     "skillOverview": "技能概览"
   },
   "request": {
-    "submit": "提交技能",
+    "title": "技能申请",
     "course": "选择课程",
     "level": "技能等级",
     "softSkills": "选择软技能",
@@ -54,7 +55,7 @@
     "fileNote": "仅允许上传不超过5MB的 PDF 或 DOCX 文件",
     "currentMajor": "当前专业",
     "submitBtn": "提交",
-    "history": "技能提交记录",
+    "history": "申请记录",
     "statusApproved": " 已通过",
     "statusRejected": " 已拒绝",
     "statusPending": " 审核中",
@@ -66,19 +67,33 @@
     "selectMajorModalTitle": "请选择你的专业",
     "selectMajorNotice": "在提交技能之前，你必须先选择专业。",
     "chooseMajor": "选择专业",
-    "saveMajor": "保存专业"
+    "saveMajor": "保存专业",
+    "create":"申请一个新技能",
+    "viewFile": "查看附件"
   },
   "settings": {
     "title": "设置",
-    "email": "邮箱",
-    "resetPassword": "发送密码重置邮件",
-    "exportPDF": "导出技能摘要PDF",
-    "publicSkills": "将技能公开给雇主",
+    "account": "账户",
+    "preference": "偏好",
+    "security": "安全",
+    "email": "电子邮件",
+    "resetPassword": "重置密码",
+    "exportPDF": "导出电子技能钱包的PDF",
+    "publicSkills": "向雇主公开技能",
     "notifications": "启用系统通知",
-    "language": "语言偏好",
-    "theme": "主题模式",
+    "language": "语言",
+    "theme": "主题",
     "save": "保存设置",
-    "saveSuccess": "设置保存成功"
+    "saveSuccess": "设置保存成功",
+    "light": "浅色",
+    "dark": "深色",
+    "other":"其它",
+
+    "deleteAccount": "注销账户",
+    "deleteConfirm": "确认注销",
+    "deletePrompt": "注销后所有数据将被永久删除，且无法恢复。是否继续？",
+    "cancel": "取消",
+    "confirm": "确认"
   },
   "navbar": {
     "home": "主页",
@@ -355,7 +370,10 @@
   "student": {
     "skillLabel": "技能申请",
     "reviewPrefix": "你有",
-    "reviewSuffix": "项技能正在等待审核",
+    "reviewSuffix": "项技能正在等待审核。",
     "pendingSkillsMessage": "你有 {{count}} 项技能正在审核中"
+  },
+  "notification":{
+    "check": "查看我的技能申请历史。"
   }
 }

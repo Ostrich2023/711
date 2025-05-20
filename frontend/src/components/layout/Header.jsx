@@ -6,7 +6,6 @@ import { useFireStoreUser } from '../../hooks/useFirestoreUser';
 import classes from './Header.module.css';
 import logo from '../../../public/Kanavoogle_logo.png';
 import UserMenu from './UserMenu';
-import LanguageSwitcher from '../LanguageSwitcher';
 
 const links = [
   { link: '/why-kanavoogle', label: 'Why Kanavoogle' },
@@ -54,17 +53,13 @@ export default function Header() {
         <Group gap="sm" className={classes.right}>
           <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
           {!user ? (
-            <>
             <Button variant="default" radius="xl" onClick={() => navigate('/login')}>
               Sign in
-            </Button>
-            <LanguageSwitcher />            
-            </>
+            </Button>        
 
           ) : (
             <>
             <UserMenu userData={userData} />
-            <LanguageSwitcher /> 
             </>
 
           )}
