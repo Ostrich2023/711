@@ -36,6 +36,8 @@ import EmployerHome from '../pages/employer/EmployerHome';
 import JobManagement from '../pages/employer/JobManagement';
 import AddJobPage from "../pages/employer/AddJobPage";
 import EditJobPage from "../pages/employer/EditJobPage";
+import EmployerMessagesPage from '../pages/employer/EmployerMessagesPage';
+import EmployerStudentsList from '../pages/employer/EmployerStudentsList';
 
 // Admin
 import AdminPage from "../pages/AdminPage";
@@ -89,7 +91,9 @@ const AppRouter = createBrowserRouter([
             { index: true, element: <EmployerHome /> },
             { path: "jobs-list", element: <JobManagement /> },
             { path: "add-job", element: <AddJobPage /> },
-            { path: "edit-job/:jobId", element: <EditJobPage /> }
+            { path: "edit-job/:jobId", element: <EditJobPage /> },
+            { path: "messages", element: <EmployerMessagesPage /> },
+            { path: "students-list", element: <EmployerStudentsList /> },
         ]
       },
 
