@@ -182,6 +182,14 @@ router.get("/", verifyToken, async (req, res) => {
 
     let jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+
+    const softSkillsSnapshot = await admin.firestore().collection("soft-skills").get();
+    const softSkillMap = {};
+    softSkillsSnapshot.forEach(doc => {
+      softSkillMap[doc.id] = doc.data().name;
+    });
+
+
     // If student: filter jobs where user is in assignments
     if (role === "student") {
       jobs = jobs.filter(job =>
@@ -230,7 +238,12 @@ router.get("/", verifyToken, async (req, res) => {
       })
     );
 
-    res.json(enrichedJobs);
+    const jobsWithSoftSkillNames = enrichedJobs.map(job => ({
+      ...job,
+      softSkills: (job.softSkills || []).map(id => softSkillMap[id] || id),
+    }));
+    res.json(jobsWithSoftSkillNames);
+    
   } catch (error) {
     console.error("Error fetching jobs:", error.message);
     res.status(500).send("Failed to retrieve jobs");
@@ -242,7 +255,9 @@ router.get("/", verifyToken, async (req, res) => {
 // PUT /employer/job/:jobId
 router.put("/:jobId", verifyToken, async (req, res) => {
   const { jobId } = req.params;
-  const { title, description, price, location, skills } = req.body;
+  const { title, description, price, location, skills, softSkills } = req.body;
+
+  
   const { uid, role } = req.user;
 
   if (role !== "employer") return res.status(403).send("Only employers can edit jobs");
@@ -254,7 +269,15 @@ router.put("/:jobId", verifyToken, async (req, res) => {
     if (!jobDoc.exists) return res.status(404).send("Job not found");
     if (jobDoc.data().employerId !== uid) return res.status(403).send("Unauthorized");
 
-    await jobRef.update({ title, description, price, location, skills });
+    await jobRef.update({
+      title,
+      description,
+      price,
+      location,
+      skills,
+      softSkills: softSkills || [],
+    });
+
     res.status(200).send("Job updated successfully");
   } catch (error) {
     console.error("Update error:", error.message);

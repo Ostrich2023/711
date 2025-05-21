@@ -48,6 +48,21 @@ export default function JobTable({ title, data, onVerify, onEdit, onDelete, onRe
                     ))}
                   </Group>
                 )}
+                {job.softSkills?.length > 0 && (
+                  <Group spacing={4} mt={2}>
+                    {job.softSkills.map((softSkill, idx) => (
+                      <Box
+                        key={`soft-${idx}`}
+                        px="xs"
+                        py={2}
+                        bg="yellow.1"
+                        style={{ borderRadius: 4, fontSize: 12 }}
+                      >
+                        {softSkill}
+                      </Box>
+                    ))}
+                  </Group>
+                )}
               </Box>
 
               {/* Right: Assigned user + buttons */}

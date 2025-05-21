@@ -10,11 +10,16 @@ import {
   Box,
   Title,
   Badge,
-  Text
+  Text,
+  MultiSelect,
+  Loader,
+  Center
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { fetchJobById, updateJob, findStudentsBySkill, assignJob } from '../../services/jobService';
 import { useAuth } from '../../context/AuthContext';
+import { fetchSoftSkills } from '../../services/jobService';
+
 
 const EditJobPage = () => {
   const { token } = useAuth();
@@ -22,9 +27,11 @@ const EditJobPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [currentSkill, setCurrentSkill] = useState('');
+  const [softSkillOptions, setSoftSkillOptions] = useState([]);
   const [matchedStudents, setMatchedStudents] = useState([]);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState([]);
+  
 
   const form = useForm({
     initialValues: {
@@ -33,6 +40,7 @@ const EditJobPage = () => {
       location: '',
       price: 0,
       skills: [],
+      softSkills: [],
       assignments: [], // needed for tracking student assignment status
     },
   });
@@ -44,6 +52,10 @@ const EditJobPage = () => {
 
         // Set form values
         form.setValues(job);
+
+
+        const softSkillsFromDB = await fetchSoftSkills(token);
+        setSoftSkillOptions(softSkillsFromDB.map(s => ({ value: s.id, label: s.name })));
 
         // All assignments (including rejected ones)
         const allAssignments = job.assignments || [];
@@ -115,7 +127,9 @@ const EditJobPage = () => {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) {
+    return <Center mt="lg"><Loader /></Center>;
+  }
 
   return (
     <Container style={{ maxWidth: '100%', width: '100%' }}>
@@ -190,6 +204,18 @@ const EditJobPage = () => {
             </Badge>
           ))}
         </Group>
+
+        <MultiSelect
+          label="Soft Skills"
+          placeholder="Select soft skills"
+          data={softSkillOptions}
+          value={form.values.softSkills}
+          onChange={(value) => form.setFieldValue('softSkills', value)}
+          disabled={isReadOnly}
+          searchable
+          clearable
+          mt="lg"
+        />        
 
         <Button type="submit" mt="xl" fullWidth disabled={isReadOnly}>Update Job</Button>
       </form>
