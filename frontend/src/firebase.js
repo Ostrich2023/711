@@ -1,8 +1,8 @@
 // frontend/src/firebase.js
 
 import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage"; // 新增：导入 Storage 模块
 
 const firebaseConfig = {
@@ -20,11 +20,4 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app); // 新增：导出 storage
-
-  // ✅ Connect to emulators when using localhost
-  if (location.hostname === "localhost") {
-    connectAuthEmulator(auth, "http://localhost:9099");
-    connectFirestoreEmulator(db, "localhost", 8080);
-  }
-
 export { app };
