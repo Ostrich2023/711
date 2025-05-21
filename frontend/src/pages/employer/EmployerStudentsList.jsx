@@ -5,10 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 
 import StudentCard from "../../components/employer/StudentCard";
 import { searchStudentsBySkills } from "../../services/employerService";
-import { fetchSoftSkills } from '../../services/jobService';
+import { fetchSoftSkills  } from '../../services/jobService';
 
 
-
+/*
 const students = [
   {
     id: 1,
@@ -98,6 +98,12 @@ const students = [
 
 const bgColors = ['#8ff7d2', '#add8e6', '#c2d4f2', '#9cd1f9'];
 
+
+
+const softSkills = ['Communication', 'Problem Solving', 'Collaboration', 'Critical Thinking', 'Creativity'];
+const techSkills = ['React', 'CSS', 'HTML', 'JavaScript', 'Python', 'Node.js'];
+*/
+
 const jobAds = [
   { value: "1", label: 'Frontend Developer' },
   { value: "2", label: 'Data Analyst' },
@@ -107,10 +113,6 @@ const jobAds = [
   { value: "6", label: 'Marketing Specialist' },
 ];
 
-const softSkills = ['Communication', 'Problem Solving', 'Collaboration', 'Critical Thinking', 'Creativity'];
-const techSkills = ['React', 'CSS', 'HTML', 'JavaScript', 'Python', 'Node.js'];
-
-
 const EmployerStudentsList = () => {
   const [assignedJobs, setAssignedJobs] = useState({});
   const [openedModalId, setOpenedModalId] = useState(null);
@@ -119,6 +121,7 @@ const EmployerStudentsList = () => {
   const [students, setStudents] = useState([]);
   const { token } = useAuth();
   const [softSkillOptions, setSoftSkillOptions] = useState([]);
+  const [jobOptionsMap, setJobOptionsMap] = useState({});
   
 
   useEffect(() => {
@@ -132,6 +135,8 @@ const EmployerStudentsList = () => {
         // Load soft skills for dropdown filter
         const softSkills = await fetchSoftSkills(token);
         setSoftSkillOptions(softSkills.map(s => ({ value: s.id, label: s.name })));
+
+        
       } catch (err) {
         console.error("Failed to load data", err);
       }
@@ -201,7 +206,7 @@ const EmployerStudentsList = () => {
               {...student}
               setOpenedModalId={setOpenedModalId}
               openedModalId={openedModalId}
-              jobOptions={jobAds}  
+              jobOptions={jobAds || []}  
               assignedJobs={assignedJobs}
               handleJobChange={handleJobChange}
             />

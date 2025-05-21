@@ -33,6 +33,7 @@ function StudentCard({
   };
 
   const bgColors = ["#E3F2FD", "#FCE4EC", "#FFF3E0", "#E8F5E9"];
+  const randomColor = bgColors[Math.floor(Math.random() * bgColors.length)];
   const selectedJobValue = assignedJobs[id] ?? null;
   const isModalOpen = openedModalId === id;
   
@@ -40,7 +41,7 @@ function StudentCard({
     <Card shadow="sm" radius="md" h="100%" withBorder style={{ maxWidth: 400 }}>
       <div
         style={{
-          backgroundColor: bgColors[id % 4],
+          backgroundColor: randomColor,
           height: 80,
           borderRadius: "8px 8px 0 0",
         }}
@@ -157,7 +158,7 @@ function StudentCard({
         }
       }}
     >
-      Send Job Application
+      Assign Job
     </Button>
 
 

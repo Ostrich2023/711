@@ -76,19 +76,41 @@ const EditJobPage = () => {
 
         setAssignedUsers(assignedStudentsWithStatus);
 
+        const studentMap = new Map();
+        
         // Load matched students
+// Load matched students across all skills and merge results
         for (const skill of job.skills || []) {
           try {
-            const students = await findStudentsBySkill(skill, token);
-            setMatchedStudents(prev => {
-              const combined = [...prev, ...students];
-              const unique = [...new Map(combined.map(s => [s.id, s])).values()];
-              return unique;
-            });
+            const students = await findStudentsBySkill(skill, token, job.softSkills || []);
+
+            for (const student of students) {
+              if (!studentMap.has(student.id)) {
+                studentMap.set(student.id, student);
+              } else {
+                // Merge skill titles and accumulate soft skill match count
+                const existing = studentMap.get(student.id);
+                existing.skills = Array.from(new Set([
+                  ...(existing.skills || []),
+                  ...(student.skills || []),
+                ]));
+
+                existing.softSkillMatchCount =
+                  (existing.softSkillMatchCount || 0) + (student.softSkillMatchCount || 0);
+
+                studentMap.set(student.id, existing);
+              }
+            }
           } catch (err) {
             console.error(`Error finding students for skill "${skill}":`, err);
           }
         }
+
+        // Convert map to array and sort by softSkillMatchCount descending
+        const sorted = [...studentMap.values()].sort(
+          (a, b) => (b.softSkillMatchCount || 0) - (a.softSkillMatchCount || 0)
+        );
+        setMatchedStudents(sorted);
       } catch (err) {
         console.error('Failed to load job', err);
         alert('Job not found or access denied.');
