@@ -9,7 +9,7 @@ import {
   Title,
 } from '@mantine/core';
 
-export default function JobTable({ title, data, onVerify, onEdit, onRefresh  }) {
+export default function JobTable({ title, data, onVerify, onEdit, onDelete, onRefresh  }) {
   return (
     <Box w="100%" mb="50px">
       <Stack spacing="xs">
@@ -30,7 +30,7 @@ export default function JobTable({ title, data, onVerify, onEdit, onRefresh  }) 
                 <Text fw={600} size="sm">{job.title}</Text>
                 <Text size="xs" c="dimmed">Location: {job.location}</Text>
                 <Text size="xs" c="dimmed">
-                  Status: <Text span fw={800}>{job.status}</Text>
+                  Assigned to <Text span fw={800}>{job.assignments?.length || 0}</Text> student{(job.assignments?.length || 0) !== 1 && 's'}
                 </Text>
 
                 {job.skills?.length > 0 && (
@@ -52,22 +52,6 @@ export default function JobTable({ title, data, onVerify, onEdit, onRefresh  }) 
 
               {/* Right: Assigned user + buttons */}
               <Box style={{ textAlign: 'right', minWidth: '200px' }}>
-                {job.assignedUser && (
-                  <Box mb="xs">
-                    <Text size="xs" fw={500}>
-                      Assigned to: {job.assignedUser.name || job.assignedUser.email}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      Email: {job.assignedUser.email}
-                    </Text>
-                    {job.assignedUser.schoolId && (
-                      <Text size="xs" c="dimmed">
-                        School Name : {job.assignedUser.schoolName|| 'N/A'}
-                      </Text>
-                    )}
-                  </Box>
-                )}
-
                 <Flex justify="flex-end" gap="sm" wrap="wrap">
                   {job.status === 'completed' && !job.verified && (
                     <Button size="xs" color="green" onClick={() => onVerify(job.id)}>
@@ -77,6 +61,11 @@ export default function JobTable({ title, data, onVerify, onEdit, onRefresh  }) 
                   <Button size="xs" variant="light" onClick={() => onEdit(job.id)}>
                     Edit
                   </Button>
+                {(!job.assignments || job.assignments.length === 0) && (
+                  <Button size="xs" color="red" variant="outline" onClick={() => onDelete(job.id)}>
+                    Delete
+                  </Button>
+                )}                  
                 </Flex>
               </Box>
             </Flex>

@@ -93,3 +93,28 @@ export const verifyJobCompletion = async (jobId, token) => {
     throw error;
   }
 };
+
+export const deleteJob = async (jobId, token) => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/job/${jobId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log("Job deleted:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    throw error;
+  }
+};
+
+export const fetchSoftSkills = async (token) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/employer/soft-skills`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching soft skills:", error);
+    throw error;
+  }
+};

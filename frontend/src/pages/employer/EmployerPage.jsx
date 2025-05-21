@@ -21,9 +21,9 @@ const EmployerPage = () => {
   if (!user || role !== "employer") return <Navigate to="/" />;
 
   const navbarData = [
-    { link: '.', label: 'Home', icon: IconHome2 },
-    { link: 'jobs-list', label: 'Jobs List', icon: IconClipboardList },
-    { link: '', label: 'Settings', icon: IconSettings },
+    { link: '.', labelKey: 'Home', icon: IconHome2 },
+    { link: 'jobs-list', labelKey: 'Jobs List', icon: IconClipboardList },
+    { link: '', labelKey: 'Settings', icon: IconSettings },
     { link: 'messages', label: 'Messages', icon: IconCertificate },
   ];
 

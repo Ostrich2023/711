@@ -28,6 +28,28 @@ async function verifyEmployer(req, res, next) {
   }
 }
 
+// GET /employer/soft-skills
+router.get("/soft-skills", verifyEmployer, async (req, res) => {
+  const { role } = req.user;
+
+  // Only allow employers to access this
+  if (role !== "employer") return res.status(403).send("Only employers can view soft skills");
+
+  try {
+    const snapshot = await admin.firestore().collection("soft-skills").get();
+    
+    const skills = snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name,
+    }));
+
+    res.status(200).json(skills);
+  } catch (error) {
+    console.error("Error fetching soft skills:", error.message);
+    res.status(500).send("Failed to retrieve soft skills");
+  }
+});
+
 // GET /employer/student/:id
 router.get("/student/:id", verifyEmployer, async (req, res) => {
   const studentId = req.params.id;
