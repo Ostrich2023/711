@@ -5,8 +5,6 @@ import {
 } from "@mantine/core";
 import axios from "axios";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Carousel } from "@mantine/carousel";
-import "@mantine/carousel/styles.css"
 import dayjs from "dayjs";
 
 import classes from "./EmployerPage.module.css";
@@ -309,47 +307,6 @@ export default function EmployerHome() {
       >
         {selectedStudentId && <StudentWalletMini studentId={selectedStudentId} />}
       </Modal>
-
-      <Grid mt="md">
-        <Grid.Col span={12}>
-          <Paper p="lg" radius="md" shadow="sm" withBorder>
-            <Flex justify="space-between" align="center" mb="lg">
-              <div className={classes.heading}>Students</div>
-              <Button
-                onClick={() => navigate("students-list")}
-                mr="sm"
-                className={classes.actionButton}
-              >
-                Show all
-              </Button>
-            </Flex>
-
-            <Carousel
-              withControls
-              withIndicators
-              slideSize={{ base: "100%", md: "50%", lg: "50%" }}
-              slideGap="xl"
-              align="start"
-              slidesToScroll={{ sm: 1, md: 2, lg: 5 }}
-              classNames={{ indicator: classes.indicator, control: classes.control }}
-              style={{ paddingBottom: "40px" }}
-            >
-              {studentsData.map((student) => (
-                <Carousel.Slide key={student.id}>
-                  <StudentCard
-                    {...student}
-                    setOpenedModalId={setOpenedModalId}
-                    openedModalId={openedModalId}
-                    jobOptions={jobAds}  
-                    assignedJobs={assignedJobs}
-                    handleJobChange={handleJobChange}
-                  />
-                </Carousel.Slide>
-              ))}
-            </Carousel>
-          </Paper>
-        </Grid.Col>
-      </Grid>
     </Box>
   );
 }

@@ -5,11 +5,13 @@ function StudentCard({
   id,
   name,
   university,
+  schoolName,
   image,
   major = "Not specified",
+  majorName = "",
   passedCourses= [],
   softSkills = [],
-  techSkills = [],
+  skills = [],
   setOpenedModalId = () => {},
   openedModalId,
   jobOptions = [],
@@ -21,11 +23,13 @@ function StudentCard({
     id,
     name,
     university,
+    schoolName,
     image,
     major,
+    majorName,
     passedCourses: passedCourses || [],
     softSkills: softSkills || [],  // fallback in case undefined
-    techSkills: techSkills || [],
+    skills: skills || [],
   };
 
   const bgColors = ["#E3F2FD", "#FCE4EC", "#FFF3E0", "#E8F5E9"];
@@ -63,15 +67,17 @@ function StudentCard({
         <Box mt="sm">
           <Group>
             <Text fw={600}>University:</Text>
-            <Text>{university}</Text>
+            <Text>{schoolName}</Text>
           </Group>
           <Group>
             <Text fw={600}>Major:</Text>
-            <Text>{major}</Text>
+            <Text>{majorName}</Text>
           </Group>
         </Box>
 
         <Group mt="sm" align="start" spacing="xs" grow>
+
+          {/*
           <Box>
             <Text mb="-sm" fw={600}>
               Soft Skills
@@ -82,13 +88,25 @@ function StudentCard({
               ))}
             </ul>
           </Box>
+          */}
           <Box>
             <Text mb="-sm" fw={600}>
               Technical Skills
             </Text>
             <ul style={{ paddingLeft: 16 }}>
-              {techSkills.map((s, i) => (
-                <li key={i}>{s.skill || s}</li>
+              {skills.map((s, i) => (
+                <li key={i}>
+                  <Text fw={500}>{s.title}</Text>
+                  {Array.isArray(s.softSkillTitles) && s.softSkillTitles.length > 0 && (
+                    <ul style={{ paddingLeft: 16 }}>
+                      {s.softSkillTitles.map((ss, j) => (
+                        <li key={j}>
+                          <Text size="sm" c="dimmed">• {ss}</Text>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
               ))}
             </ul>
           </Box>

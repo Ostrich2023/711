@@ -28,6 +28,28 @@ async function verifyEmployer(req, res, next) {
   }
 }
 
+// GET /employer/soft-skills
+router.get("/soft-skills", verifyEmployer, async (req, res) => {
+  const { role } = req.user;
+
+  // Only allow employers to access this
+  if (role !== "employer") return res.status(403).send("Only employers can view soft skills");
+
+  try {
+    const snapshot = await admin.firestore().collection("soft-skills").get();
+    
+    const skills = snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name,
+    }));
+
+    res.status(200).json(skills);
+  } catch (error) {
+    console.error("Error fetching soft skills:", error.message);
+    res.status(500).send("Failed to retrieve soft skills");
+  }
+});
+
 // GET /employer/student/:id
 router.get("/student/:id", verifyEmployer, async (req, res) => {
   const studentId = req.params.id;
@@ -146,6 +168,129 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
     res.status(500).send("Failed to search students");
   }
 });
+
+
+// GET /employer/search-students?techSkills=React,Node.js&softSkills=3,4,5
+router.get("/search-students", verifyEmployer, async (req, res) => {
+  const techSkillsFilter = (req.query.techSkills || "").split(",").filter(Boolean); // e.g. ["React", "Node.js"]
+  const softSkillsFilter = (req.query.softSkills || "").split(",").filter(Boolean); // e.g. ["3", "4"]
+
+  console.log("techSkillsFilter:", techSkillsFilter);
+  console.log("softSkillsFilter:", softSkillsFilter);
+
+  try {
+    // Step 1: Load all schools and majors for mapping
+    const [schoolsSnap, majorsSnap] = await Promise.all([
+      admin.firestore().collection("schools").get(),
+      admin.firestore().collection("majors").get(),
+    ]);
+
+    const schoolMap = {};
+    schoolsSnap.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.code && data.name) {
+        schoolMap[data.code] = data.name;
+      }
+    });
+
+    const majorMap = {};
+    majorsSnap.docs.forEach(doc => {
+      const data = doc.data();
+      majorMap[doc.id] = data.name;
+    });
+
+    const softSkillsSnap = await admin.firestore().collection("soft-skills").get();
+        const softSkillMap = {};
+        softSkillsSnap.docs.forEach(doc => {
+          softSkillMap[doc.id] = doc.data().name;
+    });
+
+    // Step 2: Get all skills and filter
+    const skillSnapshot = await admin.firestore().collection("skills").get();
+    const allSkills = skillSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log("All skills:", JSON.stringify(allSkills, null, 2));
+
+    const filteredSkills = allSkills.filter(skill => {
+      if (!skill.softSkills) {
+        console.warn(`Skill ${skill.title} has no softSkills field`);
+      }
+      const matchesTech =
+        techSkillsFilter.length === 0 ||
+        techSkillsFilter.some(filter =>
+          (skill.title || "").toLowerCase().includes(filter.toLowerCase())
+        );
+      const matchesSoft = softSkillsFilter.length === 0 || (skill.softSkills || []).some(s => softSkillsFilter.includes(String(s)));
+      console.log(`Skill: ${skill.title}, softSkills: ${JSON.stringify(skill.softSkills)}, matchesTech: ${matchesTech}, matchesSoft: ${matchesSoft}`);
+      return matchesTech && matchesSoft;
+    });
+
+    console.log("filteredSkills:", filteredSkills);
+    if (filteredSkills.length === 0) {
+      console.log("No skills matched the filters");
+      return res.json([]);
+    }
+
+    // Step 3: Group skills by student
+    const studentSkillMap = new Map();
+    for (const skill of filteredSkills) {
+      const studentId = skill.ownerId;
+      if (!studentId) {
+        console.warn("Skill without ownerId:", skill);
+        continue;
+      }
+
+      if (!studentSkillMap.has(studentId)) {
+        console.log(`Adding new studentId to map: ${studentId}`);
+        studentSkillMap.set(studentId, []);
+      }
+
+      studentSkillMap.get(studentId).push({
+        ...skill,
+        softSkillTitles: (skill.softSkills || []).map(id => softSkillMap[id] || id)
+      });
+    }
+
+    console.log("studentSkillMap:", studentSkillMap);
+
+    // Step 4: Load student info and enrich with school/major names
+    const results = [];
+
+    for (const [studentId, skills] of studentSkillMap.entries()) {
+      console.log("Processing studentId:", studentId);
+      const studentDoc = await admin.firestore().doc(`users/${studentId}`).get();
+      if (!studentDoc.exists) {
+        console.log(`Student ${studentId} does not exist in users collection`);
+        continue;
+      }
+      if (studentDoc.data().role !== "student") {
+        console.log(`User ${studentId} is not a student, role: ${studentDoc.data().role}`);
+        continue;
+      }
+
+      const student = studentDoc.data();
+      console.log("Adding student to results:", studentId, student.name);
+      results.push({
+        studentId,
+        name: student.name,
+        email: student.email,
+        customUid: student.customUid,
+        schoolId: student.schoolId,
+        schoolName: schoolMap[student.schoolId] || student.schoolId,
+        major: student.major,
+        majorName: majorMap[student.major] || student.major,
+        skills,
+      });
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error searching students:", error.message);
+    res.status(500).send("Failed to search students");
+  }
+});
+
+
+
 
 // PATCH /employer/applications/:applicationId — 更新状态（通过 / 拒绝 / 面试）
 router.patch("/applications/:applicationId", verifyEmployer, async (req, res) => {
