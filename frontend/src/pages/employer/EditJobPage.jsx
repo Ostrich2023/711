@@ -16,9 +16,10 @@ import {
   Center
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { fetchJobById, updateJob, findStudentsBySkill, assignJob } from '../../services/jobService';
+import { fetchJobById, updateJob, findStudentsBySkill, assignJob, verifyJobCompletion } from '../../services/jobService';
 import { useAuth } from '../../context/AuthContext';
 import { fetchSoftSkills } from '../../services/jobService';
+import StudentCard from "../../components/employer/StudentCard";
 
 
 const EditJobPage = () => {
@@ -31,6 +32,7 @@ const EditJobPage = () => {
   const [matchedStudents, setMatchedStudents] = useState([]);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState([]);
+  const [openedModalId, setOpenedModalId] = useState(null);
   
 
   const form = useForm({
@@ -76,19 +78,42 @@ const EditJobPage = () => {
 
         setAssignedUsers(assignedStudentsWithStatus);
 
+        const studentMap = new Map();
+        
         // Load matched students
+// Load matched students across all skills and merge results
         for (const skill of job.skills || []) {
           try {
-            const students = await findStudentsBySkill(skill, token);
-            setMatchedStudents(prev => {
-              const combined = [...prev, ...students];
-              const unique = [...new Map(combined.map(s => [s.id, s])).values()];
-              return unique;
-            });
+            const students = await findStudentsBySkill(skill, token, job.softSkills || []);
+            console.log(students)
+
+            for (const student of students) {
+              if (!studentMap.has(student.id)) {
+                studentMap.set(student.id, student);
+              } else {
+                // Merge skill titles and accumulate soft skill match count
+                const existing = studentMap.get(student.id);
+                existing.skills = Array.from(new Set([
+                  ...(existing.skills || []),
+                  ...(student.skills || []),
+                ]));
+
+                existing.softSkillMatchCount =
+                  (existing.softSkillMatchCount || 0) + (student.softSkillMatchCount || 0);
+
+                studentMap.set(student.id, existing);
+              }
+            }
           } catch (err) {
             console.error(`Error finding students for skill "${skill}":`, err);
           }
         }
+
+        // Convert map to array and sort by softSkillMatchCount descending
+        const sorted = [...studentMap.values()].sort(
+          (a, b) => (b.softSkillMatchCount || 0) - (a.softSkillMatchCount || 0)
+        );
+        setMatchedStudents(sorted);
       } catch (err) {
         console.error('Failed to load job', err);
         alert('Job not found or access denied.');
@@ -228,50 +253,52 @@ const EditJobPage = () => {
               const assignment = (form.values.assignments || []).find(
                 (a) => a.studentId === student.id
               );
-              const alreadyAssigned = assignment && assignment.status !== 'rejected';
-              const wasRejected = assignment && assignment.status === 'rejected';
+
+              const status = assignment?.status || null;
+
+              const showVerifyButton = status === 'completed';
+
+              // These are statuses that mean "job already handled"
+              const finalStatuses = ["assigned", "accepted", "rejected", "completed", "verified"];
+              
+              // Determine whether to show the assign button
+              const showAssignButton =  (!status || !finalStatuses.includes(status));
 
               return (
-                <Box key={student.id} p="sm" shadow="sm" radius="md" withBorder style={{ width: '100%' }}>
-                  <Text fw={600}>{student.name || student.email}</Text>
-                  <Text size="sm" c="dimmed">Skills: {(student.skills || []).join(', ')}</Text>
-                  <Button
-                    mt="sm"
-                    size="xs"
-                    disabled={alreadyAssigned || wasRejected}
-                    onClick={async () => {
-                      try {
-                        await assignJob(jobId, student.id, token);
-                        alert(`Job assigned to ${student.name || student.email}`);
-                        navigate('/employer/jobs-list', { state: { reload: true } });
-                      } catch (err) {
-                        alert('Failed to assign job');
-                      }
-                    }}
-                  >
-                    Assign Job
-                  </Button>
-                </Box>
+                <StudentCard
+                  key={student.id}
+                  {...student}
+                  setOpenedModalId={setOpenedModalId}
+                  openedModalId={openedModalId}                  
+                  status={status}
+                  readonly={!showAssignButton}
+                  highlight=""
+                  showTechnicalSkills={false}
+                  showAssignButton={showAssignButton}
+                  onAssignClick={async (studentId) => {
+                    try {
+                      await assignJob(jobId, studentId, token);
+                      alert(`Job assigned to ${student.name || student.email}`);
+                      navigate('/employer/jobs-list', { state: { reload: true } });
+                    } catch (err) {
+                      console.error("Failed to assign:", err);
+                      alert("Failed to assign job");
+                    }
+                  }}
+                  showVerifyButton={showVerifyButton}
+                  verifyJob={async (studentId) => {
+                    try {
+                      await verifyJobCompletion(jobId, studentId, token);
+                      alert(`Job assigned to ${student.name || student.email} verified successfully`);
+                      navigate('/employer/jobs-list', { state: { reload: true } });
+                    } catch (err) {
+                      console.error('Verification failed:', err);
+                      alert('Failed to verify job');
+                    }
+                  }}                  
+                />
               );
             })}
-          </Group>
-        </Box>
-      )}
-
-      {assignedUsers.length > 0 && (
-        <Box mt="xl">
-          <Title order={4}>Assigned Students</Title>
-          <Group mt="md" spacing="md">
-            {assignedUsers.map((student, idx) => (
-              <Box key={idx} p="sm" shadow="sm" radius="md" withBorder>
-                <Text fw={600}>{student.name || student.email}</Text>
-                <Text size="sm" c="dimmed">Email: {student.email}</Text>
-                <Text size="sm" c="dimmed">School Name: {student.schoolName || 'N/A'}</Text>
-                <Text size="sm" c={student.status === 'rejected' ? 'red' : 'blue'}>
-                  Status: <b>{student.status}</b>
-                </Text>
-              </Box>
-            ))}
           </Group>
         </Box>
       )}

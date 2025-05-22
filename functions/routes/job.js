@@ -318,8 +318,8 @@ router.put("/:jobId/assign/:studentId", verifyToken, async (req, res) => {
 });
 
 // PUT /employer/job/:jobId/verify
-router.put("/:jobId/verify", verifyToken, async (req, res) => {
-  const { jobId } = req.params;
+router.put("/:jobId/verify/:studentId", verifyToken, async (req, res) => {
+  const { jobId, studentId } = req.params;
   const { uid, role } = req.user;
 
   if (role !== "employer") return res.status(403).send("Only employers can verify");
@@ -329,19 +329,33 @@ router.put("/:jobId/verify", verifyToken, async (req, res) => {
     if (!jobDoc.exists) return res.status(404).send("Job not found");
 
     const jobData = jobDoc.data();
+
     if (jobData.employerId !== uid) return res.status(403).send("Unauthorized");
-    //if (jobData.status !== "completed") return res.status(400).send("Job not completed yet");
 
-    const completed = (jobData.assignments || []).some(a => a.status === "completed");
-    if (!completed) return res.status(400).send("Job not completed yet");
+    const assignments = jobData.assignments || [];
 
-    await jobDoc.ref.update({ verified: true });
+    const studentAssignment = assignments.find(a => a.studentId === studentId);
+
+    if (!studentAssignment) return res.status(404).send("Assignment not found for student");
+    if (studentAssignment.status !== "completed") {
+      return res.status(400).send("Job is not yet completed by the student");
+    }
+
+    const updatedAssignments = assignments.map(a =>
+      a.studentId === studentId
+        ? { ...a, status: "verified", timestamp: new Date().toISOString() }
+        : a
+    );
+
+    await jobDoc.ref.update({ assignments: updatedAssignments });
+
     res.status(200).send("Job verified successfully");
   } catch (error) {
     console.error("Verify error:", error.message);
     res.status(500).send("Failed to verify job");
   }
 });
+
 
 // PUT /student/job/:jobId/accept
 router.put("/:jobId/accept", verifyToken, async (req, res) => {
@@ -480,6 +494,8 @@ router.delete("/:jobId", verifyToken, async (req, res) => {
     res.status(500).send("Failed to delete job");
   }
 });
+
+
 
 
 

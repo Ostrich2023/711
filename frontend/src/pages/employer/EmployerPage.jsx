@@ -24,9 +24,8 @@ const EmployerPage = () => {
   const navbarData = [
     { link: '.', labelKey: 'Home', icon: IconHome2 },
     { link: 'jobs-list', labelKey: 'Jobs List', icon: IconClipboardList },
-    { link: '', labelKey: 'Settings', icon: IconSettings },
     { link: 'students-list', labelKey: 'Students', icon: IconUsers },
-    { link: 'messages', labelKey: 'Messages', icon: IconCertificate }
+    { link: 'settings', labelKey: 'Settings', icon: IconSettings }
     
   ];
 

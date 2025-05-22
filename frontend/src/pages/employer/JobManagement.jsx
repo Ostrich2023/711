@@ -65,13 +65,13 @@ export default function JobListPage() {
   }
 
   return (
-    <Box style={{ flex: 1, padding: "20px" }}>
-    <Group justify="space-between" align="center" mb="md">
-      <Title order={2}>My Jobs</Title>
-      <Button onClick={() => navigate("/employer/add-job")} variant="filled">
-        + Post Job
-      </Button>
-    </Group>
+      <Box style={{ flex: 1, padding: "20px" }}>
+      <Group justify="space-between" align="center" mb="md">
+        <Title order={2}>My Jobs</Title>
+        <Button onClick={() => navigate("/employer/add-job")} variant="filled">
+          + Post Job
+        </Button>
+      </Group>
 
       {jobs.length > 0 ? (
         <JobTable

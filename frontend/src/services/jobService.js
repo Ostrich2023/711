@@ -56,14 +56,18 @@ export const updateJob = async (jobId, jobData, token) => {
 };
 
 
-export const findStudentsBySkill = async (skill, token) => {
+export const findStudentsBySkill = async (skill, token, softSkills = []) => {
   try {
-    const response = await axios.get(`${BASE_URL}/employer/students/skills/${skill}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const softSkillQuery = softSkills.join(",");
+    const response = await axios.get(
+      `${BASE_URL}/employer/students/skills/${skill}?softSkills=${softSkillQuery}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data;
   } catch (error) {
-    console.error('Error searching students by skill:', error);
+    console.error("Error searching students by skill:", error);
     throw error;
   }
 };
@@ -81,9 +85,9 @@ export const assignJob = async (jobId, studentId, token) => {
   }
 };
 
-export const verifyJobCompletion = async (jobId, token) => {
+export const verifyJobCompletion = async (jobId, studentId, token) => {
   try {
-    const response = await axios.put(`${BASE_URL}/job/${jobId}/verify`, {}, {
+    const response = await axios.put(`${BASE_URL}/job/${jobId}/verify/${studentId}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -118,3 +122,4 @@ export const fetchSoftSkills = async (token) => {
     throw error;
   }
 };
+
