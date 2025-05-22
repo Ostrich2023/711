@@ -127,37 +127,68 @@ router.get("/school/:schoolId/students", verifyEmployer, async (req, res) => {
 // GET /employer/students/skills/:skill
 router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
   const { skill } = req.params;
-  const jobSoftSkills = (req.query.softSkills || "").split(",").filter(Boolean); // e.g. ?softSkills=3,4,5
+  const jobSoftSkills = (req.query.softSkills || "").split(",").filter(Boolean);
 
   try {
-    // Step 1: Get all skills
+    // Step 1: Load mapping collections
+    const [schoolsSnap, majorsSnap, softSkillsSnap] = await Promise.all([
+      admin.firestore().collection("schools").get(),
+      admin.firestore().collection("majors").get(),
+      admin.firestore().collection("soft-skills").get(),
+    ]);
+
+    const schoolMap = {};
+    schoolsSnap.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.code && data.name) {
+        schoolMap[data.code] = data.name;
+      }
+    });
+
+    const majorMap = {};
+    majorsSnap.docs.forEach(doc => {
+      majorMap[doc.id] = doc.data().name;
+    });
+
+    const softSkillMap = {};
+    softSkillsSnap.docs.forEach(doc => {
+      softSkillMap[doc.id] = doc.data().name;
+    });
+
+    // Step 2: Load all skills and filter by keyword match
     const skillSnapshot = await admin.firestore().collection("skills").get();
 
-    // Step 2: Filter skills by technical match
     const matchedSkills = skillSnapshot.docs.filter(doc =>
-      doc.data().title.toLowerCase().includes(skill.toLowerCase())
+      (doc.data().title || "").toLowerCase().includes(skill.toLowerCase())
     );
 
-    // Step 3: Build a map of studentId -> { titles[], softSkillsMatchCount }
+    // Step 3: Group by student ID
     const studentSkillsMap = {};
     matchedSkills.forEach(doc => {
       const data = doc.data();
       const { ownerId, title, softSkills = [] } = data;
 
+      if (!ownerId) return;
+
       if (!studentSkillsMap[ownerId]) {
         studentSkillsMap[ownerId] = {
-          titles: [],
-          softSkillMatches: 0,
+          skills: [],
+          softSkillMatchCount: 0,
         };
       }
 
-      studentSkillsMap[ownerId].titles.push(title);
-
       const matchCount = softSkills.filter(s => jobSoftSkills.includes(String(s))).length;
-      studentSkillsMap[ownerId].softSkillMatches += matchCount;
+      const softTitles = softSkills.map(id => softSkillMap[id] || id);
+
+      studentSkillsMap[ownerId].skills.push({
+        title,
+        softSkillTitles: softTitles
+      });
+
+      studentSkillsMap[ownerId].softSkillMatchCount += matchCount;
     });
 
-    // Step 4: Fetch user info and enrich
+    // Step 4: Fetch and enrich student data
     const students = [];
 
     for (const studentId of Object.keys(studentSkillsMap)) {
@@ -165,16 +196,23 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
 
       if (userDoc.exists && userDoc.data().role === "student") {
         const userData = userDoc.data();
+
         students.push({
-          id: userDoc.id,
-          ...userData,
-          skills: studentSkillsMap[studentId].titles,
-          softSkillMatchCount: studentSkillsMap[studentId].softSkillMatches,
+          id: studentId,
+          name: userData.name,
+          email: userData.email,
+          customUid: userData.customUid,
+          schoolId: userData.schoolId,
+          schoolName: schoolMap[userData.schoolId] || userData.schoolId,
+          major: userData.major,
+          majorName: majorMap[userData.major] || userData.major,
+          skills: studentSkillsMap[studentId].skills,
+          softSkillMatchCount: studentSkillsMap[studentId].softSkillMatchCount,
         });
       }
     }
 
-    // Step 5: Sort by number of matching soft skills (descending)
+    // Step 5: Sort by soft skill match count (descending)
     students.sort((a, b) => b.softSkillMatchCount - a.softSkillMatchCount);
 
     res.json(students);
@@ -183,6 +221,8 @@ router.get("/students/skills/:skill", verifyEmployer, async (req, res) => {
     res.status(500).send("Failed to search students");
   }
 });
+
+
 
 
 

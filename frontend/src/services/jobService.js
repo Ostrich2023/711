@@ -85,9 +85,9 @@ export const assignJob = async (jobId, studentId, token) => {
   }
 };
 
-export const verifyJobCompletion = async (jobId, token) => {
+export const verifyJobCompletion = async (jobId, studentId, token) => {
   try {
-    const response = await axios.put(`${BASE_URL}/job/${jobId}/verify`, {}, {
+    const response = await axios.put(`${BASE_URL}/job/${jobId}/verify/${studentId}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
     });
 

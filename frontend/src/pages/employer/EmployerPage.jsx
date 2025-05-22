@@ -25,7 +25,7 @@ const EmployerPage = () => {
     { link: '.', labelKey: 'Home', icon: IconHome2 },
     { link: 'jobs-list', labelKey: 'Jobs List', icon: IconClipboardList },
     { link: 'students-list', labelKey: 'Students', icon: IconUsers },
-    { link: '', labelKey: 'Settings', icon: IconSettings }
+    { link: 'settings', labelKey: 'Settings', icon: IconSettings }
     
   ];
 

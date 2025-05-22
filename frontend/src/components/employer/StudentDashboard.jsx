@@ -19,6 +19,7 @@ const StudentDashboard = ({
     name: 'Unknown',
     university: 'Unknown',
     major: 'Unknown',
+    email : 'Unknown',
     image: '',
     passedCourses: [],
     softSkills: [],
@@ -33,6 +34,7 @@ const StudentDashboard = ({
           <Text fw={700} size="lg">{student.name}'s Wallet Dashboard</Text>
           <Text>University: {student.schoolName}</Text>
           <Text>Major: {student.majorName}</Text>
+          <Text>Email: {student.email}</Text>
         </Box>
         <Avatar size={80} src={student.image} />
       </Group>
